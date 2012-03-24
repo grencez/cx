@@ -1,17 +1,20 @@
 
-#ifndef FileB
-#define FileB FileB
+#ifndef FileB_H_
+#define FileB_H_
 
 #include "table.h"
 
 #include <stdio.h>
 
-#ifndef DeclTableT_char
-#define DeclTableT_char
+#ifndef Table_char
+#define Table_char Table_char
 DeclTableT( char, char );
 #endif
 
+#ifndef FileB
+#define FileB FileB
 typedef struct FileB FileB;
+#endif
 struct FileB
 {
     FILE* f;
