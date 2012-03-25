@@ -30,7 +30,10 @@
     if ((table).sz >= (table).alloc_sz) \
     { \
         if ((table).alloc_sz == 0) \
+        { \
+            (table).s = 0; \
             (table).alloc_sz = 4; \
+        } \
         while ((table).sz >= (table).alloc_sz) \
             (table).alloc_sz *= 2; \
         (table).s = (TableT_##S*) \

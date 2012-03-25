@@ -18,6 +18,7 @@ typedef int bool;
 
 typedef unsigned char byte;
 #define NBitsInByte 8
+#define NBits_byte 8
 
 typedef unsigned int uint;
 #define Max_uint UINT_MAX
