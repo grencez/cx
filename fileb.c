@@ -1,88 +1,28 @@
 
 #include "fileb.h"
 
+#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 
-    char*
-read_FILE (FILE* in)
-{
-    const uint n_per_chunk = BUFSIZ;
-    DeclTable( char, buf );
-    uint off = 0;
+#define AssertBelow( i, bel )  assert(i < bel)
+#define AssertEq( expect, result )  assert((expect) == (result))
 
-    while (1)
-    {
-        size_t n;
 
-        n = off + n_per_chunk + 1;
-        if (buf.sz < n)
-            GrowTable( char, buf, n - buf.sz );
+#ifndef Table_byte
+#define Table_byte Table_byte
+DeclTableT( byte, byte );
+#endif
 
-        n = fread (&buf.s[off], sizeof(char), n_per_chunk, in);
-        off += n;
-        if (n < n_per_chunk)  break;
-    }
-    fclose (in);
-
-    MPopTable( char, buf, buf.sz - off + 1 );
-    buf.s[off] = '\0';
-    return buf.s;
-}
-
-    uint
-getline_FILE (FILE* in, Table(char)* line, uint off)
-{
-    const uint n_per_chunk = BUFSIZ;
-    char* s = 0;
-
-    if (off > 0)
-    {
-        size_t n;
-        s = &line->s[off];
-        n = strlen (s) + 1;
-        memmove (line->s, s, n * sizeof (char));
-        off = n - 1;
-        s = strchr (line->s, '\n');
-    }
-
-    while (!s)
-    {
-        size_t n;
-
-        n = off + n_per_chunk + 1;
-        if (line->sz < n)
-            GrowTable( char, *line, n - line->sz );
-
-        s = &line->s[off];
-        n = fread (s, sizeof (char), n_per_chunk, in);
-        s[n] = 0;
-        s = strchr (s, '\n');
-        off += n;
-        if (n == 0)  break;
-    }
-
-    off = 0;
-    if (s)
-    {
-        if (s != line->s && s[-1] == '\r')
-            s[-1] = '\0';
-        if (s[0] != '\0')
-        {
-            s[0] = '\0';
-            s = &s[1];
-        }
-        off = IndexInTable( char, *line, s );
-    }
-
-    return off;
-}
 
     void
 init_FileB (FileB* f)
 {
+    static char empty[1] = { 0 };
     f->f = 0;
     InitTable( char, f->buf );
+    f->buf.s = empty;
+    f->buf.sz = 1;
     f->off = 0;
 }
 
@@ -100,124 +40,190 @@ close_FileB (FileB* f)
     init_FileB (f);
 }
 
+    void
+olay_FileB (FileB* olay, FileB* source)
+{
+    init_FileB (olay);
+    olay->buf.s = source->buf.s;
+    olay->buf.sz = source->off;
+    olay->buf.alloc_sz = 0;
+}
+
+static
+    bool
+read_FILE (FILE* in, Table( byte )* buf )
+{
+    bool good = true;
+    long ret = 0;
+    size_t sz = 0;
+
+    if (good && (good = !!in))
+    {
+        ret = fseek (in, 0, SEEK_END);
+    }
+    if (good && (good = (ret == 0)))
+    {
+        ret = ftell (in);
+    }
+    if (good && (good = (ret >= 0)))
+    {
+        sz = ret;
+        ret = fseek (in, 0, SEEK_SET);
+    }
+    if (good && (good = (ret == 0)))
+    {
+        GrowTable( byte, *buf, sz );
+        ret = fread (buf->s, 1, sz, in);
+    }
+    if (good)
+    {
+        good = (ret == (long)sz);
+    }
+
+    if (in)  fclose (in);
+    return good;
+}
+
     char*
 read_FileB (FileB* in)
 {
-    char* s = read_FILE (in->f);
+    DeclTable( byte, buf );
+    read_FILE (in->f, &buf);
     in->f = 0;
     close_FileB (in);
-    in->buf.s = s;
-    in->buf.sz = strlen (s);
-    in->buf.alloc_sz = in->buf.sz + 1;
-    return s;
+    in->buf.s = (char*) buf.s;
+    in->buf.sz = buf.sz / sizeof(char);
+    in->buf.alloc_sz = buf.alloc_sz / sizeof(char);
+    GrowTable( char, in->buf, 1 );
+    in->buf.s[in->buf.sz-1] = 0;
+    return in->buf.s;
+}
+
+static
+    bool
+load_chunk_FileB (FileB* in)
+{
+    const uint n_per_chunk = BUFSIZ;
+    Table(char)* buf = &in->buf;
+    size_t n;
+    char* s;
+
+    if (!in->f)  return false;
+
+    AssertBelow( 0, buf->sz );
+    n = buf->sz - 1;
+    GrowTable( char, *buf, n_per_chunk );
+    s = &buf->s[n];
+
+    n = fread (s, sizeof (char), n_per_chunk, in->f);
+    s[n] = 0;
+    buf->sz -= (n_per_chunk - n);
+    return (n != 0);
+}
+
+static
+    void
+flushoff_FileB (FileB* in)
+{
+    Table(char)* buf = &in->buf;
+    AssertBelow( 0, buf->sz );
+    AssertEq( 0, buf->s[buf->sz-1] );
+    if (in->off == 0)  return;
+    buf->sz = buf->sz - in->off;
+    if (buf->sz > 0)
+    {
+        memmove (buf->s, &buf->s[in->off], buf->sz * sizeof (char));
+    }
+    else
+    {
+        buf->s[0] = 0;
+        buf->sz = 1;
+    }
+    in->off = 0;
 }
 
     char*
 getline_FileB (FileB* in)
 {
-    const uint n_per_chunk = BUFSIZ;
-    char* s = 0;
-    uint off = in->off;
+    char* s;
 
-    if (off > 0)
+    flushoff_FileB (in);
+    s = strchr (in->buf.s, '\n');
+
+    while (!s)
     {
-        size_t n;
-        s = &in->buf.s[off];
-        n = strlen (s) + 1;
-        memmove (in->buf.s, s, n * sizeof (char));
-        off = n - 1;
-        s = strchr (in->buf.s, '\n');
-    }
-    else if (!in->f)
-    {
-        s = strchr (in->buf.s, '\n');
-    }
-
-    if (in->f)  while (!s)
-    {
-        size_t n;
-
-        n = off + n_per_chunk + 1;
-        if (in->buf.sz < n)
-            GrowTable( char, in->buf, n - in->buf.sz );
-
-        s = &in->buf.s[off];
-        n = fread (s, sizeof (char), n_per_chunk, in->f);
-        s[n] = 0;
-        if (n == 0)  break;
-        s = strchr (s, '\n');
-        off += n;
+        uint off = in->buf.sz - 1;
+        if (!load_chunk_FileB (in))  break;
+        s = strchr (&in->buf.s[off], '\n');
     }
 
     if (s)
     {
+        s[0] = '\0';
         if (s != in->buf.s && s[-1] == '\r')
             s[-1] = '\0';
-        if (s[0] != '\0')
-        {
-            s[0] = '\0';
-            s = &s[1];
-        }
-        off = IndexInTable( char, in->buf, s );
+        s = &s[1];
+        in->off = IndexInTable( char, in->buf, s );
+    }
+    else
+    {
+        in->off = in->buf.sz;
     }
 
-    in->off = off;
-    return (off == 0) ? 0 : in->buf.s;
+    return (in->buf.sz == 1) ? 0 : in->buf.s;
 }
 
     char*
 getlined_FileB (FileB* in, const char* delim)
 {
-    const uint n_per_chunk = BUFSIZ;
-    char* s = 0;
-    uint off = in->off;
+    char* s;
     uint delim_sz = strlen (delim);
 
-    if (off > 0)
-    {
-        size_t n;
-        s = &in->buf.s[off];
-        n = strlen (s) + 1;
-        memmove (in->buf.s, s, n * sizeof (char));
-        off = n - 1;
-        s = strstr (in->buf.s, delim);
-    }
-    else if (!in->f)
-    {
-        s = strstr (in->buf.s, delim);
-    }
+    flushoff_FileB (in);
+    s = strstr (in->buf.s, delim);
 
-    if (in->f)  while (!s)
+    while (!s)
     {
-        size_t n;
+        uint off = in->buf.sz - 1;
+        if (!load_chunk_FileB (in))  break;
 
-        n = off + n_per_chunk + 1;
-        if (in->buf.sz < n)
-            GrowTable( char, in->buf, n - in->buf.sz );
-
-        s = &in->buf.s[off];
-        n = fread (s, sizeof (char), n_per_chunk, in->f);
-        s[n] = 0;
-        if (n == 0)  break;
         if (off < delim_sz)
             s = strstr (in->buf.s, delim);
         else
             s = strstr (&in->buf.s[1+off-delim_sz], delim);
-        off += n;
     }
 
     if (s)
     {
-        if (s[0] != '\0')
-        {
-            s[0] = '\0';
-            s = &s[delim_sz];
-        }
-        off = IndexInTable( char, in->buf, s );
+        s[0] = '\0';
+        s = &s[delim_sz];
+        in->off = IndexInTable( char, in->buf, s );
+    }
+    else
+    {
+        in->off = in->buf.sz;
     }
 
-    in->off = off;
-    return (off == 0) ? 0 : in->buf.s;
+    return (in->buf.sz == 1) ? 0 : in->buf.s;
+}
+
+    void
+skipws_FileB (FileB* in)
+{
+    char* s;
+    flushoff_FileB (in);
+
+    s = in->buf.s;
+    s = &s[strspn (s, WhiteSpaceChars)];
+
+    while (!s[0]) {
+        uint off = in->buf.sz - 1;
+        if (!load_chunk_FileB (in))  break;
+        s = &in->buf.s[off];
+        s = &s[strspn (s, WhiteSpaceChars)];
+    }
+    in->off = IndexInTable( char, in->buf, s );
+    flushoff_FileB (in);
 }
 
     /** Inject content from a file /src/
