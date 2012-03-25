@@ -140,7 +140,7 @@ testfn_skipws_FileB ()
         }
     }
 
-    close_FileB (in);
+    lose_FileB (in);
 }
 
 int main ()

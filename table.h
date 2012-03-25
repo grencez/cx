@@ -55,6 +55,18 @@
     } \
 } while (0)
 
+#define SizeTable( S, table, capac )  do \
+{ \
+    if ((table).sz <= (capac))  GrowTable( S, table, (capac) - (table).sz ); \
+    else                        MPopTable( S, table, (table).sz - (capac) ); \
+} while (0)
+
+    /** Never downsize.**/
+#define SizeUpTable( S, table, capac ) do \
+{ \
+    if ((table).sz < (capac))  GrowTable( S, table, (capac) - (table).sz ); \
+} while (0)
+
 #define PushTable( S, table, x )  do \
 { \
     GrowTable( S, table, 1 ); \
@@ -74,7 +86,7 @@
             realloc ((table).s, (table).alloc_sz * sizeof (TableT_##S)); \
     } \
 } while (0)
-    
+
 #define LoseTable( S, table )  do if ((table).alloc_sz > 0) \
 { \
     free ((table).s); \

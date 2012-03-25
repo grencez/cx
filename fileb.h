@@ -20,6 +20,9 @@ struct FileB
     FILE* f;
     Table(char) buf;
     uint off;
+    bool sink;
+    Table(char) pathname;
+    Table(char) filename;
 };
 
 static const char WhiteSpaceChars[] = " \t\v\r\n";
@@ -28,13 +31,15 @@ static const char WhiteSpaceChars[] = " \t\v\r\n";
 void
 init_FileB (FileB* f);
 void
-lose_FileB (FileB* f);
-void
 close_FileB (FileB* f);
+void
+lose_FileB (FileB* f);
+bool
+open_FileB (FileB* f, const char* pathname, const char* filename, bool sink);
 void
 olay_FileB (FileB* olay, FileB* source);
 char*
-read_FileB (FileB* in);
+load_FileB (FileB* f);
 char*
 getline_FileB (FileB* in);
 char*
@@ -47,6 +52,17 @@ char*
 nextok_FileB (FileB* in, char* ret_match, const char* delims);
 void
 inject_FileB (FileB* in, FileB* src, const char* delim);
+
+bool
+flusho_FileB (FileB* f);
+void
+dump_uint_FileB (FileB* f, uint x);
+void
+dump_real_FileB (FileB* f, real x);
+void
+dump_char_FileB (FileB* f, char c);
+void
+dump_cstr_FileB (FileB* f, const char* s);
 
 #ifdef IncludeC
 #include "fileb.c"
