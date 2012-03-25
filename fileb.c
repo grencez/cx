@@ -5,10 +5,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define AssertBelow( i, bel )  assert(i < bel)
-#define AssertEq( expect, result )  assert((expect) == (result))
-
-
 #ifndef Table_byte
 #define Table_byte Table_byte
 DeclTableT( byte, byte );
@@ -110,7 +106,7 @@ load_chunk_FileB (FileB* in)
 
     if (!in->f)  return false;
 
-    AssertBelow( 0, buf->sz );
+    Claim2( 0 ,<, buf->sz );
     n = buf->sz - 1;
     GrowTable( char, *buf, n_per_chunk );
     s = &buf->s[n];
@@ -126,8 +122,8 @@ static
 flushoff_FileB (FileB* in)
 {
     Table(char)* buf = &in->buf;
-    AssertBelow( 0, buf->sz );
-    AssertEq( 0, buf->s[buf->sz-1] );
+    Claim2( 0 ,<, buf->sz );
+    Claim2( 0 ,==, buf->s[buf->sz-1] );
     if (in->off == 0)  return;
     buf->sz = buf->sz - in->off;
     if (buf->sz > 0)
@@ -208,22 +204,62 @@ getlined_FileB (FileB* in, const char* delim)
 }
 
     void
-skipws_FileB (FileB* in)
+skipds_FileB (FileB* in, const char* delims)
 {
     char* s;
+    if (!delims)  delims = WhiteSpaceChars;
     flushoff_FileB (in);
 
     s = in->buf.s;
-    s = &s[strspn (s, WhiteSpaceChars)];
+    s = &s[strspn (s, delims)];
+
+    while (!s[0]) {
+        flushoff_FileB (in);
+        if (!load_chunk_FileB (in))  break;
+        s = in->buf.s;
+        s = &s[strspn (s, delims)];
+    }
+    in->off = IndexInTable( char, in->buf, s );
+    flushoff_FileB (in);
+}
+
+    char*
+nextds_FileB (FileB* in, char* ret_match, const char* delims)
+{
+    char* s;
+    if (!delims)  delims = WhiteSpaceChars;
+    flushoff_FileB (in);
+
+    s = in->buf.s;
+    s = &s[strcspn (s, delims)];
 
     while (!s[0]) {
         uint off = in->buf.sz - 1;
         if (!load_chunk_FileB (in))  break;
         s = &in->buf.s[off];
-        s = &s[strspn (s, WhiteSpaceChars)];
+        s = &s[strcspn (s, delims)];
     }
-    in->off = IndexInTable( char, in->buf, s );
-    flushoff_FileB (in);
+
+    if (ret_match)  *ret_match = s[0];
+    if (s[0])
+    {
+        s[0] = 0;
+        ++ s;
+        in->off = IndexInTable( char, in->buf, s );
+    }
+    else
+    {
+        in->off = in->buf.sz;
+    }
+
+    return (in->buf.sz == 1) ? 0 : in->buf.s;
+}
+
+    char*
+nextok_FileB (FileB* in, char* ret_match, const char* delims)
+{
+    skipds_FileB (in, delims);
+    return nextds_FileB (in, ret_match, delims);
 }
 
     /** Inject content from a file /src/

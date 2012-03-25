@@ -40,9 +40,16 @@ getline_FileB (FileB* in);
 char*
 getlined_FileB (FileB* in, const char* delim);
 void
-skipws_FileB (FileB* in);
+skipds_FileB (FileB* in, const char* delims);
+char*
+nextds_FileB (FileB* in, char* ret_match, const char* delims);
+char*
+nextok_FileB (FileB* in, char* ret_match, const char* delims);
 void
 inject_FileB (FileB* in, FileB* src, const char* delim);
 
+#ifdef IncludeC
+#include "fileb.c"
+#endif
 #endif
 

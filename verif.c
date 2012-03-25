@@ -130,15 +130,13 @@ testfn_skipws_FileB ()
         char* s;
 
         olay_FileB (olay, in);
-        skipws_FileB (olay);
-        while ((s = getlined_FileB (olay, " ")))
+        while ((s = nextok_FileB (olay, 0, 0)))
         {
-            assert (idx < ArraySz( expect_text ));
-            assert (0 == strcmp(expect_text[idx], s));
+            Claim2(idx ,<, ArraySz( expect_text ));
+            Claim2(0 ,==, strcmp(expect_text[idx], s));
             ++ idx;
             fputs (s, out);
             fputc ('\n', out);
-            skipws_FileB (olay);
         }
     }
 
