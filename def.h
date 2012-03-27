@@ -101,5 +101,7 @@ typedef float real;
      ? ((line) = &(line)[strlen(tok)]) \
      : 0)
 
+#define DecloStack( T, x )  T onstack_##x; T* const restrict x = &onstack_##x
+
 #endif
 
