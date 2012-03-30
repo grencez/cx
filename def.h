@@ -78,6 +78,8 @@ typedef float real;
 #define restrict __restrict
 #endif
 
+#define Concatify(a,b) a ## b
+#define ConcatifyDef(a,b)  Concatify(a,b)
 
 #define ArraySz( a )  sizeof(a) / sizeof(*a)
 
