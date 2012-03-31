@@ -21,8 +21,10 @@ init_FileB (FileB* f)
     InitTable( char, f->buf );
     f->buf.s = empty;
     f->buf.sz = 1;
+    f->good = true;
     f->off = 0;
     f->sink = false;
+    f->fmt = FileB_Ascii;
     InitTable( char, f->pathname );
     InitTable( char, f->filename );
 }
@@ -48,12 +50,11 @@ lose_FileB (FileB* f)
 }
 
     bool
-open_FileB (FileB* f, const char* pathname, const char* filename, bool sink)
+open_FileB (FileB* f, const char* pathname, const char* filename)
 {
     uint flen = strlen (filename);
     uint plen = (pathname ? strlen (pathname) : 0);
     char* s;
-    f->sink = sink;
 
     SizeTable( char, f->filename, flen+1 );
     memcpy (f->filename.s, filename, (flen+1)*sizeof(char));
@@ -70,7 +71,7 @@ open_FileB (FileB* f, const char* pathname, const char* filename, bool sink)
     }
     memcpy (s, filename, (flen+1)*sizeof(char));
 
-    f->f = fopen (f->pathname.s, (sink ? "wb" : "rb"));
+    f->f = fopen (f->pathname.s, (f->sink ? "wb" : "rb"));
     f->pathname.s[plen] = 0;
     SizeTable( char, f->pathname, plen+1 );
 
@@ -83,7 +84,7 @@ olay_FileB (FileB* olay, FileB* source)
     init_FileB (olay);
     olay->buf.s = source->buf.s;
     olay->buf.sz = source->off;
-    olay->buf.alloc_sz = 0;
+    if (source->sink)  olay->buf.sz += 1;
 }
 
     char*
@@ -325,6 +326,7 @@ flusho_FileB (FileB* f)
 {
     size_t n;
     if (f->off == 0)  return true;
+    if (!f->f)  return true;
     n = fwrite (f->buf.s, sizeof(char), f->off, f->f);
     f->buf.s[0] = 0;
     f->buf.sz = 1;
@@ -353,14 +355,14 @@ dump_uint_FileB (FileB* f, uint x)
 dump_real_FileB (FileB* f, real x)
 {
     SizeUpTable( char, f->buf, f->off + 50 );
-    f->off += sprintf (&f->buf.s[f->off], "%g", x);
+    f->off += sprintf (&f->buf.s[f->off], "%.16e", x);
     dump_chunk_FileB (f);
 }
 
     void
 dump_char_FileB (FileB* f, char c)
 {
-    SizeUpTable( char, f->buf, f->off + 1 );
+    SizeUpTable( char, f->buf, f->off + 2 );
     f->buf.s[f->off] = c;
     f->buf.s[++f->off] = 0;
     dump_chunk_FileB (f);
@@ -374,5 +376,62 @@ dump_cstr_FileB (FileB* f, const char* s)
     memcpy (&f->buf.s[f->off], s, (n+1)*sizeof(char));
     f->off += n;
     dump_chunk_FileB (f);
+}
+
+    char*
+load_uint_cstr (uint* ret, const char* in)
+{
+    unsigned long v;
+    char* out = 0;
+
+    assert (ret);
+    assert (in);
+    v = strtoul (in, &out, 10);
+
+    if (v > Max_uint)  out = 0;
+    if (out == in)  out = 0;
+    if (out)  *ret = (uint) v;
+    return out;
+}
+
+    char*
+load_real_cstr (real* ret, const char* in)
+{
+    double v;
+    char* out = 0;
+
+    assert (ret);
+    assert (in);
+    v = strtod (in, &out);
+
+    if (out == in)  out = 0;
+    if (out)  *ret = (real) v;
+    return out;
+}
+
+    bool
+load_uint_FileB (FileB* f, uint* x)
+{
+    const char* s;
+    if (!f->good)  return false;
+        /* if (f->buf.sz - f->off < 50) load_chunk_FileB (f); */
+    s = load_uint_cstr (x, &f->buf.s[f->off]);
+    f->good = !!s;
+    if (!f->good)  return false;
+    f->off = IndexInTable( char, f->buf, s );
+    return true;
+}
+
+    bool
+load_real_FileB (FileB* f, real* x)
+{
+    const char* s;
+    if (!f->good)  return false;
+        /* if (f->buf.sz - f->off < 50) load_chunk_FileB (f); */
+    s = load_real_cstr (x, &f->buf.s[f->off]);
+    f->good = !!s;
+    if (!f->good)  return false;
+    f->off = IndexInTable( char, f->buf, s );
+    return true;
 }
 

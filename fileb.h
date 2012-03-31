@@ -15,12 +15,22 @@ DeclTableT( char, char );
 #define FileB FileB
 typedef struct FileB FileB;
 #endif
+
+enum FileB_Format {
+    FileB_Ascii,
+        /* FileB_Raw, */
+    FileB_NFormats
+};
+typedef enum FileB_Format FileB_Format;
+
 struct FileB
 {
     FILE* f;
     Table(char) buf;
     uint off;
+    bool good;
     bool sink;
+    FileB_Format fmt;
     Table(char) pathname;
     Table(char) filename;
 };
@@ -35,7 +45,7 @@ close_FileB (FileB* f);
 void
 lose_FileB (FileB* f);
 bool
-open_FileB (FileB* f, const char* pathname, const char* filename, bool sink);
+open_FileB (FileB* f, const char* pathname, const char* filename);
 void
 olay_FileB (FileB* olay, FileB* source);
 char*
@@ -63,6 +73,16 @@ void
 dump_char_FileB (FileB* f, char c);
 void
 dump_cstr_FileB (FileB* f, const char* s);
+
+char*
+load_uint_cstr (uint* ret, const char* in);
+char*
+load_real_cstr (real* ret, const char* in);
+
+bool
+load_uint_FileB (FileB* f, uint* x);
+bool
+load_real_FileB (FileB* f, real* x);
 
 #ifdef IncludeC
 #include "fileb.c"
