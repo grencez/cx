@@ -321,6 +321,12 @@ inject_FileB (FileB* in, FileB* src, const char* delim)
                 delim_sz * sizeof (char));
 }
 
+    void
+skipto_FileB (FileB* in, const char* pos)
+{
+    in->off = IndexInTable( char, in->buf, pos );
+}
+
     bool
 flusho_FileB (FileB* f)
 {
@@ -433,5 +439,20 @@ load_real_FileB (FileB* f, real* x)
     if (!f->good)  return false;
     f->off = IndexInTable( char, f->buf, s );
     return true;
+}
+
+    FileB*
+stdout_FileB ()
+{
+    static FileB sf;
+    static FileB* f = 0;
+    if (f)  return f;
+
+    f = &sf;
+    init_FileB (f);
+    f->sink = true;
+    f->f = stdout;
+
+    return f;
 }
 

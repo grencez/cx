@@ -62,6 +62,8 @@ char*
 nextok_FileB (FileB* in, char* ret_match, const char* delims);
 void
 inject_FileB (FileB* in, FileB* src, const char* delim);
+void
+skipto_FileB (FileB* in, const char* pos);
 
 bool
 flusho_FileB (FileB* f);
@@ -83,6 +85,9 @@ bool
 load_uint_FileB (FileB* f, uint* x);
 bool
 load_real_FileB (FileB* f, real* x);
+
+FileB*
+stdout_FileB ();
 
 #ifdef IncludeC
 #include "fileb.c"

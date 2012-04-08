@@ -4,13 +4,39 @@
 #include "def.h"
 
 #define DeclTableT( S, T ) \
-    typedef T TableT_##S; \
     typedef struct Table_##S Table_##S; \
     struct Table_##S { \
         uint sz; \
         uint alloc_sz; \
-        TableT_##S* s; \
-    }
+        T* s; \
+    }; \
+    static inline \
+        void \
+    grow_nodep_Table_##S (Table_##S* table, uint capac, \
+                          void* (*f) (void*, size_t)) \
+    { \
+        table->sz += capac; \
+        if (table->sz >= table->alloc_sz) \
+        { \
+            if (table->alloc_sz == 0) \
+            { \
+                table->s = 0; \
+                table->alloc_sz = 4; \
+            } \
+            while (table->sz >= table->alloc_sz) \
+                table->alloc_sz *= 2; \
+            table->s = (T*) f (table->s, table->alloc_sz * sizeof (T)); \
+        } \
+    } \
+    static inline \
+        T* \
+    grow1_nodep_Table_##S (Table_##S* table, \
+                           void* (*f) (void*, size_t)) \
+    { \
+        grow_nodep_Table_##S (table, 1, f); \
+        return &table->s[table->sz-1]; \
+    } \
+    typedef T TableT_##S
 
 #define Table( S )  Table_##S
 
@@ -24,22 +50,14 @@
     (table).s = 0; \
 } while (0)
 
-#define GrowTable( S, table, capac )  do \
-{ \
-    (table).sz += (capac); \
-    if ((table).sz >= (table).alloc_sz) \
-    { \
-        if ((table).alloc_sz == 0) \
-        { \
-            (table).s = 0; \
-            (table).alloc_sz = 4; \
-        } \
-        while ((table).sz >= (table).alloc_sz) \
-            (table).alloc_sz *= 2; \
-        (table).s = (TableT_##S*) \
-            realloc ((table).s, (table).alloc_sz * sizeof (TableT_##S)); \
-    } \
-} while (0)
+#define GrowTable( S, table, capac ) \
+    grow_nodep_Table_##S (&(table), capac, realloc)
+
+#define Grow1Table( S, table ) \
+    grow1_nodep_Table_##S (&(table), realloc)
+
+#define DeclGrow1Table( S, table, x ) \
+    TableT_##S* const x = Grow1Table( S, table )
 
 #define MPopTable( S, table, capac )  do \
 { \
@@ -67,11 +85,8 @@
     if ((table).sz < (capac))  GrowTable( S, table, (capac) - (table).sz ); \
 } while (0)
 
-#define PushTable( S, table, x )  do \
-{ \
-    GrowTable( S, table, 1 ); \
-    (table).s[(table).sz-1] = (x); \
-} while (0)
+#define PushTable( S, table, x ) \
+    *(Grow1Table( S, table )) = (x)
 
 #define PackTable( S, table )  do if ((table).sz < (table).alloc_sz) \
 { \
