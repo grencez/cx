@@ -5,10 +5,11 @@
 
 #define DeclTableT( S, T ) \
     typedef struct Table_##S Table_##S; \
+    typedef T TableT_##S; \
     struct Table_##S { \
         uint sz; \
         uint alloc_sz; \
-        T* s; \
+        TableT_##S* s; \
     }; \
     static inline \
         void \
@@ -25,18 +26,19 @@
             } \
             while (table->sz >= table->alloc_sz) \
                 table->alloc_sz *= 2; \
-            table->s = (T*) f (table->s, table->alloc_sz * sizeof (T)); \
+            table->s = (TableT_##S*) \
+                f (table->s, table->alloc_sz * sizeof (TableT_##S)); \
         } \
     } \
     static inline \
-        T* \
+        TableT_##S* \
     grow1_nodep_Table_##S (Table_##S* table, \
                            void* (*f) (void*, size_t)) \
     { \
         grow_nodep_Table_##S (table, 1, f); \
         return &table->s[table->sz-1]; \
     } \
-    typedef T TableT_##S
+    typedef uint TableSzT_##S
 
 #define Table( S )  Table_##S
 
