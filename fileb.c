@@ -49,17 +49,38 @@ lose_FileB (FileB* f)
     LoseTable( char, f->filename );
 }
 
+static
+    uint
+pathname_sz (const char* path)
+{
+    const char* s;
+    s = strrchr (path, '/');
+    if (!s)  return 0;
+    return 1 + IndexOf( char, path, s );
+}
+
+static
+    bool
+absolute_path (const char* path)
+{
+    return path[0] == '/';
+}
+
     bool
 open_FileB (FileB* f, const char* pathname, const char* filename)
 {
-    uint flen = strlen (filename);
+    uint pflen = pathname_sz (filename);
+    uint flen = strlen (filename) - pflen;
     uint plen = (pathname ? strlen (pathname) : 0);
     char* s;
 
     SizeTable( char, f->filename, flen+1 );
-    memcpy (f->filename.s, filename, (flen+1)*sizeof(char));
+    memcpy (f->filename.s, &filename[pflen], (flen+1)*sizeof(char));
 
-    SizeTable( char, f->pathname, plen+1+flen+1 );
+    if (pflen > 0 && absolute_path (filename))
+        plen = 0;
+
+    SizeTable( char, f->pathname, plen+1+pflen+flen+1 );
 
     s = f->pathname.s;
     if (plen > 0)
@@ -69,9 +90,11 @@ open_FileB (FileB* f, const char* pathname, const char* filename)
         s[0] = '/';
         s = &s[1];
     }
-    memcpy (s, filename, (flen+1)*sizeof(char));
+    memcpy (s, filename, (pflen+flen+1)*sizeof(char));
 
     f->f = fopen (f->pathname.s, (f->sink ? "wb" : "rb"));
+
+    plen += pflen;
     f->pathname.s[plen] = 0;
     SizeTable( char, f->pathname, plen+1 );
 
