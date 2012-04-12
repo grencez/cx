@@ -321,25 +321,25 @@ nextok_FileB (FileB* in, char* ret_match, const char* delims)
 inject_FileB (FileB* in, FileB* src, const char* delim)
 {
     uint delim_sz = strlen (delim);
+    uint sz;
 
     load_FileB (src);
+    Claim2( src->buf.sz ,>, 0 );
+    sz = in->buf.sz - in->off;
 
-    if (src->buf.sz > 0)
-    {
-        uint sz = in->buf.sz - in->off;
-        GrowTable( char, in->buf, src->buf.sz + delim_sz );
-            /* Make room for injection.*/
-        memmove (&in->buf.s[in->off + src->buf.sz + delim_sz],
-                 &in->buf.s[in->off],
-                 sz * sizeof (char));
-            /* Inject file contents, assume src->buf.sz is strlen!*/
-        memcpy (&in->buf.s[in->off],
-                src->buf.s,
-                src->buf.sz * sizeof (char));
-    }
+    GrowTable( char, in->buf, src->buf.sz-1 + delim_sz );
+        /* Make room for injection.*/
+    memmove (&in->buf.s[in->off + src->buf.sz-1 + delim_sz],
+             &in->buf.s[in->off],
+             sz * sizeof (char));
+        /* Inject file contents, assume src->buf.sz is strlen!*/
+    memcpy (&in->buf.s[in->off],
+            src->buf.s,
+            (src->buf.sz-1) * sizeof (char));
+
         /* Add the delimiter at the end.*/
     if (delim_sz > 0)
-        memcpy (&in->buf.s[in->off + src->buf.sz],
+        memcpy (&in->buf.s[in->off + src->buf.sz-1],
                 delim,
                 delim_sz * sizeof (char));
 }
