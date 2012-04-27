@@ -86,6 +86,9 @@ dump_char_FileB (FileB* f, char c);
 void
 dump_cstr_FileB (FileB* f, const char* s);
 
+void
+dumpn_byte_FileB (FileB* f, const byte* a, TableSzT_byte n);
+
 char*
 load_uint_cstr (uint* ret, const char* in);
 char*

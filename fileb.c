@@ -14,6 +14,8 @@ static const uint NPerChunk = BUFSIZ;
 
 static bool
 load_chunk_FileB (FileB* f);
+static void
+dumpn_raw_byte_FileB (FileB* f, const byte* a, TableSzT_byte n);
 
     void
 init_FileB (FileB* f)
@@ -473,6 +475,31 @@ dump_cstr_FileB (FileB* f, const char* s)
     memcpy (&f->buf.s[f->off], s, (n+1)*sizeof(char));
     f->off += n;
     dump_chunk_FileB (f);
+}
+
+    void
+dumpn_raw_byte_FileB (FileB* f, const byte* a, TableSzT_byte n)
+{
+    size_t sz;
+    Claim2( f->fmt ,==, FileB_Raw );
+    flusho_FileB (f);
+    sz = fwrite (a, 1, n, f->f);
+    f->good = (sz == n);
+}
+
+    void
+dumpn_byte_FileB (FileB* f, const byte* a, TableSzT_byte n)
+{
+    if (f->fmt == FileB_Raw)
+    {
+        dumpn_raw_byte_FileB (f, a, n);
+        return;
+    }
+    { BLoop( i, n )
+        dump_uint_FileB (f, a[i]);
+        if (i+1 < n)
+            dump_char_FileB (f, ' ');
+    } BLose()
 }
 
     char*
