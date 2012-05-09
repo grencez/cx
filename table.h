@@ -4,6 +4,7 @@
 #include "def.h"
 
 #define TableT( S )  TableT_##S
+#define TableSzT( S )  TableSzT_##S
 
 #define DeclTableT( S, T ) \
     typedef struct TableT_##S TableT_##S; \

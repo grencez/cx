@@ -69,11 +69,11 @@ init_ASTree (ASTree* ast)
 }
 
     void
-init_AST (AST* ast, ASTree* t)
+init_AST (AST* ast)
 {
     ast->kind = NSyntaxKinds;
-    ast->bst.split[0] = &t->sentinel;
-    ast->bst.split[1] = &t->sentinel;
+    ast->bst.split[0] = 0;
+    ast->bst.split[1] = 0;
     ast->dat.a_other = 0;
 }
 
@@ -159,29 +159,31 @@ int main (int argc, char** argv)
     ASTree* t = &tree;
     AST nodes[10];
     AST* ast = &nodes[0];
+    (void) argc;
+    (void) argv;
 
     f = stdout_FileB ();
 
     init_ASTree (t);
-    init_AST (ast, t);
+    init_AST (ast);
     ast->kind = Plus;
     root_for_BSTree (&t->bst, &ast->bst);
 
-    init_AST (++ ast, t);
+    init_AST (++ ast);
     set_side_AST (ast-1, ast, 0);
     ast->kind = Int;
     ast->dat.a_int = 1;
 
-    init_AST (++ ast, t);
+    init_AST (++ ast);
     set_side_AST (ast-2, ast, 1);
     ast->kind = Minus;
 
-    init_AST (++ ast, t);
+    init_AST (++ ast);
     set_side_AST (ast-1, ast, 0);
     ast->kind = Int;
     ast->dat.a_int = 2;
 
-    init_AST (++ ast, t);
+    init_AST (++ ast);
     set_side_AST (ast-2, ast, 1);
     ast->kind = Int;
     ast->dat.a_int = 3;

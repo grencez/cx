@@ -15,7 +15,7 @@ load_chunk_FileB (FileB* f);
 static inline bool
 dump_chunk_FileB (FileB* f);
 static void
-dumpn_raw_byte_FileB (FileB* f, const byte* a, TableSzT_byte n);
+dumpn_raw_byte_FileB (FileB* f, const byte* a, TableSzT(byte) n);
 
     void
 init_FileB (FileB* f)
@@ -62,7 +62,7 @@ seto_FileB (FileB* f, bool sink)
 }
 
 static inline
-    TableSzT_byte
+    TableSzT(byte)
 chunksz_FileB (FileB* f)
 {
     static const uint NPerChunk = BUFSIZ;
@@ -71,9 +71,9 @@ chunksz_FileB (FileB* f)
 }
 
     byte*
-ensure_FileB (FileB* f, TableSzT_byte n)
+ensure_FileB (FileB* f, TableSzT(byte) n)
 {
-    TableSzT_byte sz;
+    TableSzT(byte) sz;
     if (f->sink)
     {
         dump_chunk_FileB (f);
@@ -233,7 +233,7 @@ load_FileB (FileB* f)
     bool
 load_chunk_FileB (FileB* f)
 {
-    const TableSzT_byte chunksz = chunksz_FileB (f);
+    const TableSzT(byte) chunksz = chunksz_FileB (f);
     TableT(byte)* buf = &f->buf;
     size_t n;
     byte* s;
@@ -558,9 +558,9 @@ dump_cstr_FileB (FileB* f, const char* s)
 }
 
     void
-dumpn_raw_byte_FileB (FileB* f, const byte* a, TableSzT_byte n)
+dumpn_raw_byte_FileB (FileB* f, const byte* a, TableSzT(byte) n)
 {
-    const TableSzT_byte ntotal = f->off + n;
+    const TableSzT(byte) ntotal = f->off + n;
     if (ntotal <= f->buf.alloc_sz)
     {
         memcpy (&f->buf.s[f->off], a, n);
@@ -581,7 +581,7 @@ dumpn_raw_byte_FileB (FileB* f, const byte* a, TableSzT_byte n)
 }
 
     void
-dumpn_byte_FileB (FileB* f, const byte* a, TableSzT_byte n)
+dumpn_byte_FileB (FileB* f, const byte* a, TableSzT(byte) n)
 {
     if (f->fmt == FileB_Raw)
     {
@@ -596,7 +596,7 @@ dumpn_byte_FileB (FileB* f, const byte* a, TableSzT_byte n)
 }
 
     void
-dumpn_char_FileB (FileB* f, const char* a, TableSzT_byte n)
+dumpn_char_FileB (FileB* f, const char* a, TableSzT(byte) n)
 {
     GrowTable( byte, f->buf, n );
     memcpy (&f->buf.s[f->off], a, (n+1)*sizeof(char));
@@ -678,13 +678,13 @@ load_real_FileB (FileB* f, real* x)
 
 static
     bool
-loadn_raw_byte_FileB (FileB* f, byte* a, TableSzT_byte n)
+loadn_raw_byte_FileB (FileB* f, byte* a, TableSzT(byte) n)
 {
     Claim2( f->fmt ,==, FileB_Raw );
     flushx_FileB (f);
     while (n > 0)
     {
-        TableSzT_byte m;
+        TableSzT(byte) m;
         if (f->buf.sz == 0)
             f->good = load_chunk_FileB (f);
         if (!f->good)  return false;
@@ -699,7 +699,7 @@ loadn_raw_byte_FileB (FileB* f, byte* a, TableSzT_byte n)
 }
 
     bool
-loadn_byte_FileB (FileB* f, byte* a, TableSzT_byte n)
+loadn_byte_FileB (FileB* f, byte* a, TableSzT(byte) n)
 {
     if (f->fmt == FileB_Raw)
         return loadn_raw_byte_FileB (f, a, n);

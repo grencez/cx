@@ -32,7 +32,7 @@ struct FileB
 {
     FILE* f;
     TableT(byte) buf;
-    TableSzT_byte off;
+    TableSzT(byte) off;
     bool good;
     bool sink;
     bool byline;
@@ -53,7 +53,7 @@ lose_FileB (FileB* f);
 void
 seto_FileB (FileB* f, bool sink);
 byte*
-ensure_FileB (FileB* f, TableSzT_byte);
+ensure_FileB (FileB* f, TableSzT(byte) n);
 void
 setfmt_FileB (FileB* f, FileB_Format fmt);
 bool
@@ -91,9 +91,9 @@ void
 dump_cstr_FileB (FileB* f, const char* s);
 
 void
-dumpn_byte_FileB (FileB* f, const byte* a, TableSzT_byte n);
+dumpn_byte_FileB (FileB* f, const byte* a, TableSzT(byte) n);
 void
-dumpn_char_FileB (FileB* f, const char* a, TableSzT_byte n);
+dumpn_char_FileB (FileB* f, const char* a, TableSzT(byte) n);
 
 char*
 load_uint_cstr (uint* ret, const char* in);
@@ -106,7 +106,7 @@ bool
 load_real_FileB (FileB* f, real* x);
 
 bool
-loadn_byte_FileB (FileB* f, byte* a, TableSzT_byte n);
+loadn_byte_FileB (FileB* f, byte* a, TableSzT(byte) n);
 
 FileB*
 stdout_FileB ();

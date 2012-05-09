@@ -87,7 +87,7 @@ typedef float real;
 #define Concatify(a,b) a ## b
 #define ConcatifyDef(a,b)  Concatify(a,b)
 
-#define ArraySz( a )  sizeof(a) / sizeof(*a)
+#define ArraySz( a )  (sizeof(a) / sizeof(*a))
 
 #define CastUp( T, field, p ) \
     ((T*) ((ptrdiff_t) p - offsetof( T, field )))

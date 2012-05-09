@@ -1,9 +1,10 @@
 
 CC = gcc
 
-CFLAGS = -ansi -pedantic
-CFLAGS += -g
+CFLAGS =
+CFLAGS += -ansi -pedantic
 CFLAGS += -Wall -Wextra
+CFLAGS += -g
 
 all: cx verify
 
