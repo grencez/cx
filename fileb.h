@@ -4,6 +4,7 @@
 
 #include "table.h"
 
+#include <stdarg.h>
 #include <stdio.h>
 
 #ifndef Table_byte
@@ -30,12 +31,14 @@ typedef enum FileB_Format FileB_Format;
 
 struct FileB
 {
+        /* TODO - Needs to be lighter weight.*/
     FILE* f;
     TableT(byte) buf;
     TableSzT(byte) off;
     bool good;
     bool sink;
     bool byline;
+        /* TODO - Flag for auto-flush so packets can be sent.*/
     FileB_Format fmt;
     TableT(char) pathname;
     TableT(char) filename;
@@ -58,6 +61,8 @@ void
 setfmt_FileB (FileB* f, FileB_Format fmt);
 bool
 open_FileB (FileB* f, const char* pathname, const char* filename);
+void
+set_FILE_FileB (FileB* f, FILE* file);
 void
 olay_FileB (FileB* olay, FileB* source);
 char*
@@ -89,6 +94,10 @@ void
 dump_char_FileB (FileB* f, char c);
 void
 dump_cstr_FileB (FileB* f, const char* s);
+void
+vprintf_FileB (FileB* f, const char* fmt, va_list args);
+void
+printf_FileB (FileB* f, const char* fmt, ...);
 
 void
 dumpn_byte_FileB (FileB* f, const byte* a, TableSzT(byte) n);
@@ -107,9 +116,6 @@ load_real_FileB (FileB* f, real* x);
 
 bool
 loadn_byte_FileB (FileB* f, byte* a, TableSzT(byte) n);
-
-FileB*
-stdout_FileB ();
 
 
 qual_inline

@@ -2,6 +2,7 @@
 #include "fileb.h"
 
 #include <assert.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -160,6 +161,14 @@ open_FileB (FileB* f, const char* pathname, const char* filename)
     SizeTable( char, f->pathname, plen+1 );
 
     return !!f->f;
+}
+
+    void
+set_FILE_FileB (FileB* f, FILE* file)
+{
+    Claim( !f->f );
+    init_FileB (f);
+    f->f = file;
 }
 
     void
@@ -558,6 +567,28 @@ dump_cstr_FileB (FileB* f, const char* s)
 }
 
     void
+vprintf_FileB (FileB* f, const char* fmt, va_list args)
+{
+  uint sz = 2048;  /* Not good :( */
+  int iret = 0;
+
+  SizeUpTable( byte, f->buf, f->off + sz );
+  iret = vsprintf ((char*) &f->buf.s[f->off], fmt, args);
+  Claim2( iret ,>=, 0 );
+  Claim2( (uint) iret ,<=, sz );
+  f->off += iret;
+}
+
+    void
+printf_FileB (FileB* f, const char* fmt, ...)
+{
+  va_list args;
+  va_start (args, fmt);
+  vprintf_FileB (f, fmt, args);
+  va_end (args);
+}
+
+    void
 dumpn_raw_byte_FileB (FileB* f, const byte* a, TableSzT(byte) n)
 {
     const TableSzT(byte) ntotal = f->off + n;
@@ -714,21 +745,5 @@ loadn_byte_FileB (FileB* f, byte* a, TableSzT(byte) n)
         n -= 1;
     }
     return true;
-}
-
-
-    FileB*
-stdout_FileB ()
-{
-    static FileB sf;
-    static FileB* f = 0;
-    if (f)  return f;
-
-    f = &sf;
-    init_FileB (f);
-    f->sink = true;
-    f->f = stdout;
-
-    return f;
 }
 

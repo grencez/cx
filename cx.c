@@ -154,7 +154,7 @@ dump_ASTree (FileB* f, ASTree* t)
 
 int main (int argc, char** argv)
 {
-    FileB* f;
+    DecloStack( FileB, f );
     ASTree tree;
     ASTree* t = &tree;
     AST nodes[10];
@@ -162,7 +162,9 @@ int main (int argc, char** argv)
     (void) argc;
     (void) argv;
 
-    f = stdout_FileB ();
+    init_FileB (f);
+    seto_FileB (f, true);
+    set_FILE_FileB (f, stdout);
 
     init_ASTree (t);
     init_AST (ast);
