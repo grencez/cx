@@ -206,9 +206,8 @@ testfn_skipws_FileB ()
     open_FileB (in, "", "test");
     in->f = fopen ("test", "rb");
 #else
-    in->buf.s = (byte*) dup_cstr (text);
-    in->buf.sz = sizeof(text);
-    in->buf.alloc_sz = in->buf.sz;
+    size_Table ((Table*)&in->buf, sizeof (text));
+    memcpy (in->buf.s, text, in->buf.sz);
 #endif
 
     while ((getline_FileB (in)))
@@ -273,11 +272,117 @@ testfn_RBTree ()
     lose_BSTree (&t->bst, lose_TNode);
 }
 
+static
+    void
+claim_allocsz_Table (Table* t)
+{
+    const TableSz sz = t->sz;
+    const TableSz allocsz = allocsz_Table (t);
+
+    Claim2( sz ,<=, allocsz );
+    Claim2( sz ,>=, allocsz / 4 );
+
+    if (sz <= allocsz / 2)
+    {
+        grow_Table (t, allocsz / 2);
+        Claim2( allocsz ,==, allocsz_Table (t) );
+        mpop_Table (t, allocsz / 2);
+        Claim2( allocsz ,==, allocsz_Table (t) );
+    }
+
+    if (sz >= allocsz / 2)
+    {
+        mpop_Table (t, allocsz / 4);
+        Claim2( allocsz ,==, allocsz_Table (t) );
+        grow_Table (t, allocsz / 4);
+        Claim2( allocsz ,==, allocsz_Table (t) );
+    }
+
+    if (sz < allocsz / 2 && sz > 0)
+    {
+        mpop_Table (t, CeilQuot( sz, 2 ));
+        Claim2( allocsz / 2 ,==, allocsz_Table (t) );
+        grow_Table (t, CeilQuot( sz, 2 ));
+        Claim2( allocsz / 2 ,==, allocsz_Table (t) );
+
+            /* Get allocsz back.*/
+        grow_Table (t, allocsz / 2);
+        Claim2( allocsz ,==, allocsz_Table (t) );
+        mpop_Table (t, allocsz / 2);
+        Claim2( allocsz ,==, allocsz_Table (t) );
+    }
+    else if (sz > allocsz / 2)
+    {
+        grow_Table (t, sz);
+        Claim2( allocsz * 2 ,==, allocsz_Table (t) );
+        mpop_Table (t, sz);
+        Claim2( allocsz * 2 ,==, allocsz_Table (t) );
+
+            /* Get allocsz back.*/
+        mpop_Table (t, sz / 2 + 1);
+        Claim2( allocsz ,==, allocsz_Table (t) );
+        grow_Table (t, sz / 2 + 1);
+        Claim2( allocsz ,==, allocsz_Table (t) );
+    }
+
+    Claim2( sz ,==, t->sz );
+    Claim2( allocsz ,==, allocsz_Table (t));
+}
+
+    void
+testfn_Table ()
+{
+    const int val = 7;
+    uint n = (1 << 12) + 1;
+    DeclTableT( V, int );
+    DeclTable( V, t );
+
+    Claim2( t.elsz ,==, sizeof(int) );
+    claim_allocsz_Table ((Table*) &t);
+    claim_allocsz_Table ((Table*) &t);
+
+    { BLoop( i, n )
+        DeclGrow1Table( V, t, x );
+        *x = (int) i;
+        claim_allocsz_Table ((Table*) &t);
+    } BLose()
+
+    PackTable( t );
+    Claim2( t.sz - 1 ,==, allocsz_Table ((Table*) &t) );
+
+    { BLoop( i, n )
+        t.s[t.sz-1] = val;
+        MPopTable( t, 1 );
+        claim_allocsz_Table ((Table*) &t);
+    } BLose()
+
+    Claim2( 0 ,==, t.sz );
+    Claim2( 0 ,<, allocsz_Table ((Table*) &t) );
+    PackTable( t );
+    Claim2( 0 ,==, allocsz_Table ((Table*) &t) );
+    InitTable( t );
+
+    PushTable( t, val );
+    Claim2( 1 ,==, t.sz );
+    PackTable( t );
+    PushTable( t, val );
+    GrowTable( t, 10 );
+    MPopTable( t, 12 );
+
+
+    PushTable( t, val );
+    PushTable( t, val );
+    PushTable( t, val );
+    Claim2( 3 ,==, t.sz );
+    LoseTable( t );
+}
+
 int main ()
 {
     testfn_skipws_FileB ();
 
     testfn_RBTree ();
+    testfn_Table ();
 
     return 0;
 }

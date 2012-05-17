@@ -7,13 +7,13 @@
 #include <stdarg.h>
 #include <stdio.h>
 
-#ifndef Table_byte
-#define Table_byte Table_byte
+#ifndef DeclTableT_byte
+#define DeclTableT_byte
 DeclTableT( byte, byte );
 #endif
 
-#ifndef Table_char
-#define Table_char Table_char
+#ifndef DeclTableT_char
+#define DeclTableT_char
 DeclTableT( char, char );
 #endif
 

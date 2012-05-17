@@ -7,10 +7,21 @@
 #define ArraySz( a )  (sizeof(a) / sizeof(*a))
 
 #define CastUp( T, field, p ) \
-    ((T*) ((ptrdiff_t) p - offsetof( T, field )))
+    ((T*) ((size_t) p - offsetof( T, field )))
 
-#define IndexOf( T, a, e ) \
-    (((ptrdiff_t) (e) - (ptrdiff_t) (a)) / sizeof (T))
+#define EltZ( a, idx, elsz ) \
+    ((void*) ((size_t) a + (size_t) ((idx) * (elsz))))
+
+#define Elt( a, idx )  (&(a)[idx])
+
+#define IdxEltZ( a, e, elsz ) \
+    ((size_t) ((size_t) (e) - (size_t) (a)) / (elsz))
+
+#define IdxElt( a, e ) \
+    IdxEltZ( a, e, sizeof(*a) )
+
+#define CeilQuot( a, b ) \
+    (((a) + (b) - 1) / (b))
 
 #define BSfx( a, op, b, sfx )  (a)sfx op (b)sfx
 

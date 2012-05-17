@@ -6,8 +6,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifndef Table_byte
-#define Table_byte Table_byte
+#ifndef DeclTableT_byte
+#define DeclTableT_byte
 DeclTableT( byte, byte );
 #endif
 
@@ -23,7 +23,7 @@ init_FileB (FileB* f)
 {
     static char empty[1] = { 0 };
     f->f = 0;
-    InitTable( byte, f->buf );
+    InitTable( f->buf );
     f->buf.s = (byte*) empty;
     f->buf.sz = 1;
     f->good = true;
@@ -31,8 +31,8 @@ init_FileB (FileB* f)
     f->sink = false;
     f->byline = false;
     f->fmt = FileB_Ascii;
-    InitTable( char, f->pathname );
-    InitTable( char, f->filename );
+    InitTable( f->pathname );
+    InitTable( f->filename );
 }
 
     void
@@ -50,9 +50,9 @@ close_FileB (FileB* f)
 lose_FileB (FileB* f)
 {
     close_FileB (f);
-    LoseTable( byte, f->buf );
-    LoseTable( char, f->pathname );
-    LoseTable( char, f->filename );
+    LoseTable( f->buf );
+    LoseTable( f->pathname );
+    LoseTable( f->filename );
 }
 
     void
@@ -78,7 +78,7 @@ ensure_FileB (FileB* f, TableSzT(byte) n)
     if (f->sink)
     {
         dump_chunk_FileB (f);
-        SizeUpTable( byte, f->buf, f->off+n );
+        SizeUpTable( f->buf, f->off+n );
         return &f->buf.s[f->off];
     }
 
@@ -88,7 +88,7 @@ ensure_FileB (FileB* f, TableSzT(byte) n)
         Claim2( 0 ,<, sz );
         sz -= 1;
     }
-    GrowTable( byte, f->buf, n );
+    GrowTable( f->buf, n );
     return &f->buf.s[sz];
 }
 
@@ -118,7 +118,7 @@ pathname_sz (const char* path)
     const char* s;
     s = strrchr (path, '/');
     if (!s)  return 0;
-    return 1 + IndexOf( char, path, s );
+    return 1 + IdxElt( path, s );
 }
 
 static
@@ -136,13 +136,13 @@ open_FileB (FileB* f, const char* pathname, const char* filename)
     uint plen = (pathname ? strlen (pathname) : 0);
     char* s;
 
-    SizeTable( char, f->filename, flen+1 );
+    SizeTable( f->filename, flen+1 );
     memcpy (f->filename.s, &filename[pflen], (flen+1)*sizeof(char));
 
     if (pflen > 0 && absolute_path (filename))
         plen = 0;
 
-    SizeTable( char, f->pathname, plen+1+pflen+flen+1 );
+    SizeTable( f->pathname, plen+1+pflen+flen+1 );
 
     s = f->pathname.s;
     if (plen > 0)
@@ -158,7 +158,7 @@ open_FileB (FileB* f, const char* pathname, const char* filename)
 
     plen += pflen;
     f->pathname.s[plen] = 0;
-    SizeTable( char, f->pathname, plen+1 );
+    SizeTable( f->pathname, plen+1 );
 
     return !!f->f;
 }
@@ -167,7 +167,6 @@ open_FileB (FileB* f, const char* pathname, const char* filename)
 set_FILE_FileB (FileB* f, FILE* file)
 {
     Claim( !f->f );
-    init_FileB (f);
     f->f = file;
 }
 
@@ -215,7 +214,7 @@ load_FileB (FileB* f)
         }
         if (good && (good = (ret == 0)))
         {
-            GrowTable( byte, f->buf, sz );
+            GrowTable( f->buf, sz );
 
                 /* Note this relation!*/
             Claim2( f->off + sz ,==, f->buf.sz-1 );
@@ -321,7 +320,7 @@ getline_FileB (FileB* in)
         if (s != (char*) in->buf.s && s[-1] == '\r')
             s[-1] = '\0';
         s = &s[1];
-        in->off = IndexInTable( byte, in->buf, s );
+        in->off = IdxElt( in->buf.s, s );
     }
     else
     {
@@ -355,7 +354,7 @@ getlined_FileB (FileB* in, const char* delim)
     {
         s[0] = '\0';
         s = &s[delim_sz];
-        in->off = IndexInTable( byte, in->buf, s );
+        in->off = IdxElt( in->buf.s, s );
     }
     else
     {
@@ -382,7 +381,7 @@ skipds_FileB (FileB* in, const char* delims)
         s = cstr_FileB (in);
         s = &s[strspn (s, delims)];
     }
-    in->off = IndexInTable( byte, in->buf, s );
+    in->off = IdxElt( in->buf.s, s );
     flushx_FileB (in);
 }
 
@@ -409,7 +408,7 @@ nextds_FileB (FileB* in, char* ret_match, const char* delims)
     {
         s[0] = 0;
         ++ s;
-        in->off = IndexInTable( byte, in->buf, s );
+        in->off = IdxElt( in->buf.s, s );
     }
     else
     {
@@ -440,7 +439,7 @@ inject_FileB (FileB* in, FileB* src, const char* delim)
     Claim2( src->buf.sz ,>, 0 );
     sz = in->buf.sz - in->off;
 
-    GrowTable( byte, in->buf, src->buf.sz-1 + delim_sz );
+    GrowTable( in->buf, src->buf.sz-1 + delim_sz );
         /* Make room for injection.*/
     memmove (&in->buf.s[in->off + src->buf.sz-1 + delim_sz],
              &in->buf.s[in->off],
@@ -460,7 +459,7 @@ inject_FileB (FileB* in, FileB* src, const char* delim)
     void
 skipto_FileB (FileB* in, const char* pos)
 {
-    in->off = IndexInTable( byte, in->buf, pos );
+    in->off = IdxElt( in->buf.s, pos );
 }
 
 static
@@ -487,7 +486,7 @@ flusho1_FileB (FileB* f, const byte* a, uint n)
     if (selfcont_FileB (f))
     {
         if (n == 0)  return true;
-        GrowTable( byte, f->buf, n );
+        GrowTable( f->buf, n );
         memcpy (&f->buf.s[f->off], a, n);
         f->off += n;
     }
@@ -534,7 +533,7 @@ dump_chunk_FileB (FileB* f)
     void
 dump_uint_FileB (FileB* f, uint x)
 {
-    SizeUpTable( byte, f->buf, f->off + 50 );
+    SizeUpTable( f->buf, f->off + 50 );
     f->off += sprintf ((char*)&f->buf.s[f->off], "%u", x);
     dump_chunk_FileB (f);
 }
@@ -542,7 +541,7 @@ dump_uint_FileB (FileB* f, uint x)
     void
 dump_real_FileB (FileB* f, real x)
 {
-    SizeUpTable( byte, f->buf, f->off + 50 );
+    SizeUpTable( f->buf, f->off + 50 );
     f->off += sprintf ((char*)&f->buf.s[f->off], "%.16e", x);
     dump_chunk_FileB (f);
 }
@@ -550,7 +549,7 @@ dump_real_FileB (FileB* f, real x)
     void
 dump_char_FileB (FileB* f, char c)
 {
-    SizeUpTable( byte, f->buf, f->off + 2 );
+    SizeUpTable( f->buf, f->off + 2 );
     f->buf.s[f->off] = c;
     f->buf.s[++f->off] = 0;
     dump_chunk_FileB (f);
@@ -560,7 +559,7 @@ dump_char_FileB (FileB* f, char c)
 dump_cstr_FileB (FileB* f, const char* s)
 {
     uint n = strlen (s);
-    GrowTable( byte, f->buf, n );
+    GrowTable( f->buf, n );
     memcpy (&f->buf.s[f->off], s, (n+1)*sizeof(char));
     f->off += n;
     dump_chunk_FileB (f);
@@ -572,7 +571,7 @@ vprintf_FileB (FileB* f, const char* fmt, va_list args)
   uint sz = 2048;  /* Not good :( */
   int iret = 0;
 
-  SizeUpTable( byte, f->buf, f->off + sz );
+  SizeUpTable( f->buf, f->off + sz );
   iret = vsprintf ((char*) &f->buf.s[f->off], fmt, args);
   Claim2( iret ,>=, 0 );
   Claim2( (uint) iret ,<=, sz );
@@ -592,7 +591,7 @@ printf_FileB (FileB* f, const char* fmt, ...)
 dumpn_raw_byte_FileB (FileB* f, const byte* a, TableSzT(byte) n)
 {
     const TableSzT(byte) ntotal = f->off + n;
-    if (ntotal <= f->buf.alloc_sz)
+    if (ntotal <= allocsz_Table ((Table*) &f->buf))
     {
         memcpy (&f->buf.s[f->off], a, n);
         f->off = ntotal;
@@ -601,7 +600,7 @@ dumpn_raw_byte_FileB (FileB* f, const byte* a, TableSzT(byte) n)
     }
     else if (ntotal <= 2*chunksz_FileB (f))
     {
-        SizeUpTable( byte, f->buf, 2*chunksz_FileB (f) );
+        SizeUpTable( f->buf, 2*chunksz_FileB (f) );
         memcpy (&f->buf.s[f->off], a, n);
         f->off = ntotal;
     }
@@ -629,7 +628,7 @@ dumpn_byte_FileB (FileB* f, const byte* a, TableSzT(byte) n)
     void
 dumpn_char_FileB (FileB* f, const char* a, TableSzT(byte) n)
 {
-    GrowTable( byte, f->buf, n );
+    GrowTable( f->buf, n );
     memcpy (&f->buf.s[f->off], a, (n+1)*sizeof(char));
     f->off += n;
     dump_chunk_FileB (f);
@@ -679,7 +678,7 @@ load_uint_FileB (FileB* f, uint* x)
         s = load_uint_cstr (x, (char*)&f->buf.s[f->off]);
         f->good = !!s;
         if (!f->good)  return false;
-        f->off = IndexInTable( byte, f->buf, s );
+        f->off = IdxElt( f->buf.s, s );
     }
     else
     {
@@ -703,7 +702,7 @@ load_real_FileB (FileB* f, real* x)
     s = load_real_cstr (x, (char*)&f->buf.s[f->off]);
     f->good = !!s;
     if (!f->good)  return false;
-    f->off = IndexInTable( byte, f->buf, s );
+    f->off = IdxElt( f->buf.s, s );
     return true;
 }
 

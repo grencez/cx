@@ -6,8 +6,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#ifndef Table_uint
-#define Table_uint Table_uint
+#ifndef TableT_uint
+#define TableT_uint TableT_uint
 DeclTableT( uint, uint );
 #endif
 
@@ -191,6 +191,7 @@ int main (int argc, char** argv)
     ast->dat.a_int = 3;
 
     dump_ASTree (f, t);
+    dump_char_FileB (f, '\n');
     lose_FileB (f);
     lose_ASTree (&tree);
     return 0;

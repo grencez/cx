@@ -213,7 +213,7 @@ int main ()
 
         close (io[0]);
 
-        SizeUpTable( byte, msg, 1024 );
+        SizeUpTable( msg, 1024 );
 
         sock = socket (addr->ai_family,
                        addr->ai_socktype,
@@ -264,7 +264,7 @@ int main ()
 
         BLose();
 
-        LoseTable( byte, msg );
+        LoseTable( msg );
 
         if (io[1] >= 0)  close (io[1]);
         waitpid (pid, &istat, 0);
