@@ -9,14 +9,6 @@
 #include <stdio.h>
 #include <string.h>
 
-    char*
-dup_cstr (const char* s)
-{
-    char* a = (char*) malloc ((strlen (s) + 1) * sizeof (char));
-    strcpy (a, s);
-    return a;
-}
-
     bool
 eql_cstr (const char* a, const char* b)
 {

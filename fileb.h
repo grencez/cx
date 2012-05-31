@@ -144,6 +144,18 @@ FileB* stdin_FileB ();
 FileB* stdout_FileB ();
 FileB* stderr_FileB ();
 
+
+qual_inline
+    char*
+dup_cstr (const char* s)
+{
+    uint n = strlen (s) + 1;
+    DeclAlloc( char, a, n );
+    memcpy (a, s, n * sizeof(char));
+    return a;
+}
+
+
 #ifdef IncludeC
 #include "fileb.c"
 #endif
