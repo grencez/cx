@@ -168,10 +168,18 @@ mpop_Table (Table* t, TableSz capac)
 
 qual_inline
     void*
+top_Table (Table* t)
+{
+    return elt_Table (t, t->sz - 1);
+}
+#define TopTable( t )  Elt((t).s, (t).sz-1)
+    
+qual_inline
+    void*
 grow1_Table (Table* t)
 {
     grow_Table (t, 1);
-    return elt_Table (t, t->sz - 1);
+    return top_Table (t);
 }
 
     /** Don't use this... It's a hack for the Grow1Table() macro.**/
@@ -189,7 +197,7 @@ synhax_grow1_Table (void* ps, void* s, TableSz* sz,
 #define Grow1Table( t ) \
     (synhax_grow1_Table (&(t).s, (t).s, &(t).sz, \
                          sizeof(*(t).s), &(t).alloc_lgsz), \
-     &(t).s[(t).sz-1])
+     TopTable( t ))
 #define DeclGrow1Table( S, x, t ) \
     TableElT_##S* const x = Grow1Table( t )
 #define PushTable( table, x ) \
