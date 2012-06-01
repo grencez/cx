@@ -41,8 +41,16 @@
 
 #define DecloStack( T, x )  T onstack_##x; T* const restrict x = &onstack_##x
 
+#define AllocT( T, n ) \
+    ((n) == 0 ? (T*) 0 : \
+     (T*) malloc ((n) * sizeof (T)))
+
+#define DupliT( T, a, n ) \
+    ((n) == 0 ? (T*) 0 : \
+     (T*) memcpy (malloc ((n) * sizeof (T)), a, (n) * sizeof (T)))
+
 #define DeclAlloc( T, a, n ) \
-    T* const a = (n) == 0 ? (T*) 0 : (T*) malloc ((n) * sizeof (T))
+    T* const restrict a = AllocT( T, n )
 
 
     /** Implemented in sys-cx.c **/
