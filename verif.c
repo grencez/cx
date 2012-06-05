@@ -118,7 +118,7 @@ static
     void
 insert_TNode (RBTree* t, const char* key, uint val, uint* n_expect)
 {
-    TNode* a = (TNode*) malloc (sizeof (TNode));
+    DeclAlloc( TNode, a, 1 );
     a->key = dup_cstr (key);
     a->val = val;
     insert_RBTree (t, &a->rbt);
@@ -130,17 +130,17 @@ insert_TNode (RBTree* t, const char* key, uint val, uint* n_expect)
 output_dot_fn (BSTNode* x, void* args)
 {
     TNode* a = CastUp( TNode, rbt, CastUp( RBTNode, bst, x ) );
-    FILE* out = (FILE*) ((void**)args)[0];
+    FileB* out = (FileB*) ((void**)args)[0];
 
-    fprintf (out, "q%u [label = \"%s\", color = \"%s\"];\n",
-             a->val,
-             a->key,
-             (a->rbt.red) ? "red" : "black");
+    printf_FileB (out, "q%u [label = \"%s\", color = \"%s\"];\n",
+                  a->val,
+                  a->key,
+                  (a->rbt.red) ? "red" : "black");
 
     if (x->joint)
     {
         TNode* b = CastUp( TNode, rbt, CastUp( RBTNode, bst, x->joint ) );
-        fprintf (out, "q%u -> q%u;\n", b->val, a->val);
+        printf_FileB (out, "q%u -> q%u;\n", b->val, a->val);
     }
 }
 
@@ -148,14 +148,18 @@ output_dot_fn (BSTNode* x, void* args)
 output_dot (BSTree* t)
 {
     void* args[1];
-    FILE* out = fopen ("out.dot", "wb");
+    DecloStack( FileB, out );
     args[0] = out;
 
-    fputs ("digraph tree {\n", out);
+    init_FileB (out);
+    seto_FileB (out, true);
+    open_FileB (out, "", "out.dot");
+
+    dump_cstr_FileB (out, "digraph tree {\n");
     output_dot_fn (t->sentinel, args);
     traverse_BSTree (t, Yes, output_dot_fn, args);
-    fputs ("}\n", out);
-    fclose (out);
+    dump_cstr_FileB (out, "}\n");
+    lose_FileB (out);
 }
 
 static
@@ -190,9 +194,8 @@ testfn_skipws_FileB ()
         "hello", "i", "am", "some", "text!"
     };
     uint idx = 0;
-    FileB st_in;
-    FileB* const in = &st_in;
-    FILE* out = stderr;
+    DecloStack( FileB, in );
+    FileB* out = stderr_FileB ();
 
     init_FileB (in);
 #if 0
@@ -205,8 +208,7 @@ testfn_skipws_FileB ()
 
     while ((getline_FileB (in)))
     {
-        FileB st_olay;
-        FileB* const olay = &st_olay;
+        DecloStack( FileB, olay );
         char* s;
 
         olay_FileB (olay, in);
@@ -215,13 +217,14 @@ testfn_skipws_FileB ()
             Claim2(idx ,<, ArraySz( expect_text ));
             Claim2(0 ,==, strcmp(expect_text[idx], s));
             ++ idx;
-            fputs (s, out);
-            fputc ('\n', out);
+            dump_cstr_FileB (out, s);
+            dump_char_FileB (out, '\n');
         }
     }
 
     lose_FileB (in);
-    fprintf (out, "------------\n");
+    dump_cstr_FileB (out, "------------\n");
+    flusho_FileB (out);
 }
 
     void
@@ -252,9 +255,9 @@ testfn_RBTree ()
                 const uint idx = (muls[mi] * i) % nkeys;
                 insert_TNode (t, keys[idx], idx, &n_expect);
             } BLose()
-
+#if 0
             output_dot (&t->bst);
-
+#endif
             { BLoop( i, ArraySz( keys ) )
                 const uint idx = (muls[mj] * i) % nkeys;
                 remove_TNode (t, keys[idx], &n_expect);

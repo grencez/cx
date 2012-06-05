@@ -203,28 +203,28 @@ load_FileB (FileB* f)
     else
     {
         size_t sz = 0;
-        if (good && (good = (ret == 0)))
-        {
-            ret = ftell (f->f);
-        }
-        if (good && (good = (ret >= 0)))
-        {
-            sz = ret;
-            ret = fseek (f->f, 0, SEEK_SET);
-        }
-        if (good && (good = (ret == 0)))
-        {
-            GrowTable( f->buf, sz );
+        BInit();
 
-                /* Note this relation!*/
-            Claim2( f->off + sz ,==, f->buf.sz-1 );
+        BCasc( ret == 0, good, "fseek()" );
 
-            ret = fread (&f->buf.s[f->off], 1, sz, f->f);
-            if (ret >= 0)
-                f->buf.s[f->off + ret] = '\0';
+        ret = ftell (f->f);
+        BCasc( ret == 0, good, "ftell()" );
 
-            good = (ret == (long)sz);
-        }
+        sz = ret;
+        ret = fseek (f->f, 0, SEEK_SET);
+        BCasc( ret == 0, good, "fseek()" );
+
+        GrowTable( f->buf, sz );
+
+            /* Note this relation!*/
+        Claim2( f->off + sz ,==, f->buf.sz-1 );
+
+        ret = fread (&f->buf.s[f->off], 1, sz, f->f);
+        if (ret >= 0)
+            f->buf.s[f->off + ret] = '\0';
+
+        BCasc( ret == (long)sz, good, "fread()" );
+        BLose();
     }
 
     close_FileB (f);
