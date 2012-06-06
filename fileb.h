@@ -21,6 +21,10 @@ DeclTableT( char, char );
 #define FileB FileB
 typedef struct FileB FileB;
 #endif
+typedef struct XOFileB XOFileB;
+typedef XOFileB XFileB;
+typedef XOFileB OFileB;
+typedef struct FileBOpArg FileBOpArg;
 
 enum FileB_Format {
     FileB_Ascii,
@@ -29,12 +33,60 @@ enum FileB_Format {
 };
 typedef enum FileB_Format FileB_Format;
 
-struct FileB
+enum FileB_Op {
+    FileB_LoadChunk,
+    FileB_DumpChunk,
+    FileB_NOps
+};
+typedef enum FileB_Op FileB_Op;
+
+
+struct FileBOpArg
 {
-        /* TODO - Needs to be lighter weight.*/
-    FILE* f;
+    union {
+        struct {
+            uint nbytes;
+            const byte* bytes;
+        } cdata;
+    } as;
+    bool good;
+};
+#define DeclFileBOpArg(arg) \
+    FileBOpArg arg
+
+qual_inline
+    FileBOpArg
+dflt_FileBOpArg ()
+{
+    FileBOpArg a;
+    a.good = true;
+    return a;
+}
+
+struct XOFileB
+{
     TableT(byte) buf;
     TableSzT(byte) off;
+    void (* op) (XOFileB*, FileB_Op, FileBOpArg*);
+};
+
+static char XOFileB_empty[1] = { 0 };
+qual_inline
+    XOFileB
+dflt_XOFileB ()
+{
+    XOFileB f;
+    InitTable( f.buf );
+    f.buf.s = (byte*) XOFileB_empty;
+    f.buf.sz = 1;
+    f.off = 0;
+    return f;
+}
+
+struct FileB
+{
+    XOFileB xo;
+    FILE* f;
     bool good;
     bool sink;
     bool byline;
@@ -64,7 +116,7 @@ open_FileB (FileB* f, const char* pathname, const char* filename);
 void
 set_FILE_FileB (FileB* f, FILE* file);
 void
-olay_FileB (FileB* olay, FileB* source);
+olay_FileB (XOFileB* olay, FileB* source_fb);
 char*
 load_FileB (FileB* f);
 void
@@ -136,7 +188,7 @@ qual_inline
     char*
 cstr_FileB (FileB* f)
 {
-    return (char*) f->buf.s;
+    return (char*) f->xo.buf.s;
 }
 
     /* Implemented in sys-cx.c */

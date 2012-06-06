@@ -99,8 +99,8 @@ int main ()
         BCasc( istat >= 0, good, "connect()" );
 
         aio->aio_fildes = sock;
-        aio->aio_buf = f->buf.s;
-        aio->aio_nbytes = f->off;
+        aio->aio_buf = f->xo.buf.s;
+        aio->aio_nbytes = f->xo.off;
         istat = aio_write (aio);
         BCasc( istat == 0, good, "aio_write()" );
 

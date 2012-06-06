@@ -202,8 +202,8 @@ testfn_skipws_FileB ()
     open_FileB (in, "", "test");
     in->f = fopen ("test", "rb");
 #else
-    SizeTable (in->buf, sizeof(text));
-    memcpy (in->buf.s, text, in->buf.sz);
+    SizeTable (in->xo.buf, sizeof(text));
+    memcpy (in->xo.buf.s, text, in->xo.buf.sz);
 #endif
 
     while ((getline_FileB (in)))
@@ -211,7 +211,8 @@ testfn_skipws_FileB ()
         DecloStack( FileB, olay );
         char* s;
 
-        olay_FileB (olay, in);
+        init_FileB (olay);
+        olay_FileB (&olay->xo, in);
         while ((s = nextok_FileB (olay, 0, 0)))
         {
             Claim2(idx ,<, ArraySz( expect_text ));
