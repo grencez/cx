@@ -1,4 +1,5 @@
 
+#include "bittable.h"
 #include "fileb.h"
 #include "rbtree.h"
 #include "sys-cx.h"
@@ -184,6 +185,75 @@ remove_TNode (RBTree* t, const char* key, uint* n_expect)
     lose_TNode (&a->rbt.bst);
     *n_expect -= 1;
     claim_BSTree (&t->bst, *n_expect);
+}
+
+static
+    void
+testfn_BitTable ()
+{
+    uint n = 1000;
+    uint ni = CeilQuot( n, 3 );
+    BitTable bt = cons2_BitTable (n, 0);
+
+    { BLoop( i, ni )
+        Bit x;
+        x = set1_BitTable (bt, 3 * i);
+        Claim2( x ,==, 0 );
+    } BLose()
+
+    { BLoop( i, n )
+        Bit x, y;
+        x = test_BitTable (bt, i);
+        y = (0 == (i % 3));
+        Claim2( x ,==, y );
+        x = set1_BitTable (bt, i);
+        Claim2( x ,==, y );
+    } BLose()
+
+    lose_BitTable (&bt);
+}
+
+    /* This mimics the dirty bit in a set associative cache,
+     * but is unrealistic since it disregards any values.
+     * Now, if all values fall inside [0..255], then we have a useful tool,
+     * but then LowBits() would not be tested.
+     */
+static
+    void
+testfn_cache_BitTable ()
+{
+    uint i;
+    Bit flag;
+    FixDeclBitTable( cache, 256, 1 );
+    const uint nslots = cache.sz;
+    const uint nbits = 8;
+
+    UFor( i, nslots )
+        Claim( test_BitTable (cache, i) );
+    set0_BitTable (cache, 100);
+    wipe_BitTable (cache, 0);
+    UFor( i, nslots )
+        Claim( !test_BitTable (cache, i) );
+
+    i = LowBits( nslots+1, nbits );
+    Claim2( i ,==, 1 );
+    flag = set1_BitTable (cache, i);
+    Claim2( flag ,==, 0 );
+
+    i = LowBits( nslots-1, nbits );
+    Claim2( i ,==, nslots-1 );
+    flag = set1_BitTable (cache, i);
+    Claim2( flag ,==, 0 );
+
+    i = LowBits( 3*(nslots-1), nbits );
+    Claim2( i ,==, nslots-3 );
+    flag = set1_BitTable (cache, i);
+    Claim2( flag ,==, 0 );
+
+    i = LowBits( 5*nslots-3, nbits );
+    Claim2( i ,==, nslots-3 );
+    flag = set1_BitTable (cache, i);
+    Claim2( flag ,==, 1 );
 }
 
     void
@@ -385,6 +455,8 @@ int main ()
 {
     init_sys_cx ();
 
+    testfn_BitTable ();
+    testfn_cache_BitTable ();
     testfn_skipws_FileB ();
     testfn_RBTree ();
     testfn_Table ();

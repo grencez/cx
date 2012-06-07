@@ -12,6 +12,7 @@ typedef unsigned short TableElSz;
 
 #define TableT( S )  TableT_##S
 #define TableSzT( S )  TableSz
+#define TableElT( S )  TableElT_##S
 
 typedef struct Table Table;
 struct Table
