@@ -54,6 +54,19 @@ lose_sys_cx ()
 }
 
     void
+fail_exit_sys_cx (const char* msg)
+{
+    if (msg)
+    {
+        flusho_FileB (stderr_FileB ());
+            /* Use literal stderr just in case we have memory problems.*/
+        fprintf (stderr, "Failing out! %s\n", msg);
+    }
+    lose_sys_cx ();
+    exit (1);
+}
+
+    void
 dbglog_printf3 (const char* file,
                 const char* func,
                 uint line,

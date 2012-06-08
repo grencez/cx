@@ -10,6 +10,8 @@ void
 push_losefn1_sys_cx (void (*f) (void*), void* x);
 void
 lose_sys_cx ();
+void
+fail_exit_sys_cx (const char* msg);
 
     /* synhax.h - dbglog_printf3() */
     /* fileb.h - stdin_FileB () */

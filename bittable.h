@@ -4,6 +4,8 @@
 
 #include "table.h"
 
+#include <assert.h>
+
 DeclTableT( Bit, unsigned int );
 
 typedef TableT(Bit) BitTable;
@@ -18,6 +20,24 @@ typedef TableSzT(Bit) BitTableSz;
 #define LowBits( x, nbits ) \
     ((x) & ~(((x) | ~(x)) << (nbits)))
 
+
+enum BitTable_Op {
+        /*        a = 0011
+         *        b = 0101
+         */
+    BitTable_NIL,  /* 0000 */
+    BitTable_AND,  /* 0001 */
+    BitTable_XOR,  /* 0110 */
+    BitTable_OR,   /* 0111 */
+    BitTable_NOR,  /* 1000 */
+    BitTable_EQL,  /* 1001 */
+    BitTable_NOT,  /* 1010 */
+    BitTable_IMPL, /* 1101 */
+    BitTable_NAND, /* 1110 */
+    BitTable_YES,  /* 1111 */
+    BitTable_NOps
+};
+typedef enum BitTable_Op BitTable_Op;
 
 #define DeclBitTableIdcs( p, q, i ) \
     const TableSz p = (i) / NBits_BitTableEl; \
@@ -62,13 +82,20 @@ dflt3_BitTable (BitTableSz nbits, BitTableEl* s, Bit val)
 
 qual_inline
     BitTable
-cons2_BitTable (BitTableSz n, Bit val)
+cons1_BitTable (BitTableSz n)
 {
     const BitTableSz nblocks = CeilQuot( n, NBits_BitTableEl );
     BitTable bt = dflt_BitTable ();
-
     GrowTable( bt, nblocks );
     bt.sz = n;
+    return bt;
+}
+
+qual_inline
+    BitTable
+cons2_BitTable (BitTableSz n, Bit val)
+{
+    BitTable bt = cons1_BitTable (n);
 
     if (bt.s)
         wipe_BitTable (bt, val);
@@ -126,6 +153,52 @@ set0_BitTable (BitTable bt, BitTableSz i)
     {
         bt.s[p] = x & ~y;
         return 1;
+    }
+}
+
+qual_inline
+    void
+op_BitTable (BitTable a, const BitTable b, BitTable_Op op)
+{
+    BitTableSz i;
+    const TableSz n = CeilQuot( a.sz, NBits_BitTableEl );
+
+    Claim2( a.sz ,==, b.sz );
+    switch (op)
+    {
+        case BitTable_NIL:
+            wipe_BitTable (a, 0);
+            break;
+        case BitTable_AND:
+            UFor( i, n )  a.s[i] = a.s[i] & b.s[i];
+            break;
+        case BitTable_XOR:
+            UFor( i, n )  a.s[i] = a.s[i] ^ b.s[i];
+            break;
+        case BitTable_OR:
+            UFor( i, n )  a.s[i] = a.s[i] | b.s[i];
+            break;
+        case BitTable_NOR:
+            UFor( i, n )  a.s[i] = ~(a.s[i] | b.s[i]);
+            break;
+        case BitTable_EQL:
+            UFor( i, n )  a.s[i] = ~(a.s[i] ^ b.s[i]);
+            break;
+        case BitTable_NOT:
+            UFor( i, n )  a.s[i] = ~b.s[i];
+            break;
+        case BitTable_IMPL:
+            UFor( i, n )  a.s[i] = ~a.s[i] | b.s[i];
+            break;
+        case BitTable_NAND:
+            UFor( i, n )  a.s[i] = ~(a.s[i] & b.s[i]);
+            break;
+        case BitTable_YES:
+            wipe_BitTable (a, 1);
+            break;
+        case BitTable_NOps:
+            Claim( 0 );
+            break;
     }
 }
 
