@@ -131,18 +131,19 @@ insert_TNode (RBTree* t, const char* key, uint val, uint* n_expect)
 output_dot_fn (BSTNode* x, void* args)
 {
     TNode* a = CastUp( TNode, rbt, CastUp( RBTNode, bst, x ) );
-    FileB* out = (FileB*) ((void**)args)[0];
+    OFileB* of = (OFileB*) ((void**)args)[0];
 
-    printf_FileB (out, "q%u [label = \"%s\", color = \"%s\"];\n",
-                  a->val,
-                  a->key,
-                  (a->rbt.red) ? "red" : "black");
+    printf_OFileB (of, "q%u [label = \"%s\", color = \"%s\"];\n",
+                   a->val,
+                   a->key,
+                   (a->rbt.red) ? "red" : "black");
 
     if (x->joint)
     {
         TNode* b = CastUp( TNode, rbt, CastUp( RBTNode, bst, x->joint ) );
-        printf_FileB (out, "q%u -> q%u;\n", b->val, a->val);
+        printf_OFileB (of, "q%u -> q%u;\n", b->val, a->val);
     }
+    flush_OFileB (of);
 }
 
     void
@@ -150,16 +151,17 @@ output_dot (BSTree* t)
 {
     void* args[1];
     DecloStack( FileB, out );
-    args[0] = out;
+    OFileB* of = &out->xo;
+    args[0] = of;
 
     init_FileB (out);
     seto_FileB (out, true);
     open_FileB (out, "", "out.dot");
 
-    dump_cstr_FileB (out, "digraph tree {\n");
+    dump_cstr_OFileB (of, "digraph tree {\n");
     output_dot_fn (t->sentinel, args);
     traverse_BSTree (t, Yes, output_dot_fn, args);
-    dump_cstr_FileB (out, "}\n");
+    dump_cstr_OFileB (of, "}\n");
     lose_FileB (out);
 }
 
@@ -265,7 +267,7 @@ testfn_skipws_FileB ()
     };
     uint idx = 0;
     DecloStack( FileB, in );
-    FileB* out = stderr_FileB ();
+    OFileB* of = stderr_OFileB ();
 
     init_FileB (in);
 #if 0
@@ -288,14 +290,14 @@ testfn_skipws_FileB ()
             Claim2(idx ,<, ArraySz( expect_text ));
             Claim2(0 ,==, strcmp(expect_text[idx], s));
             ++ idx;
-            dump_cstr_FileB (out, s);
-            dump_char_FileB (out, '\n');
+            dump_cstr_OFileB (of, s);
+            dump_char_OFileB (of, '\n');
         }
     }
 
     lose_FileB (in);
-    dump_cstr_FileB (out, "------------\n");
-    flusho_FileB (out);
+    dump_cstr_OFileB (of, "------------\n");
+    flush_OFileB (of);
 }
 
     void

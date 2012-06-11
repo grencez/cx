@@ -73,15 +73,14 @@ int main ()
     if (pid == 0)
     {
         int sock = -1;
-        DecloStack( FileB, f );
+        DecloStack( OFileB, of );
+        *of = dflt_OFileB ();
 
         BInit();
 
         close (io[1]);
 
-        init_FileB (f);
-
-        dump_cstr_FileB (f, "hi");
+        dump_cstr_OFileB (of, "hi");
 
             /* Wait for parent proc to be ready.*/
         {
@@ -99,8 +98,8 @@ int main ()
         BCasc( istat >= 0, good, "connect()" );
 
         aio->aio_fildes = sock;
-        aio->aio_buf = f->xo.buf.s;
-        aio->aio_nbytes = f->xo.off;
+        aio->aio_buf = of->buf.s;
+        aio->aio_nbytes = of->off;
         istat = aio_write (aio);
         BCasc( istat == 0, good, "aio_write()" );
 
@@ -115,7 +114,7 @@ int main ()
         BLose();
 
         if (sock >= 0)  close (sock);
-        lose_FileB (f);
+        lose_OFileB (of);
     }
     else
     {

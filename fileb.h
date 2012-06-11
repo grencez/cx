@@ -36,6 +36,7 @@ typedef enum FileB_Format FileB_Format;
 enum FileB_Op {
     FileB_LoadChunk,
     FileB_DumpChunk,
+    FileB_FlushO,
     FileB_NOps
 };
 typedef enum FileB_Op FileB_Op;
@@ -63,10 +64,12 @@ dflt_FileBOpArg ()
     return a;
 }
 
+
 struct XOFileB
 {
     TableT(byte) buf;
     TableSzT(byte) off;
+    TableSzT(byte) chunksz;
     void (* op) (XOFileB*, FileB_Op, FileBOpArg*);
 };
 
@@ -80,8 +83,13 @@ dflt_XOFileB ()
     f.buf.s = (byte*) XOFileB_empty;
     f.buf.sz = 1;
     f.off = 0;
+    f.chunksz = 0;
     return f;
 }
+qual_inline
+OFileB dflt_OFileB () { return dflt_XOFileB (); }
+qual_inline
+XFileB dflt_XFileB () { return dflt_XOFileB (); }
 
 struct FileB
 {
@@ -98,6 +106,13 @@ struct FileB
 
 static const char WhiteSpaceChars[] = " \t\v\r\n";
 
+
+void
+lose_XOFileB (XOFileB* xo);
+void
+lose_OFileB (OFileB* of);
+void
+lose_XFileB (OFileB* xf);
 
 void
 init_FileB (FileB* f);
@@ -119,6 +134,7 @@ void
 olay_FileB (XOFileB* olay, FileB* source_fb);
 char*
 load_FileB (FileB* f);
+
 void
 flushx_FileB (FileB* f);
 char*
@@ -139,22 +155,26 @@ skipto_FileB (FileB* in, const char* pos);
 bool
 flusho_FileB (FileB* f);
 void
-dump_uint_FileB (FileB* f, uint x);
+flush_OFileB (OFileB* f);
 void
-dump_real_FileB (FileB* f, real x);
+mayflush_OFileB (OFileB* of);
 void
-dump_char_FileB (FileB* f, char c);
+dump_uint_OFileB (OFileB* f, uint x);
 void
-dump_cstr_FileB (FileB* f, const char* s);
+dump_real_OFileB (OFileB* f, real x);
 void
-vprintf_FileB (FileB* f, const char* fmt, va_list args);
+dump_char_OFileB (OFileB* f, char c);
 void
-printf_FileB (FileB* f, const char* fmt, ...);
+dump_cstr_OFileB (OFileB* f, const char* s);
+void
+vprintf_OFileB (OFileB* f, const char* fmt, va_list args);
+void
+printf_OFileB (OFileB* f, const char* fmt, ...);
 
 void
 dumpn_byte_FileB (FileB* f, const byte* a, TableSzT(byte) n);
 void
-dumpn_char_FileB (FileB* f, const char* a, TableSzT(byte) n);
+dumpn_char_OFileB (OFileB* of, const char* a, TableSzT(byte) n);
 
 char*
 load_uint_cstr (uint* ret, const char* in);
@@ -184,17 +204,24 @@ byline_FileB (const FileB* f)
     return f->byline;
 }
 
+
 qual_inline
     char*
-cstr_FileB (FileB* f)
+cstr_XOFileB (XOFileB* f)
 {
-    return (char*) f->xo.buf.s;
+    return (char*) f->buf.s;
 }
+
+qual_inline
+char* cstr_FileB (FileB* f) { return cstr_XOFileB (&f->xo); }
 
     /* Implemented in sys-cx.c */
 FileB* stdin_FileB ();
 FileB* stdout_FileB ();
 FileB* stderr_FileB ();
+XFileB* stdin_XFileB ();
+OFileB* stdout_OFileB ();
+OFileB* stderr_OFileB ();
 
 
 qual_inline

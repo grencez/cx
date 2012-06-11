@@ -16,12 +16,24 @@ load_chunk_FileB (FileB* f);
 static inline bool
 dump_chunk_FileB (FileB* f);
 static void
+op_FileB (XOFileB* xo, FileB_Op op, FileBOpArg* arg);
+static void
 dumpn_raw_byte_FileB (FileB* f, const byte* a, TableSzT(byte) n);
+
+    void
+lose_XOFileB (XOFileB* xo)
+{
+    LoseTable( xo->buf );
+}
+void lose_OFileB (OFileB* of) { lose_XOFileB (of); }
+void lose_XFileB (OFileB* xf) { lose_XOFileB (xf); }
 
     void
 init_FileB (FileB* f)
 {
     f->xo = dflt_XOFileB ();
+    f->xo.chunksz = BUFSIZ;
+    f->xo.op = op_FileB;
     f->f = 0;
     f->good = true;
     f->sink = false;
@@ -62,9 +74,7 @@ static inline
     TableSzT(byte)
 chunksz_FileB (FileB* f)
 {
-    static const uint NPerChunk = BUFSIZ;
-    (void) f;
-    return NPerChunk;
+    return f->xo.chunksz;
 }
 
     byte*
@@ -540,48 +550,82 @@ dump_chunk_FileB (FileB* f)
 }
 
     void
-dump_uint_FileB (FileB* fb, uint x)
+flush_OFileB (OFileB* of)
 {
-    OFileB* const f = &fb->xo;
+        /* In the future, we may not want to flush all the time!*/
+        /* Also, we may not wish to flush the whole buffer.*/
+    Claim( of->op );
+    of->op (of, FileB_FlushO, 0);
+}
+
+
+    void
+mayflush_OFileB (OFileB* of)
+{
+    if (of->chunksz > 0 && of->off > of->chunksz)
+        flush_OFileB (of);
+}
+
+    void
+op_FileB (XOFileB* xo, FileB_Op op, FileBOpArg* arg)
+{
+    FileB* fb = CastUp( FileB, xo, xo );
+    (void) arg;
+    switch (op)
+    {
+        case FileB_LoadChunk:
+            load_chunk_FileB (fb);
+            break;
+        case FileB_DumpChunk:
+            dump_chunk_FileB (fb);
+            break;
+        case FileB_FlushO:
+            flusho_FileB (fb);
+            break;
+        case FileB_NOps:
+            Claim(0);
+            break;
+    }
+}
+
+    void
+dump_uint_OFileB (OFileB* f, uint x)
+{
     SizeUpTable( f->buf, f->off + 50 );
     f->off += sprintf ((char*)&f->buf.s[f->off], "%u", x);
-    dump_chunk_FileB (fb);
+    mayflush_OFileB (f);
 }
 
     void
-dump_real_FileB (FileB* fb, real x)
+dump_real_OFileB (OFileB* f, real x)
 {
-    OFileB* const f = &fb->xo;
     SizeUpTable( f->buf, f->off + 50 );
     f->off += sprintf ((char*)&f->buf.s[f->off], "%.16e", x);
-    dump_chunk_FileB (fb);
+    mayflush_OFileB (f);
 }
 
     void
-dump_char_FileB (FileB* fb, char c)
+dump_char_OFileB (OFileB* f, char c)
 {
-    OFileB* const f = &fb->xo;
     SizeUpTable( f->buf, f->off + 2 );
     f->buf.s[f->off] = c;
     f->buf.s[++f->off] = 0;
-    dump_chunk_FileB (fb);
+    mayflush_OFileB (f);
 }
 
     void
-dump_cstr_FileB (FileB* fb, const char* s)
+dump_cstr_OFileB (OFileB* f, const char* s)
 {
-    OFileB* const f = &fb->xo;
     uint n = strlen (s);
     GrowTable( f->buf, n );
     memcpy (&f->buf.s[f->off], s, (n+1)*sizeof(char));
     f->off += n;
-    dump_chunk_FileB (fb);
+    mayflush_OFileB (f);
 }
 
     void
-vprintf_FileB (FileB* fb, const char* fmt, va_list args)
+vprintf_OFileB (OFileB* f, const char* fmt, va_list args)
 {
-    OFileB* const f = &fb->xo;
     uint sz = 2048;  /* Not good :( */
     int iret = 0;
 
@@ -590,14 +634,15 @@ vprintf_FileB (FileB* fb, const char* fmt, va_list args)
     Claim2( iret ,>=, 0 );
     Claim2( (uint) iret ,<=, sz );
     f->off += iret;
+    mayflush_OFileB (f);
 }
 
     void
-printf_FileB (FileB* f, const char* fmt, ...)
+printf_OFileB (OFileB* f, const char* fmt, ...)
 {
     va_list args;
     va_start (args, fmt);
-    vprintf_FileB (f, fmt, args);
+    vprintf_OFileB (f, fmt, args);
     va_end (args);
 }
 
@@ -635,20 +680,19 @@ dumpn_byte_FileB (FileB* f, const byte* a, TableSzT(byte) n)
         return;
     }
     { BLoop( i, n )
-        dump_uint_FileB (f, a[i]);
+        dump_uint_OFileB (&f->xo, a[i]);
         if (i+1 < n)
-            dump_char_FileB (f, ' ');
+            dump_char_OFileB (&f->xo, ' ');
     } BLose()
 }
 
     void
-dumpn_char_FileB (FileB* f, const char* a, TableSzT(byte) n)
+dumpn_char_OFileB (OFileB* of, const char* a, TableSzT(byte) n)
 {
-    OFileB* const of = &f->xo;
     GrowTable( of->buf, n );
     memcpy (&of->buf.s[of->off], a, (n+1)*sizeof(char));
     of->off += n;
-    dump_chunk_FileB (f);
+    mayflush_OFileB (of);
 }
 
     char*

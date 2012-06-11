@@ -75,15 +75,15 @@ dbglog_printf3 (const char* file,
 {
     va_list args;
     int err = errno;
-    FileB* f = stderr_FileB ();
+    OFileB* f = stderr_OFileB ();
 
-    printf_FileB (f, "%s(%u) %s: ", file, line, func);
+    printf_OFileB (f, "%s(%u) %s: ", file, line, func);
 
     va_start (args, fmt);
-    vprintf_FileB (f, fmt, args);
+    vprintf_OFileB (f, fmt, args);
     va_end(args);
 
-    dump_char_FileB (f, '\n');
+    dump_char_OFileB (f, '\n');
 
     if (err != 0)
     {
@@ -102,11 +102,11 @@ dbglog_printf3 (const char* file,
         f->off += strlen (s) * sizeof(char);
         dump_char_FileB (f, '\n');
 #else
-        printf_FileB (f, "^^^ errno:%d %s\n", err, strerror (err));
+        printf_OFileB (f, "^^^ errno:%d %s\n", err, strerror (err));
 #endif
         errno = 0;
     }
-    flusho_FileB (f);
+    flush_OFileB (f);
 }
 
 
@@ -152,5 +152,26 @@ stderr_FileB ()
         set_FILE_FileB (f, stderr);
     }
     return f;
+}
+
+    XFileB*
+stdin_XFileB ()
+{
+    FileB* fb = stdin_FileB ();
+    return &fb->xo;
+}
+
+    OFileB*
+stdout_OFileB ()
+{
+    FileB* fb = stdout_FileB ();
+    return &fb->xo;
+}
+
+    OFileB*
+stderr_OFileB ()
+{
+    FileB* fb = stderr_FileB ();
+    return &fb->xo;
 }
 

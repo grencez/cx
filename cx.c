@@ -104,7 +104,7 @@ lose_ASTree (ASTree* ast)
 }
 
     void
-dump_AST (FileB* f, const ASTree* t, const BSTNode* bst)
+dump_AST (OFileB* of, const ASTree* t, const BSTNode* bst)
 {
     char txt[100];
     uint txtsz = 0;
@@ -126,36 +126,36 @@ dump_AST (FileB* f, const ASTree* t, const BSTNode* bst)
         txtsz = sprintf (txt, "%f", ast->dat.a_double);
         break;
     case Plus:
-        dump_char_FileB (f, '(');
-        dump_AST (f, t, bst->split[0]);
-        dump_char_FileB (f, '+');
-        dump_AST (f, t, bst->split[1]);
-        dump_char_FileB (f, ')');
+        dump_char_OFileB (of, '(');
+        dump_AST (of, t, bst->split[0]);
+        dump_char_OFileB (of, '+');
+        dump_AST (of, t, bst->split[1]);
+        dump_char_OFileB (of, ')');
         break;
     case Minus:
-        dump_char_FileB (f, '(');
-        dump_AST (f, t, bst->split[0]);
-        dump_char_FileB (f, '-');
-        dump_AST (f, t, bst->split[1]);
-        dump_char_FileB (f, ')');
+        dump_char_OFileB (of, '(');
+        dump_AST (of, t, bst->split[0]);
+        dump_char_OFileB (of, '-');
+        dump_AST (of, t, bst->split[1]);
+        dump_char_OFileB (of, ')');
         break;
     default:
         fputs ("No Good!\n", stderr);
         break;
     };
     if (txtsz > 0)
-        dumpn_char_FileB (f, txt, txtsz);
+        dumpn_char_OFileB (of, txt, txtsz);
 }
 
     void
-dump_ASTree (FileB* f, ASTree* t)
+dump_ASTree (OFileB* of, ASTree* t)
 {
-    dump_AST (f, t, root_of_BSTree (&t->bst));
+    dump_AST (of, t, root_of_BSTree (&t->bst));
 }
 
 int main (int argc, char** argv)
 {
-    FileB* f;
+    OFileB* of;
     ASTree tree;
     ASTree* t = &tree;
     AST nodes[10];
@@ -165,7 +165,7 @@ int main (int argc, char** argv)
 
     init_sys_cx ();
 
-    f = stdout_FileB ();
+    of = stdout_OFileB ();
 
     init_ASTree (t);
     init_AST (ast);
@@ -191,8 +191,8 @@ int main (int argc, char** argv)
     ast->kind = Int;
     ast->dat.a_int = 3;
 
-    dump_ASTree (f, t);
-    dump_char_FileB (f, '\n');
+    dump_ASTree (of, t);
+    dump_char_OFileB (of, '\n');
     lose_ASTree (&tree);
 
     lose_sys_cx ();
