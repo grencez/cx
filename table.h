@@ -116,7 +116,7 @@ idxelt_Table (const Table* t, const void* el)
     return (TableSz) IdxEltZ( t->s, el, t->elsz );
 }
 #define IdxEltTable( t, el ) \
-    (TableSz) IdxEltZ( (t).s, el, (t).elsz )
+    (TableSz) IdxEltZ( (t).s, el, sizeof(*(t).s) )
 
 
 qual_inline

@@ -69,7 +69,7 @@ struct XOFileB
 {
     TableT(byte) buf;
     TableSzT(byte) off;
-    TableSzT(byte) chunksz;
+    TableSzT(byte) flushsz;
     void (* op) (XOFileB*, FileB_Op, FileBOpArg*);
 };
 
@@ -83,7 +83,8 @@ dflt_XOFileB ()
     f.buf.s = (byte*) XOFileB_empty;
     f.buf.sz = 1;
     f.off = 0;
-    f.chunksz = 0;
+    f.op = 0;
+    f.flushsz = 0;
     return f;
 }
 qual_inline
@@ -130,23 +131,25 @@ bool
 open_FileB (FileB* f, const char* pathname, const char* filename);
 void
 set_FILE_FileB (FileB* f, FILE* file);
-void
-olay_FileB (XOFileB* olay, FileB* source_fb);
 char*
 load_FileB (FileB* f);
 
 void
 flushx_FileB (FileB* f);
-char*
-getline_FileB (FileB* in);
-char*
-getlined_FileB (FileB* in, const char* delim);
 void
-skipds_FileB (FileB* in, const char* delims);
+flush_XFileB (XFileB* f);
+void
+mayflush_XFileB (XFileB* xf);
 char*
-nextds_FileB (FileB* in, char* ret_match, const char* delims);
+getline_XFileB (XFileB* in);
 char*
-nextok_FileB (FileB* in, char* ret_match, const char* delims);
+getlined_XFileB (XFileB* xf, const char* delim);
+void
+skipds_XFileB (XFileB* xf, const char* delims);
+char*
+nextds_XFileB (XFileB* in, char* ret_match, const char* delims);
+char*
+nextok_XFileB (XFileB* xf, char* ret_match, const char* delims);
 void
 inject_FileB (FileB* in, FileB* src, const char* delim);
 void
@@ -184,11 +187,27 @@ load_real_cstr (real* ret, const char* in);
 bool
 load_uint_FileB (FileB* f, uint* x);
 bool
-load_real_FileB (FileB* f, real* x);
+load_real_XFileB (XFileB* xf, real* x);
 
 bool
 loadn_byte_FileB (FileB* f, byte* a, TableSzT(byte) n);
 
+qual_inline
+    void
+set_mayflush_XFileB (XFileB* xf, bool may)
+{
+    xf->flushsz = may ? 1 : 0;
+}
+
+qual_inline
+    XFileB
+olay_XFileB (XFileB* xf, uint off)
+{
+    XFileB olay = dflt_XFileB ();
+    olay.buf.s = &xf->buf.s[off];
+    olay.buf.sz = xf->off - off;
+    return olay;
+}
 
 qual_inline
     bool
@@ -209,9 +228,12 @@ qual_inline
     char*
 cstr_XOFileB (XOFileB* f)
 {
-    return (char*) f->buf.s;
+    return (char*) &f->buf.s[f->off];
 }
-
+qual_inline
+char* cstr_XFileB (XFileB* xf) { return cstr_XOFileB (xf); }
+qual_inline
+char* cstr_OFileB (OFileB* of) { return cstr_XOFileB (of); }
 qual_inline
 char* cstr_FileB (FileB* f) { return cstr_XOFileB (&f->xo); }
 

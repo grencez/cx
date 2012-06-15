@@ -268,6 +268,7 @@ testfn_skipws_FileB ()
     uint idx = 0;
     DecloStack( FileB, in );
     OFileB* of = stderr_OFileB ();
+    char* s;
 
     init_FileB (in);
 #if 0
@@ -278,14 +279,13 @@ testfn_skipws_FileB ()
     memcpy (in->xo.buf.s, text, in->xo.buf.sz);
 #endif
 
-    while ((getline_FileB (in)))
+    for (s = getline_XFileB (&in->xo);
+         s;
+         s = getline_XFileB (&in->xo))
     {
-        DecloStack( FileB, olay );
-        char* s;
+        XFileB olay = olay_XFileB (&in->xo, IdxEltTable( in->xo.buf, s ));
 
-        init_FileB (olay);
-        olay_FileB (&olay->xo, in);
-        while ((s = nextok_FileB (olay, 0, 0)))
+        while ((s = nextok_XFileB (&olay, 0, 0)))
         {
             Claim2(idx ,<, ArraySz( expect_text ));
             Claim2(0 ,==, strcmp(expect_text[idx], s));

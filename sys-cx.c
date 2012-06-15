@@ -120,6 +120,7 @@ stdin_FileB ()
         f = &f_mem;
         init_FileB (f);
         set_FILE_FileB (f, stdin);
+        f->byline = true;
     }
     return f;
 }

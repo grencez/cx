@@ -13,6 +13,8 @@ DeclTableT( byte, byte );
 
 static bool
 load_chunk_FileB (FileB* f);
+static bool
+load_chunk_XFileB (XFileB* xf);
 static inline bool
 dump_chunk_FileB (FileB* f);
 static void
@@ -32,7 +34,7 @@ void lose_XFileB (OFileB* xf) { lose_XOFileB (xf); }
 init_FileB (FileB* f)
 {
     f->xo = dflt_XOFileB ();
-    f->xo.chunksz = BUFSIZ;
+    f->xo.flushsz = BUFSIZ;
     f->xo.op = op_FileB;
     f->f = 0;
     f->good = true;
@@ -74,7 +76,8 @@ static inline
     TableSzT(byte)
 chunksz_FileB (FileB* f)
 {
-    return f->xo.chunksz;
+    (void) f;
+    return BUFSIZ;
 }
 
     byte*
@@ -178,19 +181,6 @@ set_FILE_FileB (FileB* f, FILE* file)
     f->f = file;
 }
 
-    void
-olay_FileB (XOFileB* olay, FileB* source_fb)
-{
-    XOFileB* const source = &source_fb->xo;
-    *olay = dflt_XOFileB ();
-    olay->buf.s = source->buf.s;
-    olay->buf.sz = source->off;
-    if (source_fb->sink)
-        olay->buf.sz = source->off + 1;
-    else if (olay->buf.sz == source->buf.sz - 1)
-        olay->buf.sz = source->buf.sz;
-}
-
     char*
 load_FileB (FileB* f)
 {
@@ -241,7 +231,7 @@ load_FileB (FileB* f)
 
     if (good)
     {
-        char* s = (char*) &xf->buf.s[xf->off];
+        char* s = cstr_XFileB (xf);
         xf->off = xf->buf.sz-1;
         return s;
     }
@@ -281,6 +271,15 @@ load_chunk_FileB (FileB* f)
     return (n != 0);
 }
 
+    bool
+load_chunk_XFileB (XFileB* xf)
+{
+    uint sz = xf->buf.sz;
+    if (xf->op)
+        xf->op (xf, FileB_LoadChunk, 0);
+    return (sz < xf->buf.sz);
+}
+
     void
 flushx_FileB (FileB* fb)
 {
@@ -304,116 +303,144 @@ flushx_FileB (FileB* fb)
     }
     else if (nullt_FileB (fb))
     {
+        Claim(0);
+            /* TODO - When does this even happen?*/
         buf->s[0] = 0;
         buf->sz = 1;
     }
     f->off = 0;
 }
 
-    char*
-getline_FileB (FileB* fb)
+    void
+flush_XFileB (XFileB* f)
 {
-    XFileB* const in = &fb->xo;
+    TableT(byte)* buf = &f->buf;
+    Claim2( f->off ,<=, buf->sz );
+
+    if (f->off == 0)  return;
+    buf->sz = buf->sz - f->off;
+    if (buf->sz > 0)
+        memmove (buf->s, &buf->s[f->off], buf->sz);
+    f->off = 0;
+}
+
+    void
+mayflush_XFileB (XFileB* xf)
+{
+    if (xf->flushsz > 0 && xf->off > CeilQuot( xf->buf.sz, 4 ))
+        flush_XFileB (xf);
+}
+
+    char*
+getline_XFileB (XFileB* in)
+{
+    uint ret_off;
     char* s;
 
-    flushx_FileB (fb);
-    s = strchr (cstr_FileB (fb), '\n');
+    mayflush_XFileB (in);
+    ret_off = in->off;
+    s = strchr (cstr_XFileB (in), '\n');
 
     while (!s)
     {
-        uint off = in->buf.sz - 1;
-        if (!load_chunk_FileB (fb))  break;
-        s = strchr ((char*) &in->buf.s[off], '\n');
+        in->off = in->buf.sz - 1;
+        if (!load_chunk_XFileB (in))  break;
+        s = strchr (cstr_XFileB (in), '\n');
     }
 
     if (s)
     {
         s[0] = '\0';
-        if (s != (char*) in->buf.s && s[-1] == '\r')
-            s[-1] = '\0';
-        s = &s[1];
         in->off = IdxElt( in->buf.s, s );
+        if (in->off > ret_off && s[-1] == '\r')
+            s[-1] = '\0';
+        if (in->off + 1 < in->buf.sz)
+            in->off += 1;
     }
     else
     {
         in->off = in->buf.sz - 1;
     }
 
-    return (in->buf.sz == 1) ? 0 : (char*) in->buf.s;
+    return (ret_off + 1 == in->buf.sz) ? 0 : (char*) &in->buf.s[ret_off];
 }
 
     char*
-getlined_FileB (FileB* in_fb, const char* delim)
+getlined_XFileB (XFileB* xf, const char* delim)
 {
-    XFileB* const in = &in_fb->xo;
+    uint ret_off;
     char* s;
     uint delim_sz = strlen (delim);
 
-    flushx_FileB (in_fb);
-    s = strstr ((char*) in->buf.s, delim);
+    mayflush_XFileB (xf);
+    ret_off = xf->off;
+    Claim2( ret_off ,<, xf->buf.sz );
+    s = strstr (cstr_XFileB (xf), delim);
 
     while (!s)
     {
-        uint off = in->buf.sz - 1;
-        if (!load_chunk_FileB (in_fb))  break;
+            /* We only need to re-check the last /delim_sz-1/ chars,
+             * which start at /buf.sz-delim_sz/ due to the NUL byte.
+             */
+        if (xf->off + delim_sz < xf->buf.sz)
+            xf->off = xf->buf.sz - delim_sz;
 
-        s = (char*) in->buf.s;
-        if (off >= delim_sz)
-            s = &s[1+off-delim_sz];
-        s = strstr (s, delim);
+        if (!load_chunk_XFileB (xf))  break;
+
+        s = strstr (cstr_XFileB (xf), delim);
     }
 
     if (s)
     {
         s[0] = '\0';
         s = &s[delim_sz];
-        in->off = IdxElt( in->buf.s, s );
+        xf->off = IdxElt( xf->buf.s, s );
+        Claim2( xf->off ,<, xf->buf.sz );
     }
     else
     {
-        in->off = in->buf.sz - 1;
+        xf->off = xf->buf.sz - 1;
     }
 
-    return (in->buf.sz == 1) ? 0 : (char*) in->buf.s;
+    return (ret_off + 1 == xf->buf.sz) ? 0 : (char*) &xf->buf.s[ret_off];
 }
 
     void
-skipds_FileB (FileB* in, const char* delims)
+skipds_XFileB (XFileB* xf, const char* delims)
 {
-    XFileB* const xf = &in->xo;
     char* s;
     if (!delims)  delims = WhiteSpaceChars;
-    flushx_FileB (in);
-
-    s = cstr_FileB (in);
+    mayflush_XFileB (xf);
+    s = (char*) &xf->buf.s[xf->off];
     s = &s[strspn (s, delims)];
 
     while (!s[0])
     {
-        flushx_FileB (in);
-        if (!load_chunk_FileB (in))  break;
-        s = cstr_FileB (in);
+        mayflush_XFileB (xf);
+        if (!load_chunk_XFileB (xf))  break;
+        s = (char*) &xf->buf.s[xf->off];
         s = &s[strspn (s, delims)];
     }
-    xf->off = IdxElt( xf->buf.s, s );
-    flushx_FileB (in);
+    xf->off = IdxEltTable( xf->buf, s );
+    mayflush_XFileB (xf);
 }
 
     char*
-nextds_FileB (FileB* in_fb, char* ret_match, const char* delims)
+nextds_XFileB (XFileB* in, char* ret_match, const char* delims)
 {
-    XFileB* const in = &in_fb->xo;
+    uint ret_off;
     char* s;
     if (!delims)  delims = WhiteSpaceChars;
-    flushx_FileB (in_fb);
-
-    s = cstr_FileB (in_fb);
+    mayflush_XFileB (in);
+    ret_off = in->off;
+    Claim2( ret_off ,<, in->buf.sz );
+    s = (char*) &in->buf.s[ret_off];
     s = &s[strcspn (s, delims)];
 
     while (!s[0])
     {
         uint off = in->buf.sz - 1;
-        if (!load_chunk_FileB (in_fb))  break;
+        if (!load_chunk_XFileB (in))  break;
         s = (char*) &in->buf.s[off];
         s = &s[strcspn (s, delims)];
     }
@@ -422,22 +449,23 @@ nextds_FileB (FileB* in_fb, char* ret_match, const char* delims)
     if (s[0])
     {
         s[0] = 0;
-        ++ s;
         in->off = IdxElt( in->buf.s, s );
+        if (in->off + 1 < in->buf.sz)
+            in->off += 1;
     }
     else
     {
         in->off = in->buf.sz - 1;
     }
 
-    return (in->buf.sz == 1) ? 0 : (char*) in->buf.s;
+    return (ret_off + 1 == in->buf.sz) ? 0 : (char*) &in->buf.s[ret_off];
 }
 
     char*
-nextok_FileB (FileB* in, char* ret_match, const char* delims)
+nextok_XFileB (XFileB* xf, char* ret_match, const char* delims)
 {
-    skipds_FileB (in, delims);
-    return nextds_FileB (in, ret_match, delims);
+    skipds_XFileB (xf, delims);
+    return nextds_XFileB (xf, ret_match, delims);
 }
 
     /** Inject content from a file /src/
@@ -543,7 +571,7 @@ flusho_FileB (FileB* f)
     bool
 dump_chunk_FileB (FileB* f)
 {
-    if (f->xo.off < chunksz_FileB (f))  return true;
+    if (f->xo.off < f->xo.flushsz)  return true;
         /* In the future, we may not want to flush all the time!*/
         /* Also, we may not wish to flush the whole buffer.*/
     return flusho_FileB (f);
@@ -562,7 +590,7 @@ flush_OFileB (OFileB* of)
     void
 mayflush_OFileB (OFileB* of)
 {
-    if (of->chunksz > 0 && of->off > of->chunksz)
+    if (of->flushsz > 0 && of->off > of->flushsz)
         flush_OFileB (of);
 }
 
@@ -592,7 +620,7 @@ op_FileB (XOFileB* xo, FileB_Op op, FileBOpArg* arg)
 dump_uint_OFileB (OFileB* f, uint x)
 {
     SizeUpTable( f->buf, f->off + 50 );
-    f->off += sprintf ((char*)&f->buf.s[f->off], "%u", x);
+    f->off += sprintf (cstr_OFileB (f), "%u", x);
     mayflush_OFileB (f);
 }
 
@@ -600,7 +628,7 @@ dump_uint_OFileB (OFileB* f, uint x)
 dump_real_OFileB (OFileB* f, real x)
 {
     SizeUpTable( f->buf, f->off + 50 );
-    f->off += sprintf ((char*)&f->buf.s[f->off], "%.16e", x);
+    f->off += sprintf (cstr_OFileB (f), "%.16e", x);
     mayflush_OFileB (f);
 }
 
@@ -734,10 +762,10 @@ load_uint_FileB (FileB* f, uint* x)
     if (!f->good)  return false;
     if (nullt_FileB (f))
     {
-        skipds_FileB (f, 0);
+        skipds_XFileB (xf, 0);
         if (xf->buf.sz - xf->off < 50)
             load_chunk_FileB (f);
-        s = load_uint_cstr (x, (char*)&xf->buf.s[xf->off]);
+        s = load_uint_cstr (x, cstr_XFileB (xf));
         f->good = !!s;
         if (!f->good)  return false;
         xf->off = IdxElt( xf->buf.s, s );
@@ -756,15 +784,12 @@ load_uint_FileB (FileB* f, uint* x)
 }
 
     bool
-load_real_FileB (FileB* f, real* x)
+load_real_XFileB (XFileB* xf, real* x)
 {
-    XFileB* const xf = &f->xo;
     const char* s;
-    if (!f->good)  return false;
         /* if (f->buf.sz - f->off < 50) load_chunk_FileB (f); */
     s = load_real_cstr (x, (char*)&xf->buf.s[xf->off]);
-    f->good = !!s;
-    if (!f->good)  return false;
+    if (!s)  return false;
     xf->off = IdxElt( xf->buf.s, s );
     return true;
 }
