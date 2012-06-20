@@ -27,6 +27,7 @@ enum BitTable_Op {
          */
     BitTable_NIL,  /* 0000 */
     BitTable_AND,  /* 0001 */
+    BitTable_IDEN, /* 0101 */
     BitTable_XOR,  /* 0110 */
     BitTable_OR,   /* 0111 */
     BitTable_NOR,  /* 1000 */
@@ -171,6 +172,10 @@ op_BitTable (BitTable a, const BitTable b, BitTable_Op op)
             break;
         case BitTable_AND:
             UFor( i, n )  a.s[i] = a.s[i] & b.s[i];
+            break;
+        case BitTable_IDEN:
+            UFor( i, n )  a.s[i] = b.s[i];
+                /* if (a.s != b.s) memcpy (a.s, b.s, n * sizeof (BitTableEl)); */
             break;
         case BitTable_XOR:
             UFor( i, n )  a.s[i] = a.s[i] ^ b.s[i];

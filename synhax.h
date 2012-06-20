@@ -29,7 +29,8 @@
 
 #define BInit() {
 #define BLose() }
-#define BLoop( i, bel )  uint i; for (i = 0; i < (bel); ++i) BInit()
+#define BLoopT( T, i, bel )  T i; for (i = 0; i < (bel); ++i) BInit()
+#define BLoop( i, bel )  BLoopT( uint, i, bel )
 
 #define Claim( x )  assert(x)
 #define Claim2( a ,op, b )  assert((a) op (b))
