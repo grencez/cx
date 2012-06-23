@@ -262,5 +262,31 @@ pack_Table (Table* t)
     XferCastTable( t, PackTable_t ); \
 } while (0)
 
+qual_inline
+    void
+copy_Table (Table* a, const Table* b)
+{
+    if (a->elsz != b->elsz)
+    {
+        a->sz = a->sz * a->elsz / b->elsz;
+        a->elsz = b->elsz;
+    }
+
+    if (a->sz >= b->sz)
+        a->sz = b->sz;
+    else
+        sizeup_Table (a, b->sz);
+
+    memcpy (a->s, b->s, a->sz * a->elsz);
+}
+#define CopyTable( a, b )  do \
+{ \
+    Table CopyTable_a = MakeCastTable( a ); \
+    Table CopyTable_b = MakeCastTable( b ); \
+    copy_Table (&CopyTable_a, &CopyTable_b); \
+    XferCastTable( a, CopyTable_a ); \
+} while (0)
+
+
 #endif
 
