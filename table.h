@@ -222,16 +222,18 @@ size_Table (Table* t, TableSz capac)
     /** Never downsize.**/
 qual_inline
     void
-sizeup_Table (Table* t, TableSz capac)
+ensize_Table (Table* t, TableSz capac)
 {
     if (t->sz < capac)
         grow_Table (t, capac - t->sz);
+    else
+        t->sz = capac;
 }
-#define SizeUpTable( t, capac )  do \
+#define EnsizeTable( t, capac )  do \
 { \
-    Table SizeUpTable_t = MakeCastTable( t ); \
-    sizeup_Table (&SizeUpTable_t, capac); \
-    XferCastTable( t, SizeUpTable_t ); \
+    Table EnsizeTable_t = MakeCastTable( t ); \
+    ensize_Table (&EnsizeTable_t, capac); \
+    XferCastTable( t, EnsizeTable_t ); \
 } while (0)
 
 
@@ -272,11 +274,7 @@ copy_Table (Table* a, const Table* b)
         a->elsz = b->elsz;
     }
 
-    if (a->sz >= b->sz)
-        a->sz = b->sz;
-    else
-        sizeup_Table (a, b->sz);
-
+    ensize_Table (a, b->sz);
     memcpy (a->s, b->s, a->sz * a->elsz);
 }
 #define CopyTable( a, b )  do \

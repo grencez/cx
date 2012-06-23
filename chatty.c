@@ -129,7 +129,7 @@ int main ()
 
         close (io[0]);
 
-        SizeUpTable( msg, 1024 );
+        EnsizeTable( msg, 1024 );
 
         sock = socket (addr->ai_family,
                        addr->ai_socktype,

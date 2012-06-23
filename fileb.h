@@ -73,11 +73,11 @@ struct XOFileB
     void (* op) (XOFileB*, FileB_Op, FileBOpArg*);
 };
 
-static char XOFileB_empty[1] = { 0 };
 qual_inline
     XOFileB
 dflt_XOFileB ()
 {
+    static char XOFileB_empty[1] = { 0 };
     XOFileB f;
     InitTable( f.buf );
     f.buf.s = (byte*) XOFileB_empty;
@@ -201,13 +201,17 @@ set_mayflush_XFileB (XFileB* xf, bool may)
 
 qual_inline
     XFileB
-olay_XFileB (XFileB* xf, uint off)
+olay_XOFileB (XOFileB* xf, uint off)
 {
     XFileB olay = dflt_XFileB ();
     olay.buf.s = &xf->buf.s[off];
     olay.buf.sz = xf->off - off;
     return olay;
 }
+qual_inline
+XFileB olay_XFileB (OFileB* xf, uint off) { return olay_XOFileB (xf, off); }
+qual_inline
+XFileB olay_OFileB (OFileB* of, uint off) { return olay_XOFileB (of, off); }
 
 qual_inline
     bool

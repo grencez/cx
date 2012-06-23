@@ -174,8 +174,7 @@ op_BitTable (BitTable a, const BitTable b, BitTable_Op op)
             UFor( i, n )  a.s[i] = a.s[i] & b.s[i];
             break;
         case BitTable_IDEN:
-            UFor( i, n )  a.s[i] = b.s[i];
-                /* if (a.s != b.s) memcpy (a.s, b.s, n * sizeof (BitTableEl)); */
+            if (a.s != b.s)  memcpy (a.s, b.s, n * sizeof (BitTableEl));
             break;
         case BitTable_XOR:
             UFor( i, n )  a.s[i] = a.s[i] ^ b.s[i];

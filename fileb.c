@@ -88,7 +88,7 @@ ensure_FileB (FileB* f, TableSzT(byte) n)
     if (f->sink)
     {
         dump_chunk_FileB (f);
-        SizeUpTable( xof->buf, xof->off+n );
+        EnsizeTable( xof->buf, xof->off+n );
         return &xof->buf.s[xof->off];
     }
 
@@ -582,8 +582,20 @@ flush_OFileB (OFileB* of)
 {
         /* In the future, we may not want to flush all the time!*/
         /* Also, we may not wish to flush the whole buffer.*/
-    Claim( of->op );
-    of->op (of, FileB_FlushO, 0);
+    if (of->op)
+    {
+        of->op (of, FileB_FlushO, 0);
+    }
+    else
+    {
+        Claim2( of->flushsz ,==, 0 );
+        if (of->off > 0)
+        {
+            of->off = 0;
+            of->buf.sz = 1;
+            of->buf.s[0] = 0;
+        }
+    }
 }
 
 
@@ -619,7 +631,7 @@ op_FileB (XOFileB* xo, FileB_Op op, FileBOpArg* arg)
     void
 dump_uint_OFileB (OFileB* f, uint x)
 {
-    SizeUpTable( f->buf, f->off + 50 );
+    EnsizeTable( f->buf, f->off + 50 );
     f->off += sprintf (cstr_OFileB (f), "%u", x);
     mayflush_OFileB (f);
 }
@@ -627,7 +639,7 @@ dump_uint_OFileB (OFileB* f, uint x)
     void
 dump_real_OFileB (OFileB* f, real x)
 {
-    SizeUpTable( f->buf, f->off + 50 );
+    EnsizeTable( f->buf, f->off + 50 );
     f->off += sprintf (cstr_OFileB (f), "%.16e", x);
     mayflush_OFileB (f);
 }
@@ -635,7 +647,7 @@ dump_real_OFileB (OFileB* f, real x)
     void
 dump_char_OFileB (OFileB* f, char c)
 {
-    SizeUpTable( f->buf, f->off + 2 );
+    EnsizeTable( f->buf, f->off + 2 );
     f->buf.s[f->off] = c;
     f->buf.s[++f->off] = 0;
     mayflush_OFileB (f);
@@ -657,7 +669,7 @@ vprintf_OFileB (OFileB* f, const char* fmt, va_list args)
     uint sz = 2048;  /* Not good :( */
     int iret = 0;
 
-    SizeUpTable( f->buf, f->off + sz );
+    EnsizeTable( f->buf, f->off + sz );
     iret = vsprintf ((char*) &f->buf.s[f->off], fmt, args);
     Claim2( iret ,>=, 0 );
     Claim2( (uint) iret ,<=, sz );
@@ -689,7 +701,7 @@ dumpn_raw_byte_FileB (FileB* f, const byte* a, TableSzT(byte) n)
     }
     else if (ntotal <= 2*chunksz_FileB (f))
     {
-        SizeUpTable( of->buf, 2*chunksz_FileB (f) );
+        EnsizeTable( of->buf, 2*chunksz_FileB (f) );
         memcpy (&of->buf.s[of->off], a, n);
         of->off = ntotal;
     }
