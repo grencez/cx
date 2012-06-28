@@ -182,10 +182,14 @@ dumpn_char_OFileB (OFileB* of, const char* a, TableSzT(byte) n);
 char*
 load_uint_cstr (uint* ret, const char* in);
 char*
+load_int_cstr (int* ret, const char* in);
+char*
 load_real_cstr (real* ret, const char* in);
 
 bool
 load_uint_FileB (FileB* f, uint* x);
+bool
+load_int_XFileB (XFileB* xf, int* x);
 bool
 load_real_XFileB (XFileB* xf, real* x);
 

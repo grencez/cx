@@ -752,6 +752,22 @@ load_uint_cstr (uint* ret, const char* in)
 }
 
     char*
+load_int_cstr (int* ret, const char* in)
+{
+    unsigned long v;
+    char* out = 0;
+
+    assert (ret);
+    assert (in);
+    v = strtol (in, &out, 10);
+
+    if (v > Max_uint)  out = 0;
+    if (out == in)  out = 0;
+    if (out)  *ret = (uint) v;
+    return out;
+}
+
+    char*
 load_real_cstr (real* ret, const char* in)
 {
     double v;
@@ -796,10 +812,21 @@ load_uint_FileB (FileB* f, uint* x)
 }
 
     bool
+load_int_XFileB (XFileB* xf, int* x)
+{
+    const char* s;
+    skipds_XFileB (xf, WhiteSpaceChars);
+    s = load_int_cstr (x, (char*)&xf->buf.s[xf->off]);
+    if (!s)  return false;
+    xf->off = IdxElt( xf->buf.s, s );
+    return true;
+}
+
+    bool
 load_real_XFileB (XFileB* xf, real* x)
 {
     const char* s;
-        /* if (f->buf.sz - f->off < 50) load_chunk_FileB (f); */
+    skipds_XFileB (xf, WhiteSpaceChars);
     s = load_real_cstr (x, (char*)&xf->buf.s[xf->off]);
     if (!s)  return false;
     xf->off = IdxElt( xf->buf.s, s );

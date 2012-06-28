@@ -23,6 +23,8 @@
 #define CeilQuot( a, b ) \
     (((a) + (b) - 1) / (b))
 
+#define DomMax( a )  (~(a) | (a))
+
 #define BSfx( a, op, b, sfx )  (a)sfx op (b)sfx
 
 #define UFor( i, bel )  for (i = 0; i < (bel); ++i)
