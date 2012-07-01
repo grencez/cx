@@ -462,6 +462,25 @@ nextds_XFileB (XFileB* in, char* ret_match, const char* delims)
 }
 
     char*
+tods_XFileB (XFileB* xf, const char* delims)
+{
+    char c;
+    ujint dsoff;
+    ujint off;
+    off = xf->off;
+    nextds_XFileB (xf, &c, delims);
+
+    dsoff = xf->off;
+    if (xf->buf.s[xf->off])
+    {
+        xf->buf.s[xf->off-1] = c;
+        -- dsoff;
+    }
+    xf->off = off;
+    return (char*) &xf->buf.s[dsoff];
+}
+
+    char*
 nextok_XFileB (XFileB* xf, char* ret_match, const char* delims)
 {
     skipds_XFileB (xf, delims);
@@ -816,6 +835,7 @@ load_int_XFileB (XFileB* xf, int* x)
 {
     const char* s;
     skipds_XFileB (xf, WhiteSpaceChars);
+    tods_XFileB (xf, WhiteSpaceChars);
     s = load_int_cstr (x, (char*)&xf->buf.s[xf->off]);
     if (!s)  return false;
     xf->off = IdxElt( xf->buf.s, s );
@@ -827,6 +847,7 @@ load_real_XFileB (XFileB* xf, real* x)
 {
     const char* s;
     skipds_XFileB (xf, WhiteSpaceChars);
+    tods_XFileB (xf, WhiteSpaceChars);
     s = load_real_cstr (x, (char*)&xf->buf.s[xf->off]);
     if (!s)  return false;
     xf->off = IdxElt( xf->buf.s, s );

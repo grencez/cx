@@ -149,6 +149,8 @@ skipds_XFileB (XFileB* xf, const char* delims);
 char*
 nextds_XFileB (XFileB* in, char* ret_match, const char* delims);
 char*
+tods_XFileB (XFileB* xf, const char* delims);
+char*
 nextok_XFileB (XFileB* xf, char* ret_match, const char* delims);
 void
 inject_FileB (FileB* in, FileB* src, const char* delim);
