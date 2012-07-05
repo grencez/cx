@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-typedef size_t TableSz;
+typedef ujint TableSz;
 typedef byte TableLgSz;
 typedef unsigned short TableElSz;
 
@@ -32,6 +32,14 @@ struct Table
         TableLgSz alloc_lgsz; \
     }
 
+#define DeclTableT_byte
+DeclTableT( byte, byte );
+#define DeclTableT_char
+DeclTableT( char, char );
+#define DeclTableT_uint
+DeclTableT( uint, uint );
+#define DeclTableT_ujint
+DeclTableT( ujint, ujint );
 
 qual_inline
     Table

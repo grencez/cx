@@ -7,24 +7,12 @@
 #include <stdarg.h>
 #include <stdio.h>
 
-#ifndef DeclTableT_byte
-#define DeclTableT_byte
-DeclTableT( byte, byte );
-#endif
-
-#ifndef DeclTableT_char
-#define DeclTableT_char
-DeclTableT( char, char );
-#endif
-
-#ifndef FileB
-#define FileB FileB
 typedef struct FileB FileB;
-#endif
 typedef struct XOFileB XOFileB;
 typedef XOFileB XFileB;
 typedef XOFileB OFileB;
 typedef struct FileBOpArg FileBOpArg;
+typedef TableT(char) TabStr;
 
 enum FileB_Format {
     FileB_Ascii,
@@ -191,6 +179,8 @@ load_real_cstr (real* ret, const char* in);
 bool
 load_uint_FileB (FileB* f, uint* x);
 bool
+load_char_XFileB (XFileB* xf, char* c);
+bool
 load_int_XFileB (XFileB* xf, int* x);
 bool
 load_real_XFileB (XFileB* xf, real* x);
@@ -264,6 +254,19 @@ dup_cstr (const char* s)
     return DupliT( char, s, n );
 }
 
+qual_inline
+    void
+app_TabStr (TabStr* t, const char* s)
+{
+    ujint off;
+    ujint n = strlen (s);
+    if (t->sz > 0)  -- t->sz;
+    off = t->sz;
+
+    GrowTable( *t, n+1 );
+
+    RepliT( char, &t->s[off], s, n+1 );
+}
 
 #ifdef IncludeC
 #include "fileb.c"

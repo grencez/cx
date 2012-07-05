@@ -6,11 +6,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifndef DeclTableT_byte
-#define DeclTableT_byte
-DeclTableT( byte, byte );
-#endif
-
 static bool
 load_chunk_FileB (FileB* f);
 static bool
@@ -827,6 +822,19 @@ load_uint_FileB (FileB* f, uint* x)
         if (!f->good)  return false;
         *x = y.x;
     }
+    return true;
+}
+
+    bool
+load_char_XFileB (XFileB* xf, char* c)
+{
+    if (xf->off + 1 == xf->buf.sz)
+    {
+        if (!load_chunk_XFileB (xf))
+            return false;
+    }
+    *c = *cstr_XFileB (xf);
+    xf->off += sizeof(char);
     return true;
 }
 

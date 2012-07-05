@@ -4,55 +4,79 @@
 #include "sys-cx.h"
 #include "table.h"
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
-
-#ifndef TableT_uint
-#define TableT_uint TableT_uint
-DeclTableT( uint, uint );
-#endif
 
 typedef struct ASTree ASTree;
 typedef struct AST AST;
 
 typedef
 enum SyntaxKind
-{   ConsCell
-    ,Function
-    ,Char
-    ,Int
-    ,Float
-    ,Double
-    ,String
-    ,Plus
-    ,Minus
+{   Syntax_Root
+    ,Syntax_Cons
+    ,Syntax_Plain
+    ,Syntax_LineComment
+    ,Syntax_BlockComment
+    ,Syntax_Directive
+    ,Syntax_Char
+    ,Syntax_String
+    ,Syntax_Parens
+    ,Syntax_Braces
+    ,Syntax_Brackets
+    ,Syntax_Stmt
     ,NSyntaxKinds
 } SyntaxKind;
-
-struct ASTree
-{
-    BSTree bst;
-    BSTNode sentinel;
-};
 
 struct AST
 {
     SyntaxKind kind;
     BSTNode bst;
-    union AST_union {
-        char a_char;
-        int a_int;
-        float a_float;
-        double a_double;
-        char* a_string;
-        void* a_other;
-    } dat;
+    ujint line;
+    TabStr txt;
 };
+
+struct ASTree
+{
+    BSTree bst;
+    BSTNode sentinel;
+    AST* root;
+};
+
+
+    AST
+dflt_AST ()
+{
+    AST ast;
+    ast.kind = NSyntaxKinds;
+    ast.bst.split[0] = 0;
+    ast.bst.split[1] = 0;
+    ast.line = 0;
+    InitTable( ast.txt );
+    return ast;
+}
+
+    AST*
+make_AST ()
+{
+    AST* ast = AllocT( AST, 1 );
+    *ast = dflt_AST ();
+    return ast;
+}
 
     AST*
 side_of_AST (AST* ast, Bit side)
 {
     BSTNode* bst = ast->bst.split[side];
+    if (!bst)  return 0;
+    return CastUp( AST, bst, bst );
+}
+
+    AST*
+joint_of_AST (AST* ast)
+{
+    BSTNode* bst = ast->bst.joint;
+    if (!bst->joint)  return 0;
     return CastUp( AST, bst, bst );
 }
 
@@ -64,37 +88,22 @@ set_side_AST (AST* a, AST* b, Bit side)
 }
 
     void
-init_ASTree (ASTree* ast)
+init_ASTree (ASTree* t)
 {
-    init_BSTree (&ast->bst, &ast->sentinel, NULL);
+    init_BSTree (&t->bst, &t->sentinel, NULL);
+    t->root = make_AST ();
+    t->root->kind = Syntax_Root;
+    root_for_BSTree (&t->bst, &t->root->bst);
 }
 
-    void
-init_AST (AST* ast)
-{
-    ast->kind = NSyntaxKinds;
-    ast->bst.split[0] = 0;
-    ast->bst.split[1] = 0;
-    ast->dat.a_other = 0;
-}
 
 static
     void
 lose_AST (BSTNode* bst)
 {
     AST* ast = CastUp( AST, bst, bst );
-    switch (ast->kind)
-    {
-    case Char:
-    case Int:
-    case Float:
-    case Double:
-        break;
-    default:
-        if (ast->dat.a_other)
-            free (ast->dat.a_other);
-        break;
-    }
+    LoseTable( ast->txt );
+    free (ast);
 }
 
     void
@@ -104,97 +113,315 @@ lose_ASTree (ASTree* ast)
 }
 
     void
-dump_AST (OFileB* of, const ASTree* t, const BSTNode* bst)
+dump_AST (OFileB* of, AST* ast)
 {
-    char txt[100];
-    uint txtsz = 0;
-    const AST* ast = CastUp( AST, bst, bst );
-
+    if (!ast)  return;
     switch (ast->kind)
     {
-    case Char:
-            /* TODO: Special characters.*/
-        txtsz = sprintf (txt, "'%c'", ast->dat.a_char);
+    case Syntax_Root:
+    case Syntax_Cons:
+        do
+        {
+            dump_AST (of, side_of_AST (ast, 0));
+            ast = side_of_AST (ast, 1);
+        } while (ast);
         break;
-    case Int:
-        txtsz = sprintf (txt, "%d", ast->dat.a_int);
+    case Syntax_Plain:
+        Claim( ast->txt.sz > 0 );
+        dump_cstr_OFileB (of, ast->txt.s);
         break;
-    case Float:
-        txtsz = sprintf (txt, "%ff", ast->dat.a_float);
+    case Syntax_Char:
+        dump_char_OFileB (of, '\'');
+        Claim( ast->txt.sz > 0 );
+        dump_cstr_OFileB (of, ast->txt.s);
+        dump_char_OFileB (of, '\'');
         break;
-    case Double:
-        txtsz = sprintf (txt, "%f", ast->dat.a_double);
+    case Syntax_String:
+        dump_char_OFileB (of, '"');
+        Claim( ast->txt.sz > 0 );
+        dump_cstr_OFileB (of, ast->txt.s);
+        dump_char_OFileB (of, '"');
         break;
-    case Plus:
+    case Syntax_Parens:
         dump_char_OFileB (of, '(');
-        dump_AST (of, t, bst->split[0]);
-        dump_char_OFileB (of, '+');
-        dump_AST (of, t, bst->split[1]);
+        dump_AST (of, side_of_AST (ast, 0));
+        dump_AST (of, side_of_AST (ast, 1));
         dump_char_OFileB (of, ')');
         break;
-    case Minus:
-        dump_char_OFileB (of, '(');
-        dump_AST (of, t, bst->split[0]);
-        dump_char_OFileB (of, '-');
-        dump_AST (of, t, bst->split[1]);
-        dump_char_OFileB (of, ')');
+    case Syntax_Braces:
+        dump_char_OFileB (of, '{');
+        dump_AST (of, side_of_AST (ast, 0));
+        dump_AST (of, side_of_AST (ast, 1));
+        dump_char_OFileB (of, '}');
+        break;
+    case Syntax_Brackets:
+        dump_char_OFileB (of, '[');
+        dump_AST (of, side_of_AST (ast, 0));
+        dump_AST (of, side_of_AST (ast, 1));
+        dump_char_OFileB (of, ']');
+        break;
+    case Syntax_Stmt:
+        dump_AST (of, side_of_AST (ast, 0));
+        dump_AST (of, side_of_AST (ast, 1));
+        dump_char_OFileB (of, ';');
+        break;
+    case Syntax_LineComment:
+        dump_cstr_OFileB (of, "//");
+        dump_cstr_OFileB (of, ast->txt.s);
+        dump_char_OFileB (of, '\n');
+        break;
+    case Syntax_BlockComment:
+        dump_cstr_OFileB (of, "/*");
+        dump_cstr_OFileB (of, ast->txt.s);
+        dump_cstr_OFileB (of, "*/");
+        break;
+    case Syntax_Directive:
+        dump_char_OFileB (of, '#');
+        dump_cstr_OFileB (of, ast->txt.s);
+        dump_char_OFileB (of, '\n');
         break;
     default:
-        fputs ("No Good!\n", stderr);
+        DBog0( "No Good!" );
         break;
     };
-    if (txtsz > 0)
-        dumpn_char_OFileB (of, txt, txtsz);
 }
 
     void
 dump_ASTree (OFileB* of, ASTree* t)
 {
-    dump_AST (of, t, root_of_BSTree (&t->bst));
+    dump_AST (of, t->root);
+}
+
+    AST*
+app_AST (AST* ast)
+{
+    AST* b;
+    if (ast->bst.split[0])
+    {
+        Claim( !ast->bst.split[1] );
+        b = make_AST ();
+        b->kind = Syntax_Cons;
+        join_BSTNode (&ast->bst, &b->bst, 1);
+        ast = b;
+    }
+
+    b = make_AST ();
+    join_BSTNode (&ast->bst, &b->bst, 0);
+    return b;
+}
+
+    bool
+parse_escaped (XFileB* xf, TabStr* t, char delim)
+{
+    char delims[2];
+    char* s;
+
+    delims[0] = delim;
+    delims[1] = 0;
+
+    for (s = nextds_XFileB (xf, 0, delims);
+         s;
+         s = nextds_XFileB (xf, 0, delims))
+    {
+        bool escaped = false;
+        ujint off;
+
+        app_TabStr (t, s);
+        off = t->sz-1;
+
+        while (off > 0 && t->s[off-1] == '\\')
+        {
+            escaped = !escaped;
+            --off;
+        }
+        if (escaped)
+            app_TabStr (t, delims);
+        else
+            return true;
+    }
+    return false;
+}
+
+    void
+load_ASTree (XFileB* xf, ASTree* t)
+{
+    AST* ast = t->root;
+    char match = 0;
+    char* s;
+    DeclTable( char, txtq );
+
+        /* First parse:
+         * - line/block comment
+         * - directive (perhaps this should happen later)
+         * - char, string
+         * - parentheses, braces, brackets
+         * - semicolon
+         */
+    for (s = nextds_XFileB (xf, &match, "'\"(){}[];/#");
+         s;
+         s = nextds_XFileB (xf, &match, "'\"(){}[];/#"))
+    {
+        if (s[0])
+            app_TabStr (&txtq, s);
+
+        if (match == '/')
+        {
+            bool comment = false;
+            char c = 0;
+            if (load_char_XFileB (xf, &c))
+            {
+                if (c == '/')  comment = true;
+                else if (c == '*')  comment = true;
+                else  -- xf->off;
+            }
+
+            if (comment)
+            {
+                match = c;
+            }
+            else
+            {
+                xf->buf.s[xf->off-1] = (byte) '/';
+                app_TabStr (&txtq, "/");
+                continue;
+            }
+        }
+
+        if (txtq.sz > 0)
+        {
+            ast = app_AST (ast);
+            ast->kind = Syntax_Plain;
+            CopyTable( ast->txt, txtq );
+            txtq.sz = 0;
+            ast = joint_of_AST (ast);
+        }
+
+        switch (match)
+        {
+        case '\0':
+                /* End of file has been reached.*/
+            break;
+        case '\'':
+            ast = app_AST (ast);
+            ast->kind = Syntax_Char;
+            if (!parse_escaped (xf, &ast->txt, '\''))
+                DBog0( "Gotta problem with single quotes!" );
+            ast = joint_of_AST (ast);
+            break;
+        case '"':
+            ast = app_AST (ast);
+            ast->kind = Syntax_String;
+            if (!parse_escaped (xf, &ast->txt, '"'))
+                DBog0( "Gotta problem with double quotes!" );
+            ast = joint_of_AST (ast);
+            break;
+        case '(':
+            ast = app_AST (ast);
+            ast->kind = Syntax_Parens;
+            break;
+        case '{':
+            ast = app_AST (ast);
+            ast->kind = Syntax_Braces;
+            break;
+        case '[':
+            ast = app_AST (ast);
+            ast->kind = Syntax_Brackets;
+            break;
+        case ')':
+        case '}':
+        case ']':
+            while (ast)
+            {
+                if ((match == ')' && ast->kind == Syntax_Parens) ||
+                    (match == '}' && ast->kind == Syntax_Braces) ||
+                    (match == ']' && ast->kind == Syntax_Brackets))
+                {
+                    ast = joint_of_AST (ast);
+                    break;
+                }
+                ast = joint_of_AST (ast);
+            }
+            if (!ast)
+            {
+                DBog1( "Unmatched closing '%c'.", match );
+                return;
+            }
+            break;
+        case ';':
+                /* TODO: Insert me at the right spot
+                 * and as the right thing!
+                 */
+            if (1)
+            {
+                ast = app_AST (ast);
+                ast->kind = Syntax_Plain;
+                app_TabStr (&ast->txt, ";");
+                ast = joint_of_AST (ast);
+            }
+            else
+            {
+                AST* b = ast;
+                while (ast->kind == Syntax_Cons)
+                {
+                    side_of_AST (ast, 0);
+                    b = ast;
+                    ast = joint_of_AST (ast);
+                }
+            }
+            break;
+        case '/':
+            ast = app_AST (ast);
+            ast->kind = Syntax_LineComment;
+            app_TabStr (&ast->txt, getlined_XFileB (xf, "\n"));
+            ast = joint_of_AST (ast);
+            break;
+        case '*':
+            ast = app_AST (ast);
+            ast->kind = Syntax_BlockComment;
+            app_TabStr (&ast->txt, getlined_XFileB (xf, "*/"));
+            ast = joint_of_AST (ast);
+            break;
+        case '#':
+            ast = app_AST (ast);
+            ast->kind = Syntax_Directive;
+            app_TabStr (&ast->txt, getlined_XFileB (xf, "\n"));
+            ast = joint_of_AST (ast);
+            break;
+        }
+    }
+    while (ast)
+    {
+        switch (ast->kind)
+        {
+        case Syntax_Parens:
+            DBog0( "Unclosed '('." );
+            break;
+        case Syntax_Braces:
+            DBog0( "Unclosed '{'." );
+            break;
+        case Syntax_Brackets:
+            DBog0( "Unclosed '['." );
+            break;
+        default:
+            break;
+        }
+        ast = joint_of_AST (ast);
+    }
+    LoseTable( txtq );
 }
 
 int main (int argc, char** argv)
 {
-    OFileB* of;
-    ASTree tree;
-    ASTree* t = &tree;
-    AST nodes[10];
-    AST* ast = &nodes[0];
+    ASTree t;
+    init_sys_cx ();
     (void) argc;
     (void) argv;
 
-    init_sys_cx ();
+    init_ASTree (&t);
+    load_ASTree (stdin_XFileB (), &t);
+    dump_ASTree (stdout_OFileB (), &t);
 
-    of = stdout_OFileB ();
-
-    init_ASTree (t);
-    init_AST (ast);
-    ast->kind = Plus;
-    root_for_BSTree (&t->bst, &ast->bst);
-
-    init_AST (++ ast);
-    set_side_AST (ast-1, ast, 0);
-    ast->kind = Int;
-    ast->dat.a_int = 1;
-
-    init_AST (++ ast);
-    set_side_AST (ast-2, ast, 1);
-    ast->kind = Minus;
-
-    init_AST (++ ast);
-    set_side_AST (ast-1, ast, 0);
-    ast->kind = Int;
-    ast->dat.a_int = 2;
-
-    init_AST (++ ast);
-    set_side_AST (ast-2, ast, 1);
-    ast->kind = Int;
-    ast->dat.a_int = 3;
-
-    dump_ASTree (of, t);
-    dump_char_OFileB (of, '\n');
-    lose_ASTree (&tree);
-
+    lose_ASTree (&t);
     lose_sys_cx ();
     return 0;
 }
