@@ -25,6 +25,46 @@ enum SyntaxKind
     ,Syntax_Braces
     ,Syntax_Brackets
     ,Syntax_Stmt
+
+    ,Lexical_Add
+    ,Lexical_Inc
+    ,Lexical_Sub
+    ,Lexical_Dec
+    ,Lexical_Mul
+    ,Lexical_Div
+    ,Lexical_Mod
+    ,Lexical_BitAnd
+    ,Lexical_And
+    ,Lexical_BitXor
+    ,Lexical_BitOr
+    ,Lexical_Or
+    ,Lexical_BitNot
+    ,Lexical_Not
+    ,Lexical_Dot
+    ,Lexical_Comma
+    ,Lexical_Question
+    ,Lexical_Colon
+    ,Lexical_GT
+    ,Lexical_PMemb
+    ,Lexical_RShift
+    ,Lexical_LT
+    ,Lexical_LShift
+    ,Lexical_Assign
+    ,Lexical_AddAssign
+    ,Lexical_SubAssign
+    ,Lexical_MulAssign
+    ,Lexical_DivAssign
+    ,Lexical_ModAssign
+    ,Lexical_BitAndAssign
+    ,Lexical_BitXorAssign
+    ,Lexical_BitOrAssign
+    ,Lexical_NotEq
+    ,Lexical_GTEq
+    ,Lexical_RShiftAssign
+    ,Lexical_LTEq
+    ,Lexical_LShiftAssign
+    ,Lexical_Eq
+
     ,NSyntaxKinds
 } SyntaxKind;
 
@@ -180,10 +220,53 @@ dump_AST (OFileB* of, AST* ast)
         dump_cstr_OFileB (of, ast->txt.s);
         dump_char_OFileB (of, '\n');
         break;
+#define LexiCase( s, k )  case k: \
+        dump_cstr_OFileB (of, s); \
+        break;
+
+        LexiCase( "+"  , Lexical_Add );
+        LexiCase( "++" , Lexical_Inc );
+        LexiCase( "-"  , Lexical_Sub );
+        LexiCase( "--" , Lexical_Dec );
+        LexiCase( "*"  , Lexical_Mul );
+        LexiCase( "/"  , Lexical_Div );
+        LexiCase( "%"  , Lexical_Mod );
+        LexiCase( "&"  , Lexical_BitAnd );
+        LexiCase( "&&" , Lexical_And );
+        LexiCase( "^"  , Lexical_BitXor );
+        LexiCase( "|"  , Lexical_BitOr );
+        LexiCase( "||" , Lexical_Or );
+        LexiCase( "~"  , Lexical_BitNot );
+        LexiCase( "!"  , Lexical_Not );
+        LexiCase( "."  , Lexical_Dot );
+        LexiCase( ","  , Lexical_Comma );
+        LexiCase( "?"  , Lexical_Question );
+        LexiCase( ":"  , Lexical_Colon );
+        LexiCase( ">"  , Lexical_GT );
+        LexiCase( "->" , Lexical_PMemb );
+        LexiCase( ">>" , Lexical_RShift );
+        LexiCase( "<"  , Lexical_LT );
+        LexiCase( "<<" , Lexical_LShift );
+        LexiCase( "="  , Lexical_Assign );
+        LexiCase( "+=" , Lexical_AddAssign );
+        LexiCase( "-=" , Lexical_SubAssign );
+        LexiCase( "*=" , Lexical_MulAssign );
+        LexiCase( "/=" , Lexical_DivAssign );
+        LexiCase( "%=" , Lexical_ModAssign );
+        LexiCase( "&=" , Lexical_BitAndAssign );
+        LexiCase( "^=" , Lexical_BitXorAssign );
+        LexiCase( "|=" , Lexical_BitOrAssign );
+        LexiCase( "!=" , Lexical_NotEq );
+        LexiCase( ">=" , Lexical_GTEq );
+        LexiCase( ">>=", Lexical_RShiftAssign );
+        LexiCase( "<=" , Lexical_LTEq );
+        LexiCase( "<<=", Lexical_LShiftAssign );
+        LexiCase( "==" , Lexical_Eq );
+#undef LexiCase
     default:
         DBog0( "No Good!" );
         break;
-    };
+    }
 }
 
     void
@@ -232,7 +315,7 @@ parse_escaped (XFileB* xf, TabStr* t, char delim)
         while (off > 0 && t->s[off-1] == '\\')
         {
             escaped = !escaped;
-            --off;
+            -- off;
         }
         if (escaped)
             app_TabStr (t, delims);
@@ -249,6 +332,7 @@ load_ASTree (XFileB* xf, ASTree* t)
     char match = 0;
     char* s;
     DeclTable( char, txtq );
+    const char delims[] = "'\"(){}[];#+-*/%&^|~!.,?:><=";
 
         /* First parse:
          * - line/block comment
@@ -257,35 +341,13 @@ load_ASTree (XFileB* xf, ASTree* t)
          * - parentheses, braces, brackets
          * - semicolon
          */
-    for (s = nextds_XFileB (xf, &match, "'\"(){}[];/#");
+    for (s = nextds_XFileB (xf, &match, delims);
          s;
-         s = nextds_XFileB (xf, &match, "'\"(){}[];/#"))
+         s = nextds_XFileB (xf, &match, delims))
     {
+        AST* lo_ast;
         if (s[0])
             app_TabStr (&txtq, s);
-
-        if (match == '/')
-        {
-            bool comment = false;
-            char c = 0;
-            if (load_char_XFileB (xf, &c))
-            {
-                if (c == '/')  comment = true;
-                else if (c == '*')  comment = true;
-                else  -- xf->off;
-            }
-
-            if (comment)
-            {
-                match = c;
-            }
-            else
-            {
-                xf->buf.s[xf->off-1] = (byte) '/';
-                app_TabStr (&txtq, "/");
-                continue;
-            }
-        }
 
         if (txtq.sz > 0)
         {
@@ -295,6 +357,8 @@ load_ASTree (XFileB* xf, ASTree* t)
             txtq.sz = 0;
             ast = joint_of_AST (ast);
         }
+
+        lo_ast = side_of_AST (ast, 0);
 
         switch (match)
         {
@@ -348,38 +412,22 @@ load_ASTree (XFileB* xf, ASTree* t)
             }
             break;
         case ';':
-                /* TODO: Insert me at the right spot
-                 * and as the right thing!
-                 */
-            if (1)
+            while (ast->kind == Syntax_Cons && lo_ast->kind != Syntax_Stmt)
             {
-                ast = app_AST (ast);
-                ast->kind = Syntax_Plain;
-                app_TabStr (&ast->txt, ";");
+                side_of_AST (ast, 0);
+                lo_ast = ast;
                 ast = joint_of_AST (ast);
             }
-            else
-            {
-                AST* b = ast;
-                while (ast->kind == Syntax_Cons)
-                {
-                    side_of_AST (ast, 0);
-                    b = ast;
-                    ast = joint_of_AST (ast);
-                }
-            }
-            break;
-        case '/':
-            ast = app_AST (ast);
-            ast->kind = Syntax_LineComment;
-            app_TabStr (&ast->txt, getlined_XFileB (xf, "\n"));
-            ast = joint_of_AST (ast);
-            break;
-        case '*':
-            ast = app_AST (ast);
-            ast->kind = Syntax_BlockComment;
-            app_TabStr (&ast->txt, getlined_XFileB (xf, "*/"));
-            ast = joint_of_AST (ast);
+            if (ast->kind == Syntax_Cons)  ast = lo_ast;
+
+            lo_ast = make_AST ();
+            lo_ast->kind = Syntax_Stmt;
+            join_BSTNode (&lo_ast->bst, ast->bst.split[0], 0);
+            join_BSTNode (&lo_ast->bst, ast->bst.split[1], 1);
+            ast->bst.split[0] = 0;
+            ast->bst.split[1] = 0;
+            join_BSTNode (&ast->bst, &lo_ast->bst, 0);
+            ast = joint_of_AST (lo_ast);
             break;
         case '#':
             ast = app_AST (ast);
@@ -387,6 +435,119 @@ load_ASTree (XFileB* xf, ASTree* t)
             app_TabStr (&ast->txt, getlined_XFileB (xf, "\n"));
             ast = joint_of_AST (ast);
             break;
+
+#define LexiCase( c, k )  case c: \
+            ast = app_AST (ast); \
+            ast->kind = k; \
+            ast = joint_of_AST (ast); \
+            break;
+
+#define Lex2Case( c, k1, k2 )  case c: \
+            if (lo_ast && lo_ast->kind == k1) \
+            { \
+                lo_ast->kind = k2; \
+            } \
+            else \
+            { \
+                ast = app_AST (ast); \
+                ast->kind = k1; \
+                ast = joint_of_AST (ast); \
+            } \
+            break;
+
+            Lex2Case( '+', Lexical_Add, Lexical_Inc );
+            Lex2Case( '-', Lexical_Sub, Lexical_Dec );
+        case '*':
+            if (lo_ast && lo_ast->kind == Lexical_Div)
+            {
+                lo_ast->kind = Syntax_BlockComment;
+                app_TabStr (&lo_ast->txt, getlined_XFileB (xf, "*/"));
+            }
+            else
+            {
+                ast = app_AST (ast);
+                ast->kind = Lexical_Mul;
+                ast = joint_of_AST (ast);
+            }
+            break;
+        case '/':
+            if (lo_ast && lo_ast->kind == Lexical_Div)
+            {
+                lo_ast->kind = Syntax_LineComment;
+                app_TabStr (&lo_ast->txt, getlined_XFileB (xf, "\n"));
+            }
+            else
+            {
+                ast = app_AST (ast);
+                ast->kind = Lexical_Div;
+                ast = joint_of_AST (ast);
+            }
+            break;
+            LexiCase( '%', Lexical_Mod );
+            Lex2Case( '&', Lexical_BitAnd, Lexical_And );
+            LexiCase( '^', Lexical_BitXor );
+            Lex2Case( '|', Lexical_BitOr, Lexical_Or );
+            LexiCase( '~', Lexical_BitNot );
+            LexiCase( '!', Lexical_Not );
+            LexiCase( '.', Lexical_Dot );
+            LexiCase( ',', Lexical_Comma );
+            LexiCase( '?', Lexical_Question );
+            LexiCase( ':', Lexical_Colon );
+        case '>':
+            if (lo_ast && lo_ast->kind == Lexical_GT)
+            {
+                lo_ast->kind = Lexical_RShift;
+            }
+            else if (lo_ast && lo_ast->kind == Lexical_Sub)
+            {
+                lo_ast->kind = Lexical_PMemb;
+            }
+            else
+            {
+                ast = app_AST (ast);
+                ast->kind = Lexical_GT;
+                ast = joint_of_AST (ast);
+            }
+            break;
+            Lex2Case( '<', Lexical_LT, Lexical_LShift );
+        case '=':
+            if (lo_ast && lo_ast->kind == Lexical_Add)
+                lo_ast->kind = Lexical_AddAssign;
+            else if (lo_ast && lo_ast->kind == Lexical_Sub)
+                lo_ast->kind = Lexical_SubAssign;
+            else if (lo_ast && lo_ast->kind == Lexical_Mul)
+                lo_ast->kind = Lexical_MulAssign;
+            else if (lo_ast && lo_ast->kind == Lexical_Div)
+                lo_ast->kind = Lexical_DivAssign;
+            else if (lo_ast && lo_ast->kind == Lexical_Mod)
+                lo_ast->kind = Lexical_ModAssign;
+            else if (lo_ast && lo_ast->kind == Lexical_BitAnd)
+                lo_ast->kind = Lexical_BitAndAssign;
+            else if (lo_ast && lo_ast->kind == Lexical_BitXor)
+                lo_ast->kind = Lexical_BitXorAssign;
+            else if (lo_ast && lo_ast->kind == Lexical_BitOr)
+                lo_ast->kind = Lexical_BitOrAssign;
+            else if (lo_ast && lo_ast->kind == Lexical_Not)
+                lo_ast->kind = Lexical_NotEq;
+            else if (lo_ast && lo_ast->kind == Lexical_GT)
+                lo_ast->kind = Lexical_GTEq;
+            else if (lo_ast && lo_ast->kind == Lexical_RShift)
+                lo_ast->kind = Lexical_RShiftAssign;
+            else if (lo_ast && lo_ast->kind == Lexical_LT)
+                lo_ast->kind = Lexical_LTEq;
+            else if (lo_ast && lo_ast->kind == Lexical_LShift)
+                lo_ast->kind = Lexical_LShiftAssign;
+            else if (lo_ast && lo_ast->kind == Lexical_Assign)
+                lo_ast->kind = Lexical_Eq;
+            else
+            {
+                ast = app_AST (ast);
+                ast->kind = Lexical_Assign;
+                ast = joint_of_AST (ast);
+            }
+            break;
+#undef Lex2Case
+#undef LexiCase
         }
     }
     while (ast)
