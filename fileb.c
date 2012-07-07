@@ -15,7 +15,7 @@ dump_chunk_FileB (FileB* f);
 static void
 op_FileB (XOFileB* xo, FileB_Op op, FileBOpArg* arg);
 static void
-dumpn_raw_byte_FileB (FileB* f, const byte* a, TableSzT(byte) n);
+dumpn_raw_byte_FileB (FileB* f, const byte* a, ujint n);
 
     void
 lose_XOFileB (XOFileB* xo)
@@ -68,7 +68,7 @@ seto_FileB (FileB* f, bool sink)
 }
 
 static inline
-    TableSzT(byte)
+    ujint
 chunksz_FileB (FileB* f)
 {
     (void) f;
@@ -76,10 +76,10 @@ chunksz_FileB (FileB* f)
 }
 
     byte*
-ensure_FileB (FileB* f, TableSzT(byte) n)
+ensure_FileB (FileB* f, ujint n)
 {
     XFileB* const xof = &f->xo;
-    TableSzT(byte) sz;
+    ujint sz;
     if (f->sink)
     {
         dump_chunk_FileB (f);
@@ -236,7 +236,7 @@ load_FileB (FileB* f)
     bool
 load_chunk_FileB (FileB* f)
 {
-    const TableSzT(byte) chunksz = chunksz_FileB (f);
+    const ujint chunksz = chunksz_FileB (f);
     TableT(byte)* buf = &f->xo.buf;
     size_t n;
     byte* s;
@@ -319,20 +319,13 @@ flush_XFileB (XFileB* f)
     f->off = 0;
 }
 
-    void
-mayflush_XFileB (XFileB* xf)
-{
-    if (xf->flushsz > 0 && xf->off > CeilQuot( xf->buf.sz, 4 ))
-        flush_XFileB (xf);
-}
-
     char*
 getline_XFileB (XFileB* in)
 {
     uint ret_off;
     char* s;
 
-    mayflush_XFileB (in);
+    mayflush_XFileB (in, May);
     ret_off = in->off;
     s = strchr (cstr_XFileB (in), '\n');
 
@@ -367,7 +360,7 @@ getlined_XFileB (XFileB* xf, const char* delim)
     char* s;
     uint delim_sz = strlen (delim);
 
-    mayflush_XFileB (xf);
+    mayflush_XFileB (xf, May);
     ret_off = xf->off;
     Claim2( ret_off ,<, xf->buf.sz );
     s = strstr (cstr_XFileB (xf), delim);
@@ -405,19 +398,19 @@ skipds_XFileB (XFileB* xf, const char* delims)
 {
     char* s;
     if (!delims)  delims = WhiteSpaceChars;
-    mayflush_XFileB (xf);
+    mayflush_XFileB (xf, May);
     s = (char*) &xf->buf.s[xf->off];
     s = &s[strspn (s, delims)];
 
     while (!s[0])
     {
-        mayflush_XFileB (xf);
         if (!load_chunk_XFileB (xf))  break;
+        mayflush_XFileB (xf, May);
         s = (char*) &xf->buf.s[xf->off];
         s = &s[strspn (s, delims)];
     }
     xf->off = IdxEltTable( xf->buf, s );
-    mayflush_XFileB (xf);
+    mayflush_XFileB (xf, May);
 }
 
     char*
@@ -426,7 +419,7 @@ nextds_XFileB (XFileB* in, char* ret_match, const char* delims)
     uint ret_off;
     char* s;
     if (!delims)  delims = WhiteSpaceChars;
-    mayflush_XFileB (in);
+    mayflush_XFileB (in, May);
     ret_off = in->off;
     Claim2( ret_off ,<, in->buf.sz );
     s = (char*) &in->buf.s[ret_off];
@@ -466,10 +459,10 @@ tods_XFileB (XFileB* xf, const char* delims)
     nextds_XFileB (xf, &c, delims);
 
     dsoff = xf->off;
-    if (xf->buf.s[xf->off])
+    if (c)
     {
-        xf->buf.s[xf->off-1] = c;
         -- dsoff;
+        xf->buf.s[dsoff] = c;
     }
     xf->off = off;
     return (char*) &xf->buf.s[dsoff];
@@ -701,10 +694,10 @@ printf_OFileB (OFileB* f, const char* fmt, ...)
 }
 
     void
-dumpn_raw_byte_FileB (FileB* f, const byte* a, TableSzT(byte) n)
+dumpn_raw_byte_FileB (FileB* f, const byte* a, ujint n)
 {
     OFileB* const of = &f->xo;
-    const TableSzT(byte) ntotal = of->off + n;
+    const ujint ntotal = of->off + n;
     if (ntotal <= allocsz_Table ((Table*) &of->buf))
     {
         memcpy (&of->buf.s[of->off], a, n);
@@ -726,7 +719,7 @@ dumpn_raw_byte_FileB (FileB* f, const byte* a, TableSzT(byte) n)
 }
 
     void
-dumpn_byte_FileB (FileB* f, const byte* a, TableSzT(byte) n)
+dumpn_byte_FileB (FileB* f, const byte* a, ujint n)
 {
     if (f->fmt == FileB_Raw)
     {
@@ -741,7 +734,7 @@ dumpn_byte_FileB (FileB* f, const byte* a, TableSzT(byte) n)
 }
 
     void
-dumpn_char_OFileB (OFileB* of, const char* a, TableSzT(byte) n)
+dumpn_char_OFileB (OFileB* of, const char* a, ujint n)
 {
     GrowTable( of->buf, n );
     memcpy (&of->buf.s[of->off], a, (n+1)*sizeof(char));
@@ -864,14 +857,14 @@ load_real_XFileB (XFileB* xf, real* x)
 
 static
     bool
-loadn_raw_byte_FileB (FileB* f, byte* a, TableSzT(byte) n)
+loadn_raw_byte_FileB (FileB* f, byte* a, ujint n)
 {
     XFileB* const xf = &f->xo;
     Claim2( f->fmt ,==, FileB_Raw );
     flushx_FileB (f);
     while (n > 0)
     {
-        TableSzT(byte) m;
+        ujint m;
         if (xf->buf.sz == 0)
             f->good = load_chunk_FileB (f);
         if (!f->good)  return false;
@@ -886,7 +879,7 @@ loadn_raw_byte_FileB (FileB* f, byte* a, TableSzT(byte) n)
 }
 
     bool
-loadn_byte_FileB (FileB* f, byte* a, TableSzT(byte) n)
+loadn_byte_FileB (FileB* f, byte* a, ujint n)
 {
     if (f->fmt == FileB_Raw)
         return loadn_raw_byte_FileB (f, a, n);

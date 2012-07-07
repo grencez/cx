@@ -6,19 +6,17 @@
 #include <stdlib.h>
 #include <string.h>
 
-typedef ujint TableSz;
 typedef byte TableLgSz;
 typedef unsigned short TableElSz;
 
 #define TableT( S )  TableT_##S
-#define TableSzT( S )  TableSz
 #define TableElT( S )  TableElT_##S
 
 typedef struct Table Table;
 struct Table
 {
     void* s;
-    TableSz sz;
+    ujint sz;
     TableElSz elsz;
     TableLgSz alloc_lgsz;
 };
@@ -28,7 +26,7 @@ struct Table
     typedef T TableElT_##S; \
     struct TableT_##S { \
         TableElT_##S* s; \
-        TableSz sz; \
+        ujint sz; \
         TableLgSz alloc_lgsz; \
     }
 
@@ -43,7 +41,7 @@ DeclTableT( ujint, ujint );
 
 qual_inline
     Table
-make_Table (void* s, TableSz sz, TableElSz elsz, TableLgSz alloc_lgsz)
+make_Table (void* s, ujint sz, TableElSz elsz, TableLgSz alloc_lgsz)
 {
     Table t;
     t.s = s;
@@ -100,9 +98,9 @@ lose_Table (Table* t)
 } while (0)
 
 #define AllocszTable( t ) \
-    ((t).alloc_lgsz == 0 ? 0 : (TableSz)1 << ((t).alloc_lgsz - 1))
+    ((t).alloc_lgsz == 0 ? 0 : (ujint)1 << ((t).alloc_lgsz - 1))
 qual_inline
-    TableSz
+    ujint
 allocsz_Table (const Table* t)
 {
     return AllocszTable( *t );
@@ -110,7 +108,7 @@ allocsz_Table (const Table* t)
 
 qual_inline
     void*
-elt_Table (Table* t, TableSz idx)
+elt_Table (Table* t, ujint idx)
 {
     return EltZ( t->s, idx, t->elsz );
 }
@@ -118,28 +116,28 @@ elt_Table (Table* t, TableSz idx)
     TableElT_##S* const x = Elt( (t).s, idx )
 
 qual_inline
-    TableSz
+    ujint
 idxelt_Table (const Table* t, const void* el)
 {
-    return (TableSz) IdxEltZ( t->s, el, t->elsz );
+    return (ujint) IdxEltZ( t->s, el, t->elsz );
 }
 #define IdxEltTable( t, el ) \
-    (TableSz) IdxEltZ( (t).s, el, sizeof(*(t).s) )
+    (ujint) IdxEltZ( (t).s, el, sizeof(*(t).s) )
 
 
 qual_inline
     void
-grow_Table (Table* t, TableSz capac)
+grow_Table (Table* t, ujint capac)
 {
     t->sz += capac;
-    if ((t->sz << 1) > ((TableSz)1 << t->alloc_lgsz))
+    if ((t->sz << 1) > ((ujint)1 << t->alloc_lgsz))
     {
         if (t->alloc_lgsz == 0)
         {
             t->s = 0;
             t->alloc_lgsz = 1;
         }
-        while (t->sz > ((TableSz)1 << t->alloc_lgsz))
+        while (t->sz > ((ujint)1 << t->alloc_lgsz))
             t->alloc_lgsz += 1;
 
         t->alloc_lgsz += 1;
@@ -156,7 +154,7 @@ grow_Table (Table* t, TableSz capac)
 
 qual_inline
     void
-mpop_Table (Table* t, TableSz capac)
+mpop_Table (Table* t, ujint capac)
 {
     t->sz -= capac;
     if ((t->alloc_lgsz >= 3) && ((t->sz >> (t->alloc_lgsz - 3)) == 0))
@@ -194,7 +192,7 @@ grow1_Table (Table* t)
     /** Don't use this... It's a hack for the Grow1Table() macro.**/
 qual_inline
     void
-synhax_grow1_Table (void* ps, void* s, TableSz* sz,
+synhax_grow1_Table (void* ps, void* s, ujint* sz,
                     TableElSz elsz, TableLgSz* alloc_lgsz)
 {
     Table t = make_Table (s, *sz, elsz, *alloc_lgsz);
@@ -215,7 +213,7 @@ synhax_grow1_Table (void* ps, void* s, TableSz* sz,
 
 qual_inline
     void
-size_Table (Table* t, TableSz capac)
+size_Table (Table* t, ujint capac)
 {
     if (t->sz <= capac)  grow_Table (t, capac - t->sz);
     else                 mpop_Table (t, t->sz - capac);
@@ -230,7 +228,7 @@ size_Table (Table* t, TableSz capac)
     /** Never downsize.**/
 qual_inline
     void
-ensize_Table (Table* t, TableSz capac)
+ensize_Table (Table* t, ujint capac)
 {
     if (t->sz < capac)
         grow_Table (t, capac - t->sz);
@@ -249,7 +247,7 @@ qual_inline
     void
 pack_Table (Table* t)
 {
-    if ((t->sz << 1) < ((TableSz) 1 << t->alloc_lgsz))
+    if ((t->sz << 1) < ((ujint) 1 << t->alloc_lgsz))
     {
         if (t->sz == 0)
         {
@@ -260,7 +258,7 @@ pack_Table (Table* t)
         else
         {
             t->s = realloc (t->s, t->sz * t->elsz);
-            while ((t->sz << 1) < ((TableSz) 1 << t->alloc_lgsz))
+            while ((t->sz << 1) < ((ujint) 1 << t->alloc_lgsz))
                 t->alloc_lgsz -= 1;
         }
     }

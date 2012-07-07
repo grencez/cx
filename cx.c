@@ -15,7 +15,8 @@ typedef
 enum SyntaxKind
 {   Syntax_Root
     ,Syntax_Cons
-    ,Syntax_Plain
+    ,Syntax_WhiteSpace
+    ,Syntax_Iden
     ,Syntax_LineComment
     ,Syntax_BlockComment
     ,Syntax_Directive
@@ -166,7 +167,11 @@ dump_AST (OFileB* of, AST* ast)
             ast = side_of_AST (ast, 1);
         } while (ast);
         break;
-    case Syntax_Plain:
+    case Syntax_WhiteSpace:
+        Claim( ast->txt.sz > 0 );
+        dump_cstr_OFileB (of, ast->txt.s);
+        break;
+    case Syntax_Iden:
         Claim( ast->txt.sz > 0 );
         dump_cstr_OFileB (of, ast->txt.s);
         break;
@@ -325,37 +330,78 @@ parse_escaped (XFileB* xf, TabStr* t, char delim)
     return false;
 }
 
+    ujint
+count_newlines (const char* s)
+{
+    ujint n = 0;
+    for (s = strchr (s, '\n');  s;  s = strchr (&s[1], '\n'))
+        ++ n;
+    return n;
+}
+
     void
 load_ASTree (XFileB* xf, ASTree* t)
 {
     AST* ast = t->root;
     char match = 0;
     char* s;
-    DeclTable( char, txtq );
     const char delims[] = "'\"(){}[];#+-*/%&^|~!.,?:><=";
+    ujint off;
+    ujint line = 0;
 
-        /* First parse:
+    mayflush_XFileB (xf, Yes);
+
+        /* Tokenize while dealing with
          * - line/block comment
          * - directive (perhaps this should happen later)
          * - char, string
          * - parentheses, braces, brackets
-         * - semicolon
+         * - statement ending with semicolon
          */
     for (s = nextds_XFileB (xf, &match, delims);
          s;
          s = nextds_XFileB (xf, &match, delims))
     {
         AST* lo_ast;
-        if (s[0])
-            app_TabStr (&txtq, s);
 
-        if (txtq.sz > 0)
+        off = IdxEltTable( xf->buf, s );
+
+        if (s[0])
         {
-            ast = app_AST (ast);
-            ast->kind = Syntax_Plain;
-            CopyTable( ast->txt, txtq );
-            txtq.sz = 0;
-            ast = joint_of_AST (ast);
+            DecloStack( XFileB, olay );
+            *olay = olay_XFileB (xf, off);
+
+            while (olay->buf.sz > 1)
+            {
+                skipds_XFileB (olay, 0);
+                if (olay->off > 0)
+                {
+                    TabStr ts = TabStr_XFileB (olay, 0);
+                    ast = app_AST (ast);
+                    ast->kind = Syntax_WhiteSpace;
+                    ast->line = line;
+                    cat_TabStr (&ast->txt, &ts);
+                    line += count_newlines (ast->txt.s);
+                    ast = joint_of_AST (ast);
+                }
+                off += olay->off;
+                *olay = olay_XFileB (xf, off);
+                if (olay->buf.sz <= 1)  break;
+
+                olay->off = IdxEltTable( olay->buf, tods_XFileB (olay, 0));
+                if (olay->off > 0)
+                {
+                    TabStr ts = TabStr_XFileB (olay, 0);
+                    ast = app_AST (ast);
+                    ast->kind = Syntax_Iden;
+                    ast->line = line;
+                    cat_TabStr (&ast->txt, &ts);
+                    ast = joint_of_AST (ast);
+                }
+
+                off += olay->off;
+                *olay = olay_XFileB (xf, off);
+            }
         }
 
         lo_ast = side_of_AST (ast, 0);
@@ -368,28 +414,35 @@ load_ASTree (XFileB* xf, ASTree* t)
         case '\'':
             ast = app_AST (ast);
             ast->kind = Syntax_Char;
+            ast->line = line;
             if (!parse_escaped (xf, &ast->txt, '\''))
-                DBog0( "Gotta problem with single quotes!" );
+                DBog1( "Gotta problem with single quotes! line:%u",
+                       (uint) line );
             ast = joint_of_AST (ast);
             break;
         case '"':
             ast = app_AST (ast);
             ast->kind = Syntax_String;
+            ast->line = line;
             if (!parse_escaped (xf, &ast->txt, '"'))
-                DBog0( "Gotta problem with double quotes!" );
+                DBog1( "Gotta problem with double quotes! line:%u",
+                       (uint) line );
             ast = joint_of_AST (ast);
             break;
         case '(':
             ast = app_AST (ast);
             ast->kind = Syntax_Parens;
+            ast->line = line;
             break;
         case '{':
             ast = app_AST (ast);
             ast->kind = Syntax_Braces;
+            ast->line = line;
             break;
         case '[':
             ast = app_AST (ast);
             ast->kind = Syntax_Brackets;
+            ast->line = line;
             break;
         case ')':
         case '}':
@@ -422,6 +475,7 @@ load_ASTree (XFileB* xf, ASTree* t)
 
             lo_ast = make_AST ();
             lo_ast->kind = Syntax_Stmt;
+            lo_ast->line = line;
             join_BSTNode (&lo_ast->bst, ast->bst.split[0], 0);
             join_BSTNode (&lo_ast->bst, ast->bst.split[1], 1);
             ast->bst.split[0] = 0;
@@ -432,13 +486,16 @@ load_ASTree (XFileB* xf, ASTree* t)
         case '#':
             ast = app_AST (ast);
             ast->kind = Syntax_Directive;
+            ast->line = line;
             app_TabStr (&ast->txt, getlined_XFileB (xf, "\n"));
+            ++ line;
             ast = joint_of_AST (ast);
             break;
 
 #define LexiCase( c, k )  case c: \
             ast = app_AST (ast); \
             ast->kind = k; \
+            ast->line = line; \
             ast = joint_of_AST (ast); \
             break;
 
@@ -451,6 +508,7 @@ load_ASTree (XFileB* xf, ASTree* t)
             { \
                 ast = app_AST (ast); \
                 ast->kind = k1; \
+                ast->line = line; \
                 ast = joint_of_AST (ast); \
             } \
             break;
@@ -462,11 +520,13 @@ load_ASTree (XFileB* xf, ASTree* t)
             {
                 lo_ast->kind = Syntax_BlockComment;
                 app_TabStr (&lo_ast->txt, getlined_XFileB (xf, "*/"));
+                line += count_newlines (lo_ast->txt.s);
             }
             else
             {
                 ast = app_AST (ast);
                 ast->kind = Lexical_Mul;
+                ast->line = line;
                 ast = joint_of_AST (ast);
             }
             break;
@@ -475,11 +535,13 @@ load_ASTree (XFileB* xf, ASTree* t)
             {
                 lo_ast->kind = Syntax_LineComment;
                 app_TabStr (&lo_ast->txt, getlined_XFileB (xf, "\n"));
+                ++ line;
             }
             else
             {
                 ast = app_AST (ast);
                 ast->kind = Lexical_Div;
+                ast->line = line;
                 ast = joint_of_AST (ast);
             }
             break;
@@ -543,6 +605,7 @@ load_ASTree (XFileB* xf, ASTree* t)
             {
                 ast = app_AST (ast);
                 ast->kind = Lexical_Assign;
+                ast->line = line;
                 ast = joint_of_AST (ast);
             }
             break;
@@ -555,32 +618,45 @@ load_ASTree (XFileB* xf, ASTree* t)
         switch (ast->kind)
         {
         case Syntax_Parens:
-            DBog0( "Unclosed '('." );
+            DBog1( "Unclosed '(', line %u", (uint) ast->line );
             break;
         case Syntax_Braces:
-            DBog0( "Unclosed '{'." );
+            DBog1( "Unclosed '{', line %u", (uint) ast->line );
             break;
         case Syntax_Brackets:
-            DBog0( "Unclosed '['." );
+            DBog1( "Unclosed '[', line %u", (uint) ast->line );
             break;
         default:
             break;
         }
         ast = joint_of_AST (ast);
     }
-    LoseTable( txtq );
 }
 
 int main (int argc, char** argv)
 {
     ASTree t;
-    init_sys_cx ();
-    (void) argc;
-    (void) argv;
+    DecloStack( FileB, fb );
 
+    init_sys_cx ();
+
+    if (argc != 3)
+    {
+        DBog0( "Use 2 arguments." );
+        return 1;
+    }
+
+    init_FileB (fb);
+    open_FileB (fb, 0, argv[1]);
+    
     init_ASTree (&t);
-    load_ASTree (stdin_XFileB (), &t);
-    dump_ASTree (stdout_OFileB (), &t);
+    load_ASTree (&fb->xo, &t);
+    close_FileB (fb);
+
+    seto_FileB (fb, 1);
+    open_FileB (fb, 0, argv[2]);
+    dump_ASTree (&fb->xo, &t);
+    lose_FileB (fb);
 
     lose_ASTree (&t);
     lose_sys_cx ();

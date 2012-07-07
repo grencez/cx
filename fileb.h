@@ -56,8 +56,8 @@ dflt_FileBOpArg ()
 struct XOFileB
 {
     TableT(byte) buf;
-    TableSzT(byte) off;
-    TableSzT(byte) flushsz;
+    ujint off;
+    ujint flushsz;
     void (* op) (XOFileB*, FileB_Op, FileBOpArg*);
 };
 
@@ -112,7 +112,7 @@ lose_FileB (FileB* f);
 void
 seto_FileB (FileB* f, bool sink);
 byte*
-ensure_FileB (FileB* f, TableSzT(byte) n);
+ensure_FileB (FileB* f, ujint n);
 void
 setfmt_FileB (FileB* f, FileB_Format fmt);
 bool
@@ -126,8 +126,6 @@ void
 flushx_FileB (FileB* f);
 void
 flush_XFileB (XFileB* f);
-void
-mayflush_XFileB (XFileB* xf);
 char*
 getline_XFileB (XFileB* in);
 char*
@@ -165,9 +163,9 @@ void
 printf_OFileB (OFileB* f, const char* fmt, ...);
 
 void
-dumpn_byte_FileB (FileB* f, const byte* a, TableSzT(byte) n);
+dumpn_byte_FileB (FileB* f, const byte* a, ujint n);
 void
-dumpn_char_OFileB (OFileB* of, const char* a, TableSzT(byte) n);
+dumpn_char_OFileB (OFileB* of, const char* a, ujint n);
 
 char*
 load_uint_cstr (uint* ret, const char* in);
@@ -186,18 +184,23 @@ bool
 load_real_XFileB (XFileB* xf, real* x);
 
 bool
-loadn_byte_FileB (FileB* f, byte* a, TableSzT(byte) n);
+loadn_byte_FileB (FileB* f, byte* a, ujint n);
 
 qual_inline
     void
-set_mayflush_XFileB (XFileB* xf, bool may)
+mayflush_XFileB (XFileB* xf, Trit may)
 {
-    xf->flushsz = may ? 1 : 0;
+    if (may == Yes)  xf->flushsz = 1;
+
+    if (xf->flushsz > 0 && xf->off > CeilQuot( xf->buf.sz, 4 ))
+        flush_XFileB (xf);
+
+    if (may == Nil)  xf->flushsz = 0;
 }
 
 qual_inline
     XFileB
-olay_XOFileB (XOFileB* xf, uint off)
+olay_XFileB (XFileB* xf, uint off)
 {
     XFileB olay = dflt_XFileB ();
     olay.buf.s = &xf->buf.s[off];
@@ -205,9 +208,18 @@ olay_XOFileB (XOFileB* xf, uint off)
     return olay;
 }
 qual_inline
-XFileB olay_XFileB (OFileB* xf, uint off) { return olay_XOFileB (xf, off); }
+XFileB olay_OFileB (OFileB* of, uint off) { return olay_XFileB (of, off); }
+
 qual_inline
-XFileB olay_OFileB (OFileB* of, uint off) { return olay_XOFileB (of, off); }
+    TabStr
+TabStr_XFileB (XFileB* xf, ujint off)
+{
+    DeclTable( char, t );
+    t.s = (char*) &xf->buf.s[off];
+    t.sz = (xf->off - off) / sizeof(char);
+    return t;
+}
+
 
 qual_inline
     bool
@@ -256,16 +268,27 @@ dup_cstr (const char* s)
 
 qual_inline
     void
+cat_TabStr (TabStr* a, TabStr* b)
+{
+    ujint n = b->sz;
+    if (n == 0)  return;
+    if (!b->s[n-1])  -- n;
+
+    if (a->sz > 0)  -- a->sz;
+    GrowTable( *a, n+1 );
+
+    RepliT( char, &a->s[a->sz-(n+1)], b->s, n );
+    a->s[a->sz-1] = 0;
+}
+
+qual_inline
+    void
 app_TabStr (TabStr* t, const char* s)
 {
-    ujint off;
-    ujint n = strlen (s);
-    if (t->sz > 0)  -- t->sz;
-    off = t->sz;
-
-    GrowTable( *t, n+1 );
-
-    RepliT( char, &t->s[off], s, n+1 );
+    DeclTable( char, b );
+    b.s = (char*) s;
+    b.sz = strlen (s) + 1;
+    cat_TabStr (t, &b);
 }
 
 #ifdef IncludeC

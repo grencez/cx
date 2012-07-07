@@ -345,8 +345,8 @@ static
     void
 claim_allocsz_Table (Table* t)
 {
-    const TableSz sz = t->sz;
-    const TableSz allocsz = allocsz_Table (t);
+    const ujint sz = t->sz;
+    const ujint allocsz = allocsz_Table (t);
 
     Claim2( sz ,<=, allocsz );
     Claim2( sz ,>=, allocsz / 4 );

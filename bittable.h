@@ -10,7 +10,6 @@ DeclTableT( Bit, unsigned int );
 
 typedef TableT(Bit) BitTable;
 typedef TableElT(Bit) BitTableEl;
-typedef TableSzT(Bit) BitTableSz;
 #define NBits_BitTableEl  (sizeof (BitTableEl) * NBits_byte)
 
 #define FixDeclBitTable( bt, n, val ) \
@@ -42,14 +41,14 @@ enum BitOp {
 typedef enum BitOp BitOp;
 
 #define DeclBitTableIdcs( p, q, i ) \
-    const TableSz p = (i) / NBits_BitTableEl; \
+    const ujint p = (i) / NBits_BitTableEl; \
     const uint    q = (i) % NBits_BitTableEl
 
 qual_inline
     void
 wipe_BitTable (BitTable bt, Bit val)
 {
-    const TableSz n = CeilQuot( bt.sz, NBits_BitTableEl );
+    const ujint n = CeilQuot( bt.sz, NBits_BitTableEl );
     memset (bt.s, 
             (val == 0) ? 0x00 : 0xFF,
             n * sizeof (BitTableEl));
@@ -65,7 +64,7 @@ dflt_BitTable ()
 
 qual_inline
     BitTable
-dflt2_BitTable (BitTableSz nbits, BitTableEl* s)
+dflt2_BitTable (ujint nbits, BitTableEl* s)
 {
     BitTable bt = dflt_BitTable ();
     bt.s = s;
@@ -75,7 +74,7 @@ dflt2_BitTable (BitTableSz nbits, BitTableEl* s)
 
 qual_inline
     BitTable
-dflt3_BitTable (BitTableSz nbits, BitTableEl* s, Bit val)
+dflt3_BitTable (ujint nbits, BitTableEl* s, Bit val)
 {
     BitTable bt = dflt2_BitTable (nbits, s);
     wipe_BitTable (bt, val);
@@ -84,9 +83,9 @@ dflt3_BitTable (BitTableSz nbits, BitTableEl* s, Bit val)
 
 qual_inline
     BitTable
-cons1_BitTable (BitTableSz n)
+cons1_BitTable (ujint n)
 {
-    const BitTableSz nblocks = CeilQuot( n, NBits_BitTableEl );
+    const ujint nblocks = CeilQuot( n, NBits_BitTableEl );
     BitTable bt = dflt_BitTable ();
     GrowTable( bt, nblocks );
     bt.sz = n;
@@ -95,7 +94,7 @@ cons1_BitTable (BitTableSz n)
 
 qual_inline
     BitTable
-cons2_BitTable (BitTableSz n, Bit val)
+cons2_BitTable (ujint n, Bit val)
 {
     BitTable bt = cons1_BitTable (n);
 
@@ -114,7 +113,7 @@ lose_BitTable (BitTable* bt)
 
 qual_inline
     Bit
-test_BitTable (const BitTable bt, BitTableSz i)
+test_BitTable (const BitTable bt, ujint i)
 {
     DeclBitTableIdcs( p, q, i );
     return (0 != (bt.s[p] & (1 << q)));
@@ -122,7 +121,7 @@ test_BitTable (const BitTable bt, BitTableSz i)
 
 qual_inline
     Bit
-set1_BitTable (BitTable bt, BitTableSz i)
+set1_BitTable (BitTable bt, ujint i)
 {
     DeclBitTableIdcs( p, q, i );
     const BitTableEl x = bt.s[p];
@@ -141,7 +140,7 @@ set1_BitTable (BitTable bt, BitTableSz i)
 
 qual_inline
     Bit
-set0_BitTable (BitTable bt, BitTableSz i)
+set0_BitTable (BitTable bt, ujint i)
 {
     DeclBitTableIdcs( p, q, i );
     const BitTableEl x = bt.s[p];
@@ -162,8 +161,8 @@ qual_inline
     void
 op_BitTable (BitTable a, const BitTable b, BitOp op)
 {
-    BitTableSz i;
-    const TableSz n = CeilQuot( a.sz, NBits_BitTableEl );
+    ujint i;
+    const ujint n = CeilQuot( a.sz, NBits_BitTableEl );
 
     Claim2( a.sz ,==, b.sz );
     switch (op)
@@ -215,7 +214,7 @@ qual_inline
 all_BitTable (const BitTable bt)
 {
     DeclBitTableIdcs( p, q, bt.sz );
-    BitTableSz i;
+    ujint i;
 
     UFor( i, p )
         if (0 != ~ bt.s[i])
