@@ -13,6 +13,8 @@ typedef XOFileB XFileB;
 typedef XOFileB OFileB;
 typedef struct FileBOpArg FileBOpArg;
 typedef TableT(char) TabStr;
+#define DeclTableT_TabStr
+DeclTableT( TabStr, TabStr );
 
 enum FileB_Format {
     FileB_Ascii,
@@ -156,6 +158,8 @@ dump_real_OFileB (OFileB* f, real x);
 void
 dump_char_OFileB (OFileB* f, char c);
 void
+dump_TabStr_OFileB (OFileB* f, const TabStr* t);
+void
 dump_cstr_OFileB (OFileB* f, const char* s);
 void
 vprintf_OFileB (OFileB* f, const char* fmt, va_list args);
@@ -185,6 +189,9 @@ load_real_XFileB (XFileB* xf, real* x);
 
 bool
 loadn_byte_FileB (FileB* f, byte* a, ujint n);
+
+Trit
+swapped_TabStr (const TabStr* a, const TabStr* b);
 
 qual_inline
     void
@@ -264,6 +271,16 @@ dup_cstr (const char* s)
 {
     uint n = strlen (s) + 1;
     return DupliT( char, s, n );
+}
+
+qual_inline
+    TabStr
+dflt1_TabStr (const char* s)
+{
+    DeclTable( char, t );
+    t.s = (char*) s;
+    t.sz = strlen (s);
+    return t;
 }
 
 qual_inline

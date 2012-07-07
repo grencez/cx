@@ -49,6 +49,9 @@ close_FileB (FileB* f)
         fclose (f->f);
         f->f = 0;
     }
+    f->xo.off = 0;
+    f->xo.buf.s[0] = 0;
+    f->xo.buf.sz = 1;
 }
 
     void
@@ -661,13 +664,25 @@ dump_char_OFileB (OFileB* f, char c)
 }
 
     void
+dump_TabStr_OFileB (OFileB* of, const TabStr* t)
+{
+    ujint n = t->sz;
+    if (n == 0)  return;
+    if (!t->s[n-1])  -- n;
+    GrowTable( of->buf, n*sizeof(char) );
+    memcpy (&of->buf.s[of->off], t->s, n*sizeof(char));
+    of->buf.s[of->buf.sz-1] = 0;
+    of->off += n;
+    mayflush_OFileB (of);
+}
+
+    void
 dump_cstr_OFileB (OFileB* f, const char* s)
 {
-    uint n = strlen (s);
-    GrowTable( f->buf, n );
-    memcpy (&f->buf.s[f->off], s, (n+1)*sizeof(char));
-    f->off += n;
-    mayflush_OFileB (f);
+    DeclTable( char, t );
+    t.s = (char*) s;
+    t.sz = strlen (s) + 1;
+    dump_TabStr_OFileB (f, &t);
 }
 
     void
@@ -894,5 +909,30 @@ loadn_byte_FileB (FileB* f, byte* a, ujint n)
         n -= 1;
     }
     return true;
+}
+
+    Trit
+swapped_TabStr (const TabStr* a, const TabStr* b)
+{
+    ujint na = a->sz;
+    ujint nb = b->sz;
+    int ret;
+    if (na > 0 && !a->s[na-1])  --na;
+    if (nb > 0 && !b->s[nb-1])  --nb;
+
+    if (na <= nb)
+    {
+        ret = memcmp (a->s, b->s, na * sizeof(char));
+        if (ret == 0 && na < nb)
+            ret = -1;
+
+    }
+    else
+    {
+        ret = memcmp (a->s, b->s, nb * sizeof(char));
+        if (ret == 0)
+            ret = 1;
+    }
+    return (ret < 0 ? Nil : (ret > 0 ? Yes : May));
 }
 

@@ -1,6 +1,7 @@
 
 #include "fileb.h"
 #include "bstree.h"
+#include "rbtree.h"
 #include "sys-cx.h"
 #include "table.h"
 
@@ -8,8 +9,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-typedef struct ASTree ASTree;
 typedef struct AST AST;
+typedef struct ASTree ASTree;
+typedef struct LexWordNode LexWordNode;
+typedef struct LexWordTree LexWordTree;
+
+DeclTableT( LexWordNode, LexWordNode );
 
 typedef
 enum SyntaxKind
@@ -20,14 +25,58 @@ enum SyntaxKind
     ,Syntax_LineComment
     ,Syntax_BlockComment
     ,Syntax_Directive
-    ,Syntax_Char
-    ,Syntax_String
+    ,Syntax_CharLit
+    ,Syntax_StringLit
     ,Syntax_Parens
     ,Syntax_Braces
     ,Syntax_Brackets
     ,Syntax_Stmt
 
-    ,Lexical_Add
+    ,Beg_Syntax_LexWords
+        /* ,Syntax_Sizeof */
+        /* ,Syntax_Offsetof */
+    ,Lexical_Struct = Beg_Syntax_LexWords
+    ,Lexical_Enum
+    ,Lexical_Typedef
+    ,Lexical_Union
+
+    ,Lexical_For
+    ,Lexical_If
+    ,Lexical_Else
+    ,Lexical_While
+    ,Lexical_Do
+    ,Lexical_Continue
+    ,Lexical_Switch
+    ,Lexical_Break
+    ,Lexical_Case
+    ,Lexical_Default
+    ,Lexical_Return
+
+    ,Lexical_Extern
+    ,Lexical_Goto
+
+    ,Lexical_Auto
+    ,Lexical_Restrict
+    ,Lexical_Register
+
+    ,Lexical_Const
+    ,Lexical_Static
+    ,Lexical_Volatile
+    ,Lexical_Inline
+
+    ,Lexical_Void
+    ,Lexical_Unsigned
+    ,Lexical_Signed
+    ,Lexical_Char
+    ,Lexical_Short
+    ,Lexical_Int
+    ,Lexical_Long
+    ,Lexical_Float
+    ,Lexical_Double
+    ,End_Syntax_LexWords
+
+    ,Beg_Syntax_LexOps = End_Syntax_LexWords
+    ,Lexical_Add = Beg_Syntax_LexOps
     ,Lexical_Inc
     ,Lexical_Sub
     ,Lexical_Dec
@@ -65,8 +114,9 @@ enum SyntaxKind
     ,Lexical_LTEq
     ,Lexical_LShiftAssign
     ,Lexical_Eq
+    ,End_Syntax_LexOps
 
-    ,NSyntaxKinds
+    ,NSyntaxKinds = End_Syntax_LexOps
 } SyntaxKind;
 
 struct AST
@@ -84,6 +134,29 @@ struct ASTree
     AST* root;
 };
 
+struct LexWordNode
+{
+    RBTNode rbt;
+    TabStr key;
+    SyntaxKind val;
+};
+
+struct LexWordTree
+{
+    RBTNode sentinel;
+    RBTree rbt;
+    TableT(LexWordNode) nodes;
+};
+
+    Trit
+swapped_LexWordNode (const BSTNode* lhs, const BSTNode* rhs)
+{
+    const LexWordNode* a =
+        CastUp( LexWordNode, rbt, CastUp( RBTNode, bst, lhs ) );
+    const LexWordNode* b =
+        CastUp( LexWordNode, rbt, CastUp( RBTNode, bst, rhs ) );
+    return swapped_TabStr (&a->key, &b->key);
+}
 
     AST
 dflt_AST ()
@@ -153,6 +226,111 @@ lose_ASTree (ASTree* ast)
     lose_BSTree (&ast->bst, lose_AST);
 }
 
+    const char*
+cstr_SyntaxKind (SyntaxKind kind)
+{
+    switch (kind)
+    {
+    case Lexical_Struct   : return "struct"  ;
+    case Lexical_Enum     : return "enum"    ;
+    case Lexical_Typedef  : return "typedef" ;
+    case Lexical_Union    : return "union"   ;
+    case Lexical_For      : return "for"     ;
+    case Lexical_If       : return "if"      ;
+    case Lexical_Else     : return "else"    ;
+    case Lexical_While    : return "while"   ;
+    case Lexical_Do       : return "do"      ;
+    case Lexical_Continue : return "continue";
+    case Lexical_Switch   : return "switch"  ;
+    case Lexical_Break    : return "break"   ;
+    case Lexical_Case     : return "case"    ;
+    case Lexical_Default  : return "default" ;
+    case Lexical_Return   : return "return"  ;
+    case Lexical_Extern   : return "extern"  ;
+    case Lexical_Goto     : return "goto"    ;
+    case Lexical_Auto     : return "auto"    ;
+    case Lexical_Restrict : return "restrict";
+    case Lexical_Register : return "register";
+    case Lexical_Const    : return "const"   ;
+    case Lexical_Static   : return "static"  ;
+    case Lexical_Volatile : return "volatile";
+    case Lexical_Inline   : return "inline"  ;
+    case Lexical_Void     : return "void"    ;
+    case Lexical_Unsigned : return "unsigned";
+    case Lexical_Signed   : return "signed"  ;
+    case Lexical_Char     : return "char"    ;
+    case Lexical_Short    : return "short"   ;
+    case Lexical_Int      : return "int"     ;
+    case Lexical_Long     : return "long"    ;
+    case Lexical_Float    : return "float"   ;
+    case Lexical_Double   : return "double"  ;
+
+    case Lexical_Add         : return "+"  ; 
+    case Lexical_Inc         : return "++" ; 
+    case Lexical_Sub         : return "-"  ; 
+    case Lexical_Dec         : return "--" ; 
+    case Lexical_Mul         : return "*"  ; 
+    case Lexical_Div         : return "/"  ; 
+    case Lexical_Mod         : return "%"  ; 
+    case Lexical_BitAnd      : return "&"  ; 
+    case Lexical_And         : return "&&" ; 
+    case Lexical_BitXor      : return "^"  ; 
+    case Lexical_BitOr       : return "|"  ; 
+    case Lexical_Or          : return "||" ; 
+    case Lexical_BitNot      : return "~"  ; 
+    case Lexical_Not         : return "!"  ; 
+    case Lexical_Dot         : return "."  ; 
+    case Lexical_Comma       : return ","  ; 
+    case Lexical_Question    : return "?"  ; 
+    case Lexical_Colon       : return ":"  ; 
+    case Lexical_GT          : return ">"  ; 
+    case Lexical_PMemb       : return "->" ; 
+    case Lexical_RShift      : return ">>" ; 
+    case Lexical_LT          : return "<"  ; 
+    case Lexical_LShift      : return "<<" ; 
+    case Lexical_Assign      : return "="  ; 
+    case Lexical_AddAssign   : return "+=" ; 
+    case Lexical_SubAssign   : return "-=" ; 
+    case Lexical_MulAssign   : return "*=" ; 
+    case Lexical_DivAssign   : return "/=" ; 
+    case Lexical_ModAssign   : return "%=" ; 
+    case Lexical_BitAndAssign: return "&=" ;  
+    case Lexical_BitXorAssign: return "^=" ;  
+    case Lexical_BitOrAssign : return "|=" ; 
+    case Lexical_NotEq       : return "!=" ; 
+    case Lexical_GTEq        : return ">=" ; 
+    case Lexical_RShiftAssign: return ">>=";  
+    case Lexical_LTEq        : return "<=" ; 
+    case Lexical_LShiftAssign: return "<<=";  
+    case Lexical_Eq          : return "==" ; 
+    default              : return 0;
+    }
+}
+
+    void
+init_LexWordTree (LexWordTree* t)
+{
+    uint i;
+
+    init_RBTree (&t->rbt, &t->sentinel, swapped_LexWordNode);
+    InitTable( t->nodes );
+    EnsizeTable( t->nodes, End_Syntax_LexWords - Beg_Syntax_LexWords );
+    for (i = 0; i < t->nodes.sz; ++i)
+    {
+        LexWordNode node;
+        node.val = (SyntaxKind) (i + Beg_Syntax_LexWords);
+        node.key = dflt1_TabStr (cstr_SyntaxKind (node.val));
+        t->nodes.s[i] = node;
+        insert_RBTree (&t->rbt, &t->nodes.s[i].rbt);
+    }
+}
+
+    void
+lose_LexWordTree (LexWordTree* t)
+{
+    LoseTable( t->nodes );
+}
+
     void
 dump_AST (OFileB* of, AST* ast)
 {
@@ -169,22 +347,22 @@ dump_AST (OFileB* of, AST* ast)
         break;
     case Syntax_WhiteSpace:
         Claim( ast->txt.sz > 0 );
-        dump_cstr_OFileB (of, ast->txt.s);
+        dump_TabStr_OFileB (of, &ast->txt);
         break;
     case Syntax_Iden:
         Claim( ast->txt.sz > 0 );
-        dump_cstr_OFileB (of, ast->txt.s);
+        dump_TabStr_OFileB (of, &ast->txt);
         break;
-    case Syntax_Char:
+    case Syntax_CharLit:
         dump_char_OFileB (of, '\'');
         Claim( ast->txt.sz > 0 );
-        dump_cstr_OFileB (of, ast->txt.s);
+        dump_TabStr_OFileB (of, &ast->txt);
         dump_char_OFileB (of, '\'');
         break;
-    case Syntax_String:
+    case Syntax_StringLit:
         dump_char_OFileB (of, '"');
         Claim( ast->txt.sz > 0 );
-        dump_cstr_OFileB (of, ast->txt.s);
+        dump_TabStr_OFileB (of, &ast->txt);
         dump_char_OFileB (of, '"');
         break;
     case Syntax_Parens:
@@ -212,64 +390,31 @@ dump_AST (OFileB* of, AST* ast)
         break;
     case Syntax_LineComment:
         dump_cstr_OFileB (of, "//");
-        dump_cstr_OFileB (of, ast->txt.s);
+        dump_TabStr_OFileB (of, &ast->txt);
         dump_char_OFileB (of, '\n');
         break;
     case Syntax_BlockComment:
         dump_cstr_OFileB (of, "/*");
-        dump_cstr_OFileB (of, ast->txt.s);
+        dump_TabStr_OFileB (of, &ast->txt);
         dump_cstr_OFileB (of, "*/");
         break;
     case Syntax_Directive:
         dump_char_OFileB (of, '#');
-        dump_cstr_OFileB (of, ast->txt.s);
+        dump_TabStr_OFileB (of, &ast->txt);
         dump_char_OFileB (of, '\n');
         break;
-#define LexiCase( s, k )  case k: \
-        dump_cstr_OFileB (of, s); \
-        break;
-
-        LexiCase( "+"  , Lexical_Add );
-        LexiCase( "++" , Lexical_Inc );
-        LexiCase( "-"  , Lexical_Sub );
-        LexiCase( "--" , Lexical_Dec );
-        LexiCase( "*"  , Lexical_Mul );
-        LexiCase( "/"  , Lexical_Div );
-        LexiCase( "%"  , Lexical_Mod );
-        LexiCase( "&"  , Lexical_BitAnd );
-        LexiCase( "&&" , Lexical_And );
-        LexiCase( "^"  , Lexical_BitXor );
-        LexiCase( "|"  , Lexical_BitOr );
-        LexiCase( "||" , Lexical_Or );
-        LexiCase( "~"  , Lexical_BitNot );
-        LexiCase( "!"  , Lexical_Not );
-        LexiCase( "."  , Lexical_Dot );
-        LexiCase( ","  , Lexical_Comma );
-        LexiCase( "?"  , Lexical_Question );
-        LexiCase( ":"  , Lexical_Colon );
-        LexiCase( ">"  , Lexical_GT );
-        LexiCase( "->" , Lexical_PMemb );
-        LexiCase( ">>" , Lexical_RShift );
-        LexiCase( "<"  , Lexical_LT );
-        LexiCase( "<<" , Lexical_LShift );
-        LexiCase( "="  , Lexical_Assign );
-        LexiCase( "+=" , Lexical_AddAssign );
-        LexiCase( "-=" , Lexical_SubAssign );
-        LexiCase( "*=" , Lexical_MulAssign );
-        LexiCase( "/=" , Lexical_DivAssign );
-        LexiCase( "%=" , Lexical_ModAssign );
-        LexiCase( "&=" , Lexical_BitAndAssign );
-        LexiCase( "^=" , Lexical_BitXorAssign );
-        LexiCase( "|=" , Lexical_BitOrAssign );
-        LexiCase( "!=" , Lexical_NotEq );
-        LexiCase( ">=" , Lexical_GTEq );
-        LexiCase( ">>=", Lexical_RShiftAssign );
-        LexiCase( "<=" , Lexical_LTEq );
-        LexiCase( "<<=", Lexical_LShiftAssign );
-        LexiCase( "==" , Lexical_Eq );
-#undef LexiCase
     default:
-        DBog0( "No Good!" );
+        if ((ast->kind >= Beg_Syntax_LexWords &&
+            ast->kind < End_Syntax_LexWords) ||
+            (ast->kind >= Beg_Syntax_LexOps &&
+             ast->kind < End_Syntax_LexOps))
+        {
+            dump_cstr_OFileB (of, cstr_SyntaxKind (ast->kind));
+        }
+        else
+        {
+            DBog0( "No Good!" );
+        }
         break;
     }
 }
@@ -348,6 +493,8 @@ load_ASTree (XFileB* xf, ASTree* t)
     const char delims[] = "'\"(){}[];#+-*/%&^|~!.,?:><=";
     ujint off;
     ujint line = 0;
+    LexWordTree keyword_lookup;
+    init_LexWordTree (&keyword_lookup);
 
     mayflush_XFileB (xf, Yes);
 
@@ -371,7 +518,7 @@ load_ASTree (XFileB* xf, ASTree* t)
             DecloStack( XFileB, olay );
             *olay = olay_XFileB (xf, off);
 
-            while (olay->buf.sz > 1)
+            while (olay->buf.sz > 0)
             {
                 skipds_XFileB (olay, 0);
                 if (olay->off > 0)
@@ -386,16 +533,31 @@ load_ASTree (XFileB* xf, ASTree* t)
                 }
                 off += olay->off;
                 *olay = olay_XFileB (xf, off);
-                if (olay->buf.sz <= 1)  break;
+                if (!olay->buf.s[0])  break;
 
-                olay->off = IdxEltTable( olay->buf, tods_XFileB (olay, 0));
+                olay->off = IdxEltTable( olay->buf, tods_XFileB (olay, 0) );
                 if (olay->off > 0)
                 {
                     TabStr ts = TabStr_XFileB (olay, 0);
+                    LexWordNode node;
+                    BSTNode* bst;
+                    node.key = ts;
+                    bst = find_BSTree (&keyword_lookup.rbt.bst, &node.rbt.bst);
+
                     ast = app_AST (ast);
-                    ast->kind = Syntax_Iden;
+
+                    if (bst)
+                    {
+                        RBTNode* rbt = CastUp( RBTNode, bst, bst );
+                        LexWordNode* kwd = CastUp( LexWordNode, rbt, rbt );
+                        ast->kind = kwd->val;
+                    }
+                    else
+                    {
+                        ast->kind = Syntax_Iden;
+                        cat_TabStr (&ast->txt, &ts);
+                    }
                     ast->line = line;
-                    cat_TabStr (&ast->txt, &ts);
                     ast = joint_of_AST (ast);
                 }
 
@@ -413,7 +575,7 @@ load_ASTree (XFileB* xf, ASTree* t)
             break;
         case '\'':
             ast = app_AST (ast);
-            ast->kind = Syntax_Char;
+            ast->kind = Syntax_CharLit;
             ast->line = line;
             if (!parse_escaped (xf, &ast->txt, '\''))
                 DBog1( "Gotta problem with single quotes! line:%u",
@@ -422,7 +584,7 @@ load_ASTree (XFileB* xf, ASTree* t)
             break;
         case '"':
             ast = app_AST (ast);
-            ast->kind = Syntax_String;
+            ast->kind = Syntax_StringLit;
             ast->line = line;
             if (!parse_escaped (xf, &ast->txt, '"'))
                 DBog1( "Gotta problem with double quotes! line:%u",
@@ -631,6 +793,7 @@ load_ASTree (XFileB* xf, ASTree* t)
         }
         ast = joint_of_AST (ast);
     }
+    lose_LexWordTree (&keyword_lookup);
 }
 
 int main (int argc, char** argv)
