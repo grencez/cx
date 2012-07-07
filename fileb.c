@@ -677,15 +677,6 @@ dump_TabStr_OFileB (OFileB* of, const TabStr* t)
 }
 
     void
-dump_cstr_OFileB (OFileB* f, const char* s)
-{
-    DeclTable( char, t );
-    t.s = (char*) s;
-    t.sz = strlen (s) + 1;
-    dump_TabStr_OFileB (f, &t);
-}
-
-    void
 vprintf_OFileB (OFileB* f, const char* fmt, va_list args)
 {
     uint sz = 2048;  /* Not good :( */

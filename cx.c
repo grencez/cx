@@ -20,7 +20,6 @@ typedef
 enum SyntaxKind
 {   Syntax_Root
     ,Syntax_Cons
-    ,Syntax_WhiteSpace
     ,Syntax_Iden
     ,Syntax_LineComment
     ,Syntax_BlockComment
@@ -31,6 +30,8 @@ enum SyntaxKind
     ,Syntax_Braces
     ,Syntax_Brackets
     ,Syntax_Stmt
+
+    ,Syntax_Inc
 
     ,Beg_Syntax_LexWords
         /* ,Syntax_Sizeof */
@@ -314,7 +315,7 @@ init_LexWordTree (LexWordTree* t)
 
     init_RBTree (&t->rbt, &t->sentinel, swapped_LexWordNode);
     InitTable( t->nodes );
-    EnsizeTable( t->nodes, End_Syntax_LexWords - Beg_Syntax_LexWords );
+    AffyTable( t->nodes, End_Syntax_LexWords - Beg_Syntax_LexWords );
     for (i = 0; i < t->nodes.sz; ++i)
     {
         LexWordNode node;
@@ -341,13 +342,10 @@ dump_AST (OFileB* of, AST* ast)
     case Syntax_Cons:
         do
         {
+            dump_TabStr_OFileB (of, &ast->txt);
             dump_AST (of, side_of_AST (ast, 0));
             ast = side_of_AST (ast, 1);
         } while (ast);
-        break;
-    case Syntax_WhiteSpace:
-        Claim( ast->txt.sz > 0 );
-        dump_TabStr_OFileB (of, &ast->txt);
         break;
     case Syntax_Iden:
         Claim( ast->txt.sz > 0 );
@@ -367,18 +365,21 @@ dump_AST (OFileB* of, AST* ast)
         break;
     case Syntax_Parens:
         dump_char_OFileB (of, '(');
+        dump_TabStr_OFileB (of, &ast->txt);
         dump_AST (of, side_of_AST (ast, 0));
         dump_AST (of, side_of_AST (ast, 1));
         dump_char_OFileB (of, ')');
         break;
     case Syntax_Braces:
         dump_char_OFileB (of, '{');
+        dump_TabStr_OFileB (of, &ast->txt);
         dump_AST (of, side_of_AST (ast, 0));
         dump_AST (of, side_of_AST (ast, 1));
         dump_char_OFileB (of, '}');
         break;
     case Syntax_Brackets:
         dump_char_OFileB (of, '[');
+        dump_TabStr_OFileB (of, &ast->txt);
         dump_AST (of, side_of_AST (ast, 0));
         dump_AST (of, side_of_AST (ast, 1));
         dump_char_OFileB (of, ']');
@@ -402,6 +403,11 @@ dump_AST (OFileB* of, AST* ast)
         dump_char_OFileB (of, '#');
         dump_TabStr_OFileB (of, &ast->txt);
         dump_char_OFileB (of, '\n');
+        break;
+    case Syntax_Inc:
+        dump_AST (of, side_of_AST (ast, 0));
+        dump_cstr_OFileB (of, "++");
+        dump_AST (of, side_of_AST (ast, 1));
         break;
     default:
         if ((ast->kind >= Beg_Syntax_LexWords &&
@@ -441,6 +447,21 @@ app_AST (AST* ast)
     b = make_AST ();
     join_BSTNode (&ast->bst, &b->bst, 0);
     return b;
+}
+
+    AST*
+wsnode_AST (AST* ast)
+{
+    if (ast->bst.split[0])
+    {
+        AST* b;
+        Claim( !ast->bst.split[1] );
+        b = make_AST ();
+        b->kind = Syntax_Cons;
+        join_BSTNode (&ast->bst, &b->bst, 1);
+        ast = b;
+    }
+    return ast;
 }
 
     bool
@@ -484,10 +505,16 @@ count_newlines (const char* s)
     return n;
 }
 
+    /** Tokenize while dealing with
+     * - line/block comment
+     * - directive (perhaps this should happen later)
+     * - char, string
+     * - parentheses, braces, brackets
+     * - statement ending with semicolon
+     **/
     void
-load_ASTree (XFileB* xf, ASTree* t)
+lex_AST (XFileB* xf, AST* ast)
 {
-    AST* ast = t->root;
     char match = 0;
     char* s;
     const char delims[] = "'\"(){}[];#+-*/%&^|~!.,?:><=";
@@ -496,15 +523,6 @@ load_ASTree (XFileB* xf, ASTree* t)
     LexWordTree keyword_lookup;
     init_LexWordTree (&keyword_lookup);
 
-    mayflush_XFileB (xf, Yes);
-
-        /* Tokenize while dealing with
-         * - line/block comment
-         * - directive (perhaps this should happen later)
-         * - char, string
-         * - parentheses, braces, brackets
-         * - statement ending with semicolon
-         */
     for (s = nextds_XFileB (xf, &match, delims);
          s;
          s = nextds_XFileB (xf, &match, delims))
@@ -524,12 +542,10 @@ load_ASTree (XFileB* xf, ASTree* t)
                 if (olay->off > 0)
                 {
                     TabStr ts = TabStr_XFileB (olay, 0);
-                    ast = app_AST (ast);
-                    ast->kind = Syntax_WhiteSpace;
-                    ast->line = line;
+                    ast = wsnode_AST (ast);
+                    AffyTable( ast->txt, ts.sz+1 );
                     cat_TabStr (&ast->txt, &ts);
                     line += count_newlines (ast->txt.s);
-                    ast = joint_of_AST (ast);
                 }
                 off += olay->off;
                 *olay = olay_XFileB (xf, off);
@@ -555,6 +571,7 @@ load_ASTree (XFileB* xf, ASTree* t)
                     else
                     {
                         ast->kind = Syntax_Iden;
+                        AffyTable( ast->txt, ts.sz+1 );
                         cat_TabStr (&ast->txt, &ts);
                     }
                     ast->line = line;
@@ -627,7 +644,8 @@ load_ASTree (XFileB* xf, ASTree* t)
             }
             break;
         case ';':
-            while (ast->kind == Syntax_Cons && lo_ast->kind != Syntax_Stmt)
+            while (ast->kind == Syntax_Cons &&
+                   (!lo_ast || lo_ast->kind != Syntax_Stmt))
             {
                 side_of_AST (ast, 0);
                 lo_ast = ast;
@@ -794,6 +812,12 @@ load_ASTree (XFileB* xf, ASTree* t)
         ast = joint_of_AST (ast);
     }
     lose_LexWordTree (&keyword_lookup);
+}
+
+    void
+load_ASTree (XFileB* xf, ASTree* t)
+{
+    lex_AST (xf, t->root);
 }
 
 int main (int argc, char** argv)

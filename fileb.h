@@ -160,8 +160,6 @@ dump_char_OFileB (OFileB* f, char c);
 void
 dump_TabStr_OFileB (OFileB* f, const TabStr* t);
 void
-dump_cstr_OFileB (OFileB* f, const char* s);
-void
 vprintf_OFileB (OFileB* f, const char* fmt, va_list args);
 void
 printf_OFileB (OFileB* f, const char* fmt, ...);
@@ -255,6 +253,16 @@ qual_inline
 char* cstr_OFileB (OFileB* of) { return cstr_XOFileB (of); }
 qual_inline
 char* cstr_FileB (FileB* f) { return cstr_XOFileB (&f->xo); }
+
+qual_inline
+    void
+dump_cstr_OFileB (OFileB* of, const char* s)
+{
+    DeclTable( char, t );
+    t.s = (char*) s;
+    t.sz = strlen (s) + 1;
+    dump_TabStr_OFileB (of, &t);
+}
 
     /* Implemented in sys-cx.c */
 FileB* stdin_FileB ();

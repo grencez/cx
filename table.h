@@ -272,6 +272,20 @@ pack_Table (Table* t)
 
 qual_inline
     void
+affy_Table (Table* t, ujint capac)
+{
+    t->alloc_lgsz = sizeof(ujint) * NBits_byte - 1;
+    t->s = (byte*) realloc (t->s, t->elsz * capac);
+}
+#define AffyTable( t, capac )  do \
+{ \
+    Table AffyTable_t = MakeCastTable( t ); \
+    affy_Table (&AffyTable_t, capac); \
+    XferCastTable( t, AffyTable_t ); \
+} while (0)
+
+qual_inline
+    void
 copy_Table (Table* a, const Table* b)
 {
     if (a->elsz != b->elsz)
