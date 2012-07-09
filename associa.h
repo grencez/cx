@@ -27,6 +27,7 @@ struct Associa
     Trit (* swapped) (const void* lhs, const void* rhs);
     RBTree rbt;
     Assoc sentinel;
+    bool ensize;
 };
 
 static
@@ -42,6 +43,7 @@ init3_Associa (Associa* map, size_t keysz, size_t valsz,
     InitTable( map->nodes );
     map->swapped = swapped;
     init_RBTree (&map->rbt, &map->sentinel.rbt, swapped_Assoc);
+    map->ensize = false;
 }
 
 qual_inline
@@ -163,12 +165,10 @@ acqu_Assoc (Associa* map)
     Assoc* a;
     Assoc* old = map->nodes.s;
     a = Grow1Table( map->nodes );
-    if (old != map->nodes.s)
-    {
-        -- map->nodes.sz;
-        fixlinks_Associa (map, old);
-        ++ map->nodes.sz;
-    }
+    -- map->nodes.sz;
+    fixlinks_Associa (map, old);
+    ++ map->nodes.sz;
+
     ensize_Table (&map->keys, map->nodes.sz);
     ensize_Table (&map->vals, map->nodes.sz);
     a->rbt.bst.joint = &map->sentinel.rbt.bst;
@@ -185,14 +185,17 @@ qual_inline
     void
 plac_Assoc (Assoc* a, Assoc* b, const void* key, const void* val)
 {
-    BSTNode* aa = &a->rbt.bst;
-    BSTNode* bb = &b->rbt.bst;
+    BSTNode* aa;
+    BSTNode* bb;
+    if (a == b)  return;
     a->rbt = b->rbt;
+    aa = &a->rbt.bst;
+    bb = &b->rbt.bst;
     join_BSTNode (aa->joint, aa, side_BSTNode (bb));
     join_BSTNode (aa, aa->split[0], 0);
     join_BSTNode (aa, aa->split[1], 1);
     key_fo_Assoc (a, key);
-    key_fo_Assoc (a, val);
+    val_fo_Assoc (a, val);
 }
 
 qual_inline
@@ -205,12 +208,20 @@ lose_Assoc (Assoc* a)
     b = &map->nodes.s[map->nodes.sz-1];
     plac_Assoc (a, b, key_of_Assoc (b), val_of_Assoc (b));
 
-    b = map->nodes.s;
-    MPopTable( map->nodes, 1 );
-    if (b != map->nodes.s)
-        fixlinks_Associa (map, b);
-    size_Table (&map->keys, map->nodes.sz);
-    size_Table (&map->vals, map->nodes.sz);
+    if (!map->ensize)
+    {
+        Assoc* old = map->nodes.s;
+        MPopTable( map->nodes, 1 );
+        fixlinks_Associa (map, old);
+        size_Table (&map->keys, map->nodes.sz);
+        size_Table (&map->vals, map->nodes.sz);
+    }
+    else
+    {
+        -- map->nodes.sz;
+        map->keys.sz = map->nodes.sz;
+        map->vals.sz = map->nodes.sz;
+    }
 }
 
 qual_inline
@@ -254,6 +265,14 @@ ensure_Associa (Associa* map, const void* key)
         plac_Assoc (a, &x, key, 0);
     }
     return a;
+}
+
+qual_inline
+    void
+remove_Associa (Associa* map, const void* key)
+{
+    Assoc* a = lookup_Associa (map, key);
+    if (a)  lose_Assoc (a);
 }
 
 #endif

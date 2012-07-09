@@ -1,4 +1,5 @@
 
+#include "associa.h"
 #include "bittable.h"
 #include "fileb.h"
 #include "rbtree.h"
@@ -10,17 +11,11 @@
 #include <stdio.h>
 #include <string.h>
 
-    bool
-eql_cstr (const char* a, const char* b)
-{
-    return (0 == strcmp (a, b));
-}
-
 typedef struct TNode TNode;
 struct TNode
 {
     RBTNode rbt;
-    char* key;
+    const char* key;
     uint val;
 };
 
@@ -31,8 +26,6 @@ swapped_TNode (const BSTNode* lhs, const BSTNode* rhs)
     const TNode* b = CastUp( TNode, rbt, CastUp( RBTNode, bst, rhs ) );
     int ret = strcmp (a->key, b->key);
 
-        /* fprintf (stderr, "%s   %s\n", a->key, b->key); */
-
     if (ret < 0)  return Nil;
     if (ret > 0)  return Yes;
     return May;
@@ -42,7 +35,7 @@ swapped_TNode (const BSTNode* lhs, const BSTNode* rhs)
 lose_TNode (BSTNode* x)
 {
     TNode* a = CastUp( TNode, rbt, CastUp( RBTNode, bst, x ) );
-    free (a->key);
+    a->key = 0;
     free (a);
 }
 
@@ -120,7 +113,7 @@ static
 insert_TNode (RBTree* t, const char* key, uint val, uint* n_expect)
 {
     DeclAlloc( TNode, a, 1 );
-    a->key = dup_cstr (key);
+    a->key = key;
     a->val = val;
     insert_RBTree (t, &a->rbt);
     *n_expect += 1;
@@ -171,7 +164,7 @@ find_TNode (RBTree* t, const char* s)
 {
     TNode a;
     BSTNode* x;
-    a.key = (char*) s;
+    a.key = s;
     x = find_BSTree (&t->bst, &a.rbt.bst);
     if (!x)  return 0;
     return CastUp( TNode, rbt, CastUp( RBTNode, bst, x ) );
@@ -188,6 +181,61 @@ remove_TNode (RBTree* t, const char* key, uint* n_expect)
     *n_expect -= 1;
     claim_BSTree (&t->bst, *n_expect);
 }
+
+
+static
+    void
+testfn_Associa ()
+{
+    static const char* const keys[] = {
+        "a", "b", "c", "d", "e", "f", "g",
+        "h", "i", "j", "k", "l", "m", "n",
+        "o", "p", "q", "r", "s", "t", "u",
+        "v", "w", "x", "y", "z"
+    };
+    static const uint muls[] = {
+        1, 3, 5, 7, 9, 11, 15, 17, 19, 21
+    };
+    const uint nkeys = ArraySz( keys );
+    const uint nmuls = ArraySz( muls );
+    DecloStack( Associa, map );
+    uint n_expect = 0;
+
+    init3_Associa (map, sizeof(TabStr), sizeof(uint),
+                   (Trit (*) (const void*, const void*)) swapped_TabStr);
+    map->ensize = false;
+
+    { BLoop( mi, nmuls )
+        { BLoop( mj, nmuls )
+            { BLoop( i, nkeys )
+                const uint idx = (muls[mi] * i) % nkeys;
+                const TabStr key = dflt1_TabStr (keys[idx]);
+                insert_Associa (map, &key, &idx);
+                ++ n_expect;
+                Claim2( map->nodes.sz ,==, n_expect );
+            } BLose()
+
+
+            { BLoop( i, nkeys )
+                const uint idx = (muls[mj] * i) % nkeys;
+                const TabStr key = dflt1_TabStr (keys[idx]);
+                Assoc* a = lookup_Associa (map, &key);
+                Claim( a );
+                {
+                    uint val = *(uint*) val_of_Assoc (a);
+                    Claim2( idx ,==, val );
+                }
+                lose_Assoc (a);
+                -- n_expect;
+                Claim2( map->nodes.sz ,==, n_expect );
+            } BLose()
+        } BLose()
+    } BLose()
+
+    Claim2( map->nodes.sz ,==, 0 );
+    lose_Associa (map);
+}
+
 
 static
     void
@@ -215,11 +263,11 @@ testfn_BitTable ()
     lose_BitTable (&bt);
 }
 
-    /* This mimics the dirty bit in a set associative cache,
+    /** This mimics the dirty bit in a set associative cache,
      * but is unrealistic since it disregards any values.
      * Now, if all values fall inside [0..255], then we have a useful tool,
      * but then LowBits() would not be tested.
-     */
+     **/
 static
     void
 testfn_cache_BitTable ()
@@ -287,8 +335,10 @@ testfn_skipws_FileB ()
 
         while ((s = nextok_XFileB (&olay, 0, 0)))
         {
+            int cmp_ret;
             Claim2(idx ,<, ArraySz( expect_text ));
-            Claim2(0 ,==, strcmp(expect_text[idx], s));
+            cmp_ret = strcmp(expect_text[idx], s);
+            Claim2( 0 ,==, cmp_ret );
             ++ idx;
             dump_cstr_OFileB (of, s);
             dump_char_OFileB (of, '\n');
@@ -319,7 +369,7 @@ testfn_RBTree ()
     uint n_expect = 0;
 
     init_RBTree (t, &sentinel.rbt, swapped_TNode);
-    sentinel.key = (char*) "sentinel";
+    sentinel.key = "sentinel";
     sentinel.val = nkeys;
 
     { BLoop( mi, nmuls )
@@ -331,7 +381,7 @@ testfn_RBTree ()
 #if 0
             output_dot (&t->bst);
 #endif
-            { BLoop( i, ArraySz( keys ) )
+            { BLoop( i, nkeys )
                 const uint idx = (muls[mj] * i) % nkeys;
                 remove_TNode (t, keys[idx], &n_expect);
             } BLose()
@@ -453,15 +503,17 @@ testfn_Table ()
     LoseTable( t );
 }
 
+
 int main ()
 {
     init_sys_cx ();
 
+    testfn_Table ();
     testfn_BitTable ();
     testfn_cache_BitTable ();
     testfn_skipws_FileB ();
     testfn_RBTree ();
-    testfn_Table ();
+    testfn_Associa ();
 
     lose_sys_cx ();
     return 0;

@@ -3,7 +3,7 @@ CC = gcc
 
 CFLAGS =
 CFLAGS += -ansi -pedantic
-CFLAGS += -Wall -Wextra
+CFLAGS += -Wall -Wextra -Wstrict-aliasing
 CFLAGS += -g
 #CFLAGS += -O3
 
