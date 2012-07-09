@@ -30,7 +30,7 @@ root_BSTree (const BSTree* t, const BSTNode* x);
 BSTNode*
 root_of_BSTree (BSTree* t);
 void
-root_for_BSTree (BSTree* t, BSTNode* x);
+root_fo_BSTree (BSTree* t, BSTNode* x);
 
 void
 traverse_BSTree (BSTree* t, Trit postorder,

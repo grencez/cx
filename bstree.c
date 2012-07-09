@@ -56,7 +56,7 @@ root_of_BSTree (BSTree* t)
 }
 
     void
-root_for_BSTree (BSTree* t, BSTNode* x)
+root_fo_BSTree (BSTree* t, BSTNode* x)
 {
     x->joint = t->sentinel;
     t->sentinel->split[0] = x;

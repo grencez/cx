@@ -49,9 +49,10 @@
     ((n) == 0 ? (T*) 0 : \
      (T*) malloc ((n) * sizeof (T)))
 
-#define RepliT( T, a, b, n ) \
-    ((n) == 0 ? (T*) 0 : \
-     (T*) memcpy (a, b, (n) * sizeof (T)))
+#define RepliT( T, a, b, n )  do \
+{ \
+    if ((n) > 0)  memcpy (a, b, (n) * sizeof (T)); \
+} while (0)
 
 #define DupliT( T, a, n ) \
     ((n) == 0 ? (T*) 0 : \

@@ -1,4 +1,5 @@
 
+#include "associa.h"
 #include "fileb.h"
 #include "bstree.h"
 #include "rbtree.h"
@@ -11,10 +12,7 @@
 
 typedef struct AST AST;
 typedef struct ASTree ASTree;
-typedef struct LexWordNode LexWordNode;
-typedef struct LexWordTree LexWordTree;
-
-DeclTableT( LexWordNode, LexWordNode );
+typedef struct CxCtx CxCtx;
 
 typedef
 enum SyntaxKind
@@ -31,16 +29,20 @@ enum SyntaxKind
     ,Syntax_Brackets
     ,Syntax_Stmt
 
+    /* TODO */
+    ,Syntax_Struct
+    ,Syntax_Typedef
+
     ,Syntax_Inc
 
     ,Beg_Syntax_LexWords
-        /* ,Syntax_Sizeof */
-        /* ,Syntax_Offsetof */
     ,Lexical_Struct = Beg_Syntax_LexWords
     ,Lexical_Enum
     ,Lexical_Typedef
     ,Lexical_Union
 
+    ,Lexical_Sizeof
+    ,Lexical_Offsetof
     ,Lexical_For
     ,Lexical_If
     ,Lexical_Else
@@ -95,6 +97,7 @@ enum SyntaxKind
     ,Lexical_Comma
     ,Lexical_Question
     ,Lexical_Colon
+    ,Lexical_Semicolon
     ,Lexical_GT
     ,Lexical_PMemb
     ,Lexical_RShift
@@ -135,29 +138,11 @@ struct ASTree
     AST* root;
 };
 
-struct LexWordNode
+struct CxCtx
 {
-    RBTNode rbt;
-    TabStr key;
-    SyntaxKind val;
+    ASTree ast;
 };
 
-struct LexWordTree
-{
-    RBTNode sentinel;
-    RBTree rbt;
-    TableT(LexWordNode) nodes;
-};
-
-    Trit
-swapped_LexWordNode (const BSTNode* lhs, const BSTNode* rhs)
-{
-    const LexWordNode* a =
-        CastUp( LexWordNode, rbt, CastUp( RBTNode, bst, lhs ) );
-    const LexWordNode* b =
-        CastUp( LexWordNode, rbt, CastUp( RBTNode, bst, rhs ) );
-    return swapped_TabStr (&a->key, &b->key);
-}
 
     AST
 dflt_AST ()
@@ -208,7 +193,7 @@ init_ASTree (ASTree* t)
     init_BSTree (&t->bst, &t->sentinel, NULL);
     t->root = make_AST ();
     t->root->kind = Syntax_Root;
-    root_for_BSTree (&t->bst, &t->root->bst);
+    root_fo_BSTree (&t->bst, &t->root->bst);
 }
 
 
@@ -236,6 +221,8 @@ cstr_SyntaxKind (SyntaxKind kind)
     case Lexical_Enum     : return "enum"    ;
     case Lexical_Typedef  : return "typedef" ;
     case Lexical_Union    : return "union"   ;
+    case Lexical_Sizeof   : return "sizeof"  ;
+    case Lexical_Offsetof : return "offsetof";
     case Lexical_For      : return "for"     ;
     case Lexical_If       : return "if"      ;
     case Lexical_Else     : return "else"    ;
@@ -284,6 +271,7 @@ cstr_SyntaxKind (SyntaxKind kind)
     case Lexical_Comma       : return ","  ; 
     case Lexical_Question    : return "?"  ; 
     case Lexical_Colon       : return ":"  ; 
+    case Lexical_Semicolon   : return ";"  ; 
     case Lexical_GT          : return ">"  ; 
     case Lexical_PMemb       : return "->" ; 
     case Lexical_RShift      : return ">>" ; 
@@ -309,27 +297,19 @@ cstr_SyntaxKind (SyntaxKind kind)
 }
 
     void
-init_LexWordTree (LexWordTree* t)
+init_lexwords (Associa* map)
 {
-    uint i;
+    SyntaxKind kind;
+    init3_Associa (map, sizeof(TabStr), sizeof(SyntaxKind),
+                   (Trit (*) (const void*, const void*)) swapped_TabStr);
 
-    init_RBTree (&t->rbt, &t->sentinel, swapped_LexWordNode);
-    InitTable( t->nodes );
-    AffyTable( t->nodes, End_Syntax_LexWords - Beg_Syntax_LexWords );
-    for (i = 0; i < t->nodes.sz; ++i)
+    for (kind = Beg_Syntax_LexWords;
+         kind < End_Syntax_LexWords;
+         kind = (SyntaxKind) (kind + 1))
     {
-        LexWordNode node;
-        node.val = (SyntaxKind) (i + Beg_Syntax_LexWords);
-        node.key = dflt1_TabStr (cstr_SyntaxKind (node.val));
-        t->nodes.s[i] = node;
-        insert_RBTree (&t->rbt, &t->nodes.s[i].rbt);
+        TabStr key = dflt1_TabStr (cstr_SyntaxKind (kind));
+        insert_Associa (map, &key, &kind);
     }
-}
-
-    void
-lose_LexWordTree (LexWordTree* t)
-{
-    LoseTable( t->nodes );
 }
 
     void
@@ -520,8 +500,9 @@ lex_AST (XFileB* xf, AST* ast)
     const char delims[] = "'\"(){}[];#+-*/%&^|~!.,?:><=";
     ujint off;
     ujint line = 0;
-    LexWordTree keyword_lookup;
-    init_LexWordTree (&keyword_lookup);
+    DecloStack( Associa, keyword_map );
+
+    init_lexwords (keyword_map);
 
     for (s = nextds_XFileB (xf, &match, delims);
          s;
@@ -555,18 +536,13 @@ lex_AST (XFileB* xf, AST* ast)
                 if (olay->off > 0)
                 {
                     TabStr ts = TabStr_XFileB (olay, 0);
-                    LexWordNode node;
-                    BSTNode* bst;
-                    node.key = ts;
-                    bst = find_BSTree (&keyword_lookup.rbt.bst, &node.rbt.bst);
+                    Assoc* luk = lookup_Associa (keyword_map, &ts);
 
                     ast = app_AST (ast);
 
-                    if (bst)
+                    if (luk)
                     {
-                        RBTNode* rbt = CastUp( RBTNode, bst, bst );
-                        LexWordNode* kwd = CastUp( LexWordNode, rbt, rbt );
-                        ast->kind = kwd->val;
+                        ast->kind = *(SyntaxKind*) val_of_Assoc (luk);
                     }
                     else
                     {
@@ -643,6 +619,10 @@ lex_AST (XFileB* xf, AST* ast)
                 return;
             }
             break;
+#if 0
+                /* TODO: Kept for reference.
+                 * Remove when this is handled when parsing.
+                 */
         case ';':
             while (ast->kind == Syntax_Cons &&
                    (!lo_ast || lo_ast->kind != Syntax_Stmt))
@@ -663,6 +643,7 @@ lex_AST (XFileB* xf, AST* ast)
             join_BSTNode (&ast->bst, &lo_ast->bst, 0);
             ast = joint_of_AST (lo_ast);
             break;
+#endif
         case '#':
             ast = app_AST (ast);
             ast->kind = Syntax_Directive;
@@ -735,6 +716,7 @@ lex_AST (XFileB* xf, AST* ast)
             LexiCase( ',', Lexical_Comma );
             LexiCase( '?', Lexical_Question );
             LexiCase( ':', Lexical_Colon );
+            LexiCase( ';', Lexical_Semicolon );
         case '>':
             if (lo_ast && lo_ast->kind == Lexical_GT)
             {
@@ -811,13 +793,16 @@ lex_AST (XFileB* xf, AST* ast)
         }
         ast = joint_of_AST (ast);
     }
-    lose_LexWordTree (&keyword_lookup);
+    lose_Associa (keyword_map);
 }
 
     void
 load_ASTree (XFileB* xf, ASTree* t)
 {
+    DecloStack( CxCtx, ctx );
+    ctx->ast = *t;
     lex_AST (xf, t->root);
+    *t = ctx->ast;
 }
 
 int main (int argc, char** argv)

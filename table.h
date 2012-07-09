@@ -41,7 +41,7 @@ DeclTableT( ujint, ujint );
 
 qual_inline
     Table
-make_Table (void* s, ujint sz, TableElSz elsz, TableLgSz alloc_lgsz)
+dflt4_Table (void* s, ujint sz, TableElSz elsz, TableLgSz alloc_lgsz)
 {
     Table t;
     t.s = s;
@@ -52,16 +52,16 @@ make_Table (void* s, ujint sz, TableElSz elsz, TableLgSz alloc_lgsz)
 }
 qual_inline
     Table
-dflt_TableT (TableElSz elsz)
+dflt1_Table (TableElSz elsz)
 {
-    return make_Table (0, 0, elsz, 0);
+    return dflt4_Table (0, 0, elsz, 0);
 }
 #define DeclTable( S, table ) \
     TableT_##S table = { 0, 0, 0 }
 
 
 #define MakeCastTable( t ) \
-    make_Table ((t).s, (t).sz, sizeof(*(t).s), (t).alloc_lgsz)
+    dflt4_Table ((t).s, (t).sz, sizeof(*(t).s), (t).alloc_lgsz)
 
 #define XferCastTable( t, name )  do \
 { \
@@ -73,9 +73,9 @@ dflt_TableT (TableElSz elsz)
 
 qual_inline
     void
-init_TableT (Table* t, TableElSz elsz)
+init1_Table (Table* t, TableElSz elsz)
 {
-    *t = dflt_TableT (elsz);
+    *t = dflt1_Table (elsz);
 }
 #define InitTable( t )  do \
 { \
@@ -195,7 +195,7 @@ qual_inline
 synhax_grow1_Table (void* ps, void* s, ujint* sz,
                     TableElSz elsz, TableLgSz* alloc_lgsz)
 {
-    Table t = make_Table (s, *sz, elsz, *alloc_lgsz);
+    Table t = dflt4_Table (s, *sz, elsz, *alloc_lgsz);
     grow1_Table (&t);
     memcpy (ps, &t.s, sizeof(void*));
     *alloc_lgsz = t.alloc_lgsz;
