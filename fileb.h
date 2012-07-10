@@ -283,9 +283,17 @@ dup_cstr (const char* s)
 
 qual_inline
     TabStr
-dflt1_TabStr (const char* s)
+dflt_TabStr ()
 {
     DeclTable( char, t );
+    return t;
+}
+
+qual_inline
+    TabStr
+dflt1_TabStr (const char* s)
+{
+    TabStr t = dflt_TabStr ();
     t.s = (char*) s;
     t.sz = strlen (s);
     return t;

@@ -98,13 +98,13 @@ claim_BSTree (BSTree* t, uint n_expect)
     args[1] = &nblack;
 
     n_result = 0;
-    traverse_BSTree (t, Yes, claim_TNode, args);
+    walk_BSTree (t, Yes, claim_TNode, args);
     Claim2( n_expect ,==, n_result );
     n_result = 0;
-    traverse_BSTree (t, Nil, claim_TNode, args);
+    walk_BSTree (t, Nil, claim_TNode, args);
     Claim2( n_expect ,==, n_result );
     n_result = 0;
-    traverse_BSTree (t, May, claim_TNode, args);
+    walk_BSTree (t, May, claim_TNode, args);
     Claim2( n_expect ,==, n_result );
 }
 
@@ -153,7 +153,7 @@ output_dot (BSTree* t)
 
     dump_cstr_OFileB (of, "digraph tree {\n");
     output_dot_fn (t->sentinel, args);
-    traverse_BSTree (t, Yes, output_dot_fn, args);
+    walk_BSTree (t, Yes, output_dot_fn, args);
     dump_cstr_OFileB (of, "}\n");
     lose_FileB (out);
 }

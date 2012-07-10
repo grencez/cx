@@ -67,8 +67,8 @@ root_fo_BSTree (BSTree* t, BSTNode* x)
      * values of Nil, Yes, and May for /postorder/ respectively.
      **/
     void
-traverse_BSTree (BSTree* t, Trit postorder,
-                 void (* f) (BSTNode*, void*), void* dat)
+walk_BSTree (BSTree* t, Trit postorder,
+             void (* f) (BSTNode*, void*), void* dat)
 {
     BSTNode* y = root_of_BSTree (t);
 

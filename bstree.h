@@ -33,8 +33,8 @@ void
 root_fo_BSTree (BSTree* t, BSTNode* x);
 
 void
-traverse_BSTree (BSTree* t, Trit postorder,
-                 void (* f) (BSTNode*, void*), void* dat);
+walk_BSTree (BSTree* t, Trit postorder,
+             void (* f) (BSTNode*, void*), void* dat);
 BSTNode*
 find_BSTree (BSTree* t, const BSTNode* x);
 void

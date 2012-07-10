@@ -141,6 +141,7 @@ struct ASTree
 struct CxCtx
 {
     ASTree ast;
+    Associa type_lookup;
 };
 
 
@@ -165,7 +166,7 @@ make_AST ()
 }
 
     AST*
-side_of_AST (AST* ast, Bit side)
+split_of_AST (AST* ast, Bit side)
 {
     BSTNode* bst = ast->bst.split[side];
     if (!bst)  return 0;
@@ -181,10 +182,9 @@ joint_of_AST (AST* ast)
 }
 
     void
-set_side_AST (AST* a, AST* b, Bit side)
+join_AST (AST* y, AST* x, Bit side)
 {
-    a->bst.split[side] = &b->bst;
-    b->bst.joint       = &a->bst;
+    join_BSTNode (&y->bst, (x ? &x->bst : 0), side);
 }
 
     void
@@ -196,20 +196,25 @@ init_ASTree (ASTree* t)
     root_fo_BSTree (&t->bst, &t->root->bst);
 }
 
+static
+    void
+lose_AST (AST* ast)
+{
+    LoseTable( ast->txt );
+    free (ast);
+}
 
 static
     void
-lose_AST (BSTNode* bst)
+lose_bst_AST (BSTNode* bst)
 {
-    AST* ast = CastUp( AST, bst, bst );
-    LoseTable( ast->txt );
-    free (ast);
+    lose_AST (CastUp( AST, bst, bst ));
 }
 
     void
 lose_ASTree (ASTree* ast)
 {
-    lose_BSTree (&ast->bst, lose_AST);
+    lose_BSTree (&ast->bst, lose_bst_AST);
 }
 
     const char*
@@ -253,45 +258,45 @@ cstr_SyntaxKind (SyntaxKind kind)
     case Lexical_Float    : return "float"   ;
     case Lexical_Double   : return "double"  ;
 
-    case Lexical_Add         : return "+"  ; 
-    case Lexical_Inc         : return "++" ; 
-    case Lexical_Sub         : return "-"  ; 
-    case Lexical_Dec         : return "--" ; 
-    case Lexical_Mul         : return "*"  ; 
-    case Lexical_Div         : return "/"  ; 
-    case Lexical_Mod         : return "%"  ; 
-    case Lexical_BitAnd      : return "&"  ; 
-    case Lexical_And         : return "&&" ; 
-    case Lexical_BitXor      : return "^"  ; 
-    case Lexical_BitOr       : return "|"  ; 
-    case Lexical_Or          : return "||" ; 
-    case Lexical_BitNot      : return "~"  ; 
-    case Lexical_Not         : return "!"  ; 
-    case Lexical_Dot         : return "."  ; 
-    case Lexical_Comma       : return ","  ; 
-    case Lexical_Question    : return "?"  ; 
-    case Lexical_Colon       : return ":"  ; 
-    case Lexical_Semicolon   : return ";"  ; 
-    case Lexical_GT          : return ">"  ; 
-    case Lexical_PMemb       : return "->" ; 
-    case Lexical_RShift      : return ">>" ; 
-    case Lexical_LT          : return "<"  ; 
-    case Lexical_LShift      : return "<<" ; 
-    case Lexical_Assign      : return "="  ; 
-    case Lexical_AddAssign   : return "+=" ; 
-    case Lexical_SubAssign   : return "-=" ; 
-    case Lexical_MulAssign   : return "*=" ; 
-    case Lexical_DivAssign   : return "/=" ; 
-    case Lexical_ModAssign   : return "%=" ; 
-    case Lexical_BitAndAssign: return "&=" ;  
-    case Lexical_BitXorAssign: return "^=" ;  
-    case Lexical_BitOrAssign : return "|=" ; 
-    case Lexical_NotEq       : return "!=" ; 
-    case Lexical_GTEq        : return ">=" ; 
-    case Lexical_RShiftAssign: return ">>=";  
-    case Lexical_LTEq        : return "<=" ; 
-    case Lexical_LShiftAssign: return "<<=";  
-    case Lexical_Eq          : return "==" ; 
+    case Lexical_Add         : return "+"  ;
+    case Lexical_Inc         : return "++" ;
+    case Lexical_Sub         : return "-"  ;
+    case Lexical_Dec         : return "--" ;
+    case Lexical_Mul         : return "*"  ;
+    case Lexical_Div         : return "/"  ;
+    case Lexical_Mod         : return "%"  ;
+    case Lexical_BitAnd      : return "&"  ;
+    case Lexical_And         : return "&&" ;
+    case Lexical_BitXor      : return "^"  ;
+    case Lexical_BitOr       : return "|"  ;
+    case Lexical_Or          : return "||" ;
+    case Lexical_BitNot      : return "~"  ;
+    case Lexical_Not         : return "!"  ;
+    case Lexical_Dot         : return "."  ;
+    case Lexical_Comma       : return ","  ;
+    case Lexical_Question    : return "?"  ;
+    case Lexical_Colon       : return ":"  ;
+    case Lexical_Semicolon   : return ";"  ;
+    case Lexical_GT          : return ">"  ;
+    case Lexical_PMemb       : return "->" ;
+    case Lexical_RShift      : return ">>" ;
+    case Lexical_LT          : return "<"  ;
+    case Lexical_LShift      : return "<<" ;
+    case Lexical_Assign      : return "="  ;
+    case Lexical_AddAssign   : return "+=" ;
+    case Lexical_SubAssign   : return "-=" ;
+    case Lexical_MulAssign   : return "*=" ;
+    case Lexical_DivAssign   : return "/=" ;
+    case Lexical_ModAssign   : return "%=" ;
+    case Lexical_BitAndAssign: return "&=" ;
+    case Lexical_BitXorAssign: return "^=" ;
+    case Lexical_BitOrAssign : return "|=" ;
+    case Lexical_NotEq       : return "!=" ;
+    case Lexical_GTEq        : return ">=" ;
+    case Lexical_RShiftAssign: return ">>=";
+    case Lexical_LTEq        : return "<=" ;
+    case Lexical_LShiftAssign: return "<<=";
+    case Lexical_Eq          : return "==" ;
     default              : return 0;
     }
 }
@@ -323,8 +328,8 @@ dump_AST (OFileB* of, AST* ast)
         do
         {
             dump_TabStr_OFileB (of, &ast->txt);
-            dump_AST (of, side_of_AST (ast, 0));
-            ast = side_of_AST (ast, 1);
+            dump_AST (of, split_of_AST (ast, 0));
+            ast = split_of_AST (ast, 1);
         } while (ast);
         break;
     case Syntax_Iden:
@@ -346,27 +351,28 @@ dump_AST (OFileB* of, AST* ast)
     case Syntax_Parens:
         dump_char_OFileB (of, '(');
         dump_TabStr_OFileB (of, &ast->txt);
-        dump_AST (of, side_of_AST (ast, 0));
-        dump_AST (of, side_of_AST (ast, 1));
+        dump_AST (of, split_of_AST (ast, 0));
+        dump_AST (of, split_of_AST (ast, 1));
         dump_char_OFileB (of, ')');
         break;
     case Syntax_Braces:
         dump_char_OFileB (of, '{');
         dump_TabStr_OFileB (of, &ast->txt);
-        dump_AST (of, side_of_AST (ast, 0));
-        dump_AST (of, side_of_AST (ast, 1));
+        dump_AST (of, split_of_AST (ast, 0));
+        dump_AST (of, split_of_AST (ast, 1));
         dump_char_OFileB (of, '}');
         break;
     case Syntax_Brackets:
         dump_char_OFileB (of, '[');
         dump_TabStr_OFileB (of, &ast->txt);
-        dump_AST (of, side_of_AST (ast, 0));
-        dump_AST (of, side_of_AST (ast, 1));
+        dump_AST (of, split_of_AST (ast, 0));
+        dump_AST (of, split_of_AST (ast, 1));
         dump_char_OFileB (of, ']');
         break;
     case Syntax_Stmt:
-        dump_AST (of, side_of_AST (ast, 0));
-        dump_AST (of, side_of_AST (ast, 1));
+        dump_AST (of, split_of_AST (ast, 0));
+        dump_AST (of, split_of_AST (ast, 1));
+        dump_TabStr_OFileB (of, &ast->txt);
         dump_char_OFileB (of, ';');
         break;
     case Syntax_LineComment:
@@ -385,9 +391,9 @@ dump_AST (OFileB* of, AST* ast)
         dump_char_OFileB (of, '\n');
         break;
     case Syntax_Inc:
-        dump_AST (of, side_of_AST (ast, 0));
+        dump_AST (of, split_of_AST (ast, 0));
         dump_cstr_OFileB (of, "++");
-        dump_AST (of, side_of_AST (ast, 1));
+        dump_AST (of, split_of_AST (ast, 1));
         break;
     default:
         if ((ast->kind >= Beg_Syntax_LexWords &&
@@ -559,7 +565,7 @@ lex_AST (XFileB* xf, AST* ast)
             }
         }
 
-        lo_ast = side_of_AST (ast, 0);
+        lo_ast = split_of_AST (ast, 0);
 
         switch (match)
         {
@@ -619,31 +625,6 @@ lex_AST (XFileB* xf, AST* ast)
                 return;
             }
             break;
-#if 0
-                /* TODO: Kept for reference.
-                 * Remove when this is handled when parsing.
-                 */
-        case ';':
-            while (ast->kind == Syntax_Cons &&
-                   (!lo_ast || lo_ast->kind != Syntax_Stmt))
-            {
-                side_of_AST (ast, 0);
-                lo_ast = ast;
-                ast = joint_of_AST (ast);
-            }
-            if (ast->kind == Syntax_Cons)  ast = lo_ast;
-
-            lo_ast = make_AST ();
-            lo_ast->kind = Syntax_Stmt;
-            lo_ast->line = line;
-            join_BSTNode (&lo_ast->bst, ast->bst.split[0], 0);
-            join_BSTNode (&lo_ast->bst, ast->bst.split[1], 1);
-            ast->bst.split[0] = 0;
-            ast->bst.split[1] = 0;
-            join_BSTNode (&ast->bst, &lo_ast->bst, 0);
-            ast = joint_of_AST (lo_ast);
-            break;
-#endif
         case '#':
             ast = app_AST (ast);
             ast->kind = Syntax_Directive;
@@ -797,12 +778,126 @@ lex_AST (XFileB* xf, AST* ast)
 }
 
     void
+build_stmts_AST (AST* ast)
+{
+    AST* pending = 0;
+    SyntaxKind pending_kind = NSyntaxKinds;
+
+    for (; ast; ast = split_of_AST (ast, 1))
+    {
+        AST* lo_ast = split_of_AST (ast, 0);
+
+        if (pending)
+        {
+            if (pending_kind == NSyntaxKinds)
+                pending_kind = split_of_AST (pending, 0) -> kind;
+        }
+        else
+        {
+            pending_kind = NSyntaxKinds;
+        }
+
+        if (!lo_ast)
+        {
+            Claim( !split_of_AST (ast, 1) );
+            return;
+        }
+        switch  (lo_ast->kind)
+        {
+        case Syntax_Directive:
+        case Syntax_LineComment:
+        case Syntax_BlockComment:
+            break;
+        case Syntax_Parens:
+            if (pending_kind == Lexical_For)
+            {
+                    /* Only gets first two statements in for loop.*/
+                build_stmts_AST (lo_ast);
+            }
+            if (!pending)
+            {
+                pending = ast;
+                pending_kind = lo_ast->kind;
+            }
+            break;
+        case Syntax_Braces:
+            build_stmts_AST (lo_ast);
+            if (pending_kind != Lexical_Do)
+            {
+                pending = 0;
+            }
+            break;
+        case Lexical_Colon:
+            if (pending_kind == Lexical_Case)
+            {
+            }
+            else if (pending_kind == Lexical_Goto)
+            {
+            }
+            else
+            {
+                    /* TODO: Remember the damn ternary operator.*/
+            }
+            pending = 0;
+            break;
+        case Lexical_Semicolon:
+
+            lo_ast->kind = Syntax_Stmt;
+                /* Empty statement.*/
+            if (!pending)  break;
+
+                /*   \               \
+                 *    p               p
+                 *   / \             / \
+                 *  a   0     =>   ';   2
+                 *     / \         / \
+                 *    b   1       a   0
+                 *       / \         /
+                 *     ';   2       b
+                 *
+                 * Where /';/ is the semicolon. It is changed to a statement.
+                 * Numbered nodes are known to be Cons.
+                 * Statement parts are just /a/ and /b/.
+                 */
+            join_AST (lo_ast, split_of_AST (pending, 0), 0);
+            join_AST (lo_ast, split_of_AST (pending, 1), 1);
+            join_AST (pending, lo_ast, 0);
+
+            join_AST (pending, split_of_AST (ast, 1), 1);
+            join_AST (joint_of_AST (ast), 0, 1);
+
+            lo_ast->txt = ast->txt;
+            ast->txt = dflt_TabStr ();
+            lose_AST (ast);
+            ast = pending;
+
+            pending = 0;
+            break;
+        default:
+            if (!pending)
+            {
+                pending = ast;
+                pending_kind = lo_ast->kind;
+            }
+            break;
+        }
+    }
+}
+
+    void
 load_ASTree (XFileB* xf, ASTree* t)
 {
     DecloStack( CxCtx, ctx );
     ctx->ast = *t;
+    init3_Associa (&ctx->type_lookup, sizeof(TabStr), sizeof(uint),
+                   (Trit (*) (const void*, const void*)) swapped_TabStr);
+
     lex_AST (xf, t->root);
+
+    build_stmts_AST (ctx->ast.root);
+
     *t = ctx->ast;
+    lose_Associa (&ctx->type_lookup);
 }
 
 int main (int argc, char** argv)
@@ -820,7 +915,7 @@ int main (int argc, char** argv)
 
     init_FileB (fb);
     open_FileB (fb, 0, argv[1]);
-    
+
     init_ASTree (&t);
     load_ASTree (&fb->xo, &t);
     close_FileB (fb);
