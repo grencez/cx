@@ -767,7 +767,7 @@ load_uint_cstr (uint* ret, const char* in)
     char*
 load_int_cstr (int* ret, const char* in)
 {
-    unsigned long v;
+    long v;
     char* out = 0;
 
     assert (ret);
@@ -776,7 +776,7 @@ load_int_cstr (int* ret, const char* in)
 
     if (v > Max_uint)  out = 0;
     if (out == in)  out = 0;
-    if (out)  *ret = (uint) v;
+    if (out)  *ret = (int) v;
     return out;
 }
 
