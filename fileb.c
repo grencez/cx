@@ -206,7 +206,7 @@ load_FileB (FileB* f)
         BCasc( ret == 0, good, "fseek()" );
 
         ret = ftell (f->f);
-        BCasc( ret == 0, good, "ftell()" );
+        BCasc( ret >= 0, good, "ftell()" );
 
         sz = ret;
         ret = fseek (f->f, 0, SEEK_SET);
@@ -224,8 +224,6 @@ load_FileB (FileB* f)
         BCasc( ret == (long)sz, good, "fread()" );
         BLose();
     }
-
-    close_FileB (f);
 
     if (good)
     {

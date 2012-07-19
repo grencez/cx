@@ -185,15 +185,8 @@ qual_inline
     void
 plac_Assoc (Assoc* a, Assoc* b, const void* key, const void* val)
 {
-    BSTNode* aa;
-    BSTNode* bb;
     if (a == b)  return;
-    a->rbt = b->rbt;
-    aa = &a->rbt.bst;
-    bb = &b->rbt.bst;
-    join_BSTNode (aa->joint, aa, side_BSTNode (bb));
-    join_BSTNode (aa, aa->split[0], 0);
-    join_BSTNode (aa, aa->split[1], 1);
+    plac_RBTNode (&a->rbt, &b->rbt);
     key_fo_Assoc (a, key);
     val_fo_Assoc (a, val);
 }
@@ -251,18 +244,32 @@ qual_inline
     Assoc*
 ensure_Associa (Associa* map, const void* key)
 {
-    Assoc x;
-    Assoc* a = &x;
-    a->rbt.bst.joint = 0;
-    key_fo_Assoc (a, key);
+    DecloStack( Assoc, b );
+    Assoc* a;
+    b->rbt.bst.joint = 0;
+    key_fo_Assoc (b, key);
     {
-        RBTNode* rbt = ensure_RBTree (&map->rbt, &a->rbt);
+        RBTNode* rbt = ensure_RBTree (&map->rbt, &b->rbt);
         a = CastUp( Assoc, rbt, rbt );
     }
-    if (a == &x)
+        /* If /b/ was added to the tree,
+         * we must replace it with a node which is on the heap.
+         */
+    if (a == b)
     {
+        Bit side = side_of_BSTNode (&b->rbt.bst);
+        bool root = (&map->sentinel.rbt.bst == b->rbt.bst.joint);
+        void* old = map->nodes.s;
+
+        plac_BSTNode (0, &b->rbt.bst);
         a = acqu_Assoc (map);
-        plac_Assoc (a, &x, key, 0);
+
+        if (root)  b->rbt.bst.joint = 0;
+        fixlinks_Assoc (b, (ptrdiff_t) map->nodes.s - (ptrdiff_t) old);
+        if (root)  b->rbt.bst.joint = &map->sentinel.rbt.bst;
+
+        b->rbt.bst.joint->split[side] = &b->rbt.bst;
+        plac_Assoc (a, b, key, 0);
     }
     return a;
 }

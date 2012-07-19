@@ -56,7 +56,7 @@ fixup_insert (RBTNode* x, RBTree* t)
         if (!b->red)  break;
 
         a = joint (b);
-        xside = side_BSTNode (&x->bst);
+        xside = side_of_BSTNode (&x->bst);
 
             /* Case 1.         (continue)
              *
@@ -68,7 +68,7 @@ fixup_insert (RBTNode* x, RBTree* t)
              *        / \
              *      3#   #4
              */
-        if (xside == side_BSTNode (&b->bst))
+        if (xside == side_of_BSTNode (&b->bst))
         {
             rotate (a, !xside);
             x->red = Nil;
@@ -232,7 +232,7 @@ fixup_remove (RBTNode* y, RBTree* t, Bit side)
              */
         a->red = 1;
         y = b;
-        side = side_BSTNode (&y->bst);
+        side = side_of_BSTNode (&y->bst);
     }
 }
 
@@ -240,7 +240,7 @@ fixup_remove (RBTNode* y, RBTree* t, Bit side)
 remove_RBTree (RBTree* t, RBTNode* y)
 {
     RBTNode* x = joint (y);
-    Bit side = side_BSTNode (&y->bst);
+    Bit side = side_of_BSTNode (&y->bst);
     Bit red;
     remove_BSTNode (&y->bst);
     x = split (x, side);

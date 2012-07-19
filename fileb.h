@@ -300,6 +300,9 @@ dflt1_TabStr (const char* s)
 }
 
 qual_inline
+void lose_TabStr (TabStr* ts) { LoseTable( *ts ); }
+
+qual_inline
     void
 cat_TabStr (TabStr* a, TabStr* b)
 {
@@ -312,6 +315,25 @@ cat_TabStr (TabStr* a, TabStr* b)
 
     RepliT( char, &a->s[a->sz-(n+1)], b->s, n );
     a->s[a->sz-1] = 0;
+}
+
+qual_inline
+    TabStr
+cons1_TabStr (const char* s)
+{
+    TabStr a = dflt_TabStr ();
+    TabStr b = dflt1_TabStr (s);
+    cat_TabStr (&a, &b);
+    return a;
+}
+
+qual_inline
+    char*
+cstr_TabStr (TabStr* ts)
+{
+    if (ts->sz == 0 || ts->s[ts->sz-1] != '\0')
+        PushTable( *ts, '\0' );
+    return ts->s;
 }
 
 qual_inline

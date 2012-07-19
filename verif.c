@@ -65,7 +65,7 @@ claim_TNode (BSTNode* x, void* args)
     Claim( x->joint );
 
     Claim( x->joint );
-    Claim2( x ,==, x->joint->split[side_BSTNode (x)]);
+    Claim2( x ,==, x->joint->split[side_of_BSTNode (x)]);
     
     if (x->split[0])
         Claim2( x ,==, x->split[0]->joint );
@@ -210,7 +210,15 @@ testfn_Associa ()
             { BLoop( i, nkeys )
                 const uint idx = (muls[mi] * i) % nkeys;
                 const TabStr key = dflt1_TabStr (keys[idx]);
-                insert_Associa (map, &key, &idx);
+                if (mj % 2 == 0)
+                {
+                    insert_Associa (map, &key, &idx);
+                }
+                else
+                {
+                    Assoc* assoc = ensure_Associa (map, &key);
+                    val_fo_Assoc (assoc, &idx);
+                }
                 ++ n_expect;
                 Claim2( map->nodes.sz ,==, n_expect );
             } BLose()

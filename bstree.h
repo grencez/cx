@@ -51,7 +51,7 @@ rotate_BSTNode (BSTNode* b, Bit side);
 
 qual_inline
     Bit
-side_BSTNode (const BSTNode* x)
+side_of_BSTNode (const BSTNode* x)
 {
     return (x && x == x->joint->split[1]) ? 1 : 0;
 }
@@ -60,8 +60,17 @@ qual_inline
     void
 join_BSTNode (BSTNode* y, BSTNode* x, Bit side)
 {
-    y->split[side] = x;
+    if (y)  y->split[side] = x;
     if (x)  x->joint = y;
+}
+
+qual_inline
+    void
+plac_BSTNode (BSTNode* a, BSTNode* b)
+{
+    join_BSTNode (b->joint, a, side_of_BSTNode (b));
+    join_BSTNode (a, b->split[0], 0);
+    join_BSTNode (a, b->split[1], 1);
 }
 
 #ifdef IncludeC

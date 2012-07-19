@@ -35,7 +35,7 @@ lose_BSTree (BSTree* t, void (* lose) (BSTNode*))
         {
             x = y;
             y = x->joint;
-            side = side_BSTNode (x);
+            side = side_of_BSTNode (x);
             lose (x);
         } while (y->joint && (side == 1 || !y->split[1]));
 
@@ -91,7 +91,7 @@ walk_BSTree (BSTree* t, Trit postorder,
             if (postorder == May && side == 0)  f (y, dat);
             x = y;
             y = x->joint;
-            side = side_BSTNode (x);
+            side = side_of_BSTNode (x);
             if (postorder == Yes)  f (x, dat);
         } while (y->joint && (side == 1 || !y->split[1]));
 
@@ -122,7 +122,7 @@ insert_BSTree (BSTree* t, BSTNode* x)
 {
     BSTNode* a = t->sentinel;
     BSTNode* y = root_of_BSTree (t);
-    Bit side = side_BSTNode (y);
+    Bit side = side_of_BSTNode (y);
 
     while (y)
     {
@@ -145,7 +145,7 @@ ensure_BSTree (BSTree* t, BSTNode* x)
 {
     BSTNode* a = t->sentinel;
     BSTNode* y = root_of_BSTree (t);
-    Bit side = side_BSTNode (y);
+    Bit side = side_of_BSTNode (y);
 
     while (y)
     {
@@ -178,7 +178,7 @@ setf_BSTree (BSTree* t, BSTNode* x)
     BSTNode* y = ensure_BSTree (t, x);
     if (y == x)  return 0;
     x->joint = y->joint;
-    x->joint->split[side_BSTNode (y)] = x;
+    x->joint->split[side_of_BSTNode (y)] = x;
     join_BSTNode (x, y->split[0], 0);
     join_BSTNode (x, y->split[1], 1);
     return y;
@@ -201,7 +201,7 @@ setf_BSTree (BSTree* t, BSTNode* x)
     void
 remove_BSTNode (BSTNode* a)
 {
-    Bit side_a = side_BSTNode (a);
+    Bit side_a = side_of_BSTNode (a);
     Bit side, oside;
     BSTNode* x;
     BSTNode* y;
@@ -273,7 +273,7 @@ remove_BSTNode (BSTNode* a)
     x = y;
     y = x->joint;
 
-    Claim2( oside ,==, side_BSTNode (x) );
+    Claim2( oside ,==, side_of_BSTNode (x) );
     join_BSTNode (y, x->split[side], oside);
 
     x->joint = a->joint;
@@ -305,7 +305,7 @@ rotate_BSTNode (BSTNode* b, Bit side)
     BSTNode* a = b->split[p];
     BSTNode* y = a->split[q];
 
-    join_BSTNode (b->joint, a, side_BSTNode (b));
+    join_BSTNode (b->joint, a, side_of_BSTNode (b));
     join_BSTNode (a, b, q);
     join_BSTNode (b, y, p);
 }

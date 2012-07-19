@@ -29,6 +29,14 @@ setf_RBTree (RBTree* t, RBTNode* x);
 void
 remove_RBTree (RBTree* t, RBTNode* y);
 
+qual_inline
+    void
+plac_RBTNode (RBTNode* a, RBTNode* b)
+{
+    if (a)  a->red = b->red;
+    plac_BSTNode (&a->bst, &b->bst);
+}
+
 #ifdef IncludeC
 #include "rbtree.c"
 #endif
