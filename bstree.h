@@ -50,6 +50,15 @@ void
 rotate_BSTNode (BSTNode* b, Bit side);
 
 qual_inline
+    BSTNode
+dflt_BSTNode ()
+{
+    BSTNode a;
+    a.joint = 0;  a.split[0] = 0;  a.split[1] = 0;
+    return a;
+}
+
+qual_inline
     Bit
 side_of_BSTNode (const BSTNode* x)
 {

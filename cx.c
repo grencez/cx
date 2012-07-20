@@ -150,8 +150,7 @@ dflt_AST ()
 {
     AST ast;
     ast.kind = NSyntaxKinds;
-    ast.bst.split[0] = 0;
-    ast.bst.split[1] = 0;
+    ast.bst = dflt_BSTNode ();
     ast.line = 0;
     InitTable( ast.txt );
     return ast;

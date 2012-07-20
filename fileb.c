@@ -756,9 +756,12 @@ load_uint_cstr (uint* ret, const char* in)
     assert (in);
     v = strtoul (in, &out, 10);
 
-    if (v > Max_uint)  out = 0;
     if (out == in)  out = 0;
-    if (out)  *ret = (uint) v;
+    if (out)
+    {
+        *ret = (uint) v;
+        if (*ret != v)  out = 0;
+    }
     return out;
 }
 
@@ -772,9 +775,12 @@ load_int_cstr (int* ret, const char* in)
     assert (in);
     v = strtol (in, &out, 10);
 
-    if (v > Max_uint)  out = 0;
     if (out == in)  out = 0;
-    if (out)  *ret = (int) v;
+    if (out)
+    {
+        *ret = (int) v;
+        if (*ret != v)  out = 0;
+    }
     return out;
 }
 
