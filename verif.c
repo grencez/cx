@@ -216,7 +216,9 @@ testfn_Associa ()
                 }
                 else
                 {
-                    Assoc* assoc = ensure_Associa (map, &key);
+                    bool added = false;
+                    Assoc* assoc = ensure1_Associa (map, &key, &added);
+                    Claim( added );
                     val_fo_Assoc (assoc, &idx);
                 }
                 ++ n_expect;
@@ -227,7 +229,17 @@ testfn_Associa ()
             { BLoop( i, nkeys )
                 const uint idx = (muls[mj] * i) % nkeys;
                 const TabStr key = dflt1_TabStr (keys[idx]);
-                Assoc* a = lookup_Associa (map, &key);
+                Assoc* a;
+                if (mj % 2 == 0)
+                {
+                    a = lookup_Associa (map, &key);
+                }
+                else
+                {
+                    bool added = true;
+                    a = ensure1_Associa (map, &key, &added);
+                    Claim( !added );
+                }
                 Claim( a );
                 {
                     uint val = *(uint*) val_of_Assoc (a);

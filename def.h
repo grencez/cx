@@ -8,6 +8,7 @@
 typedef int Bit;
 enum Trit { Nil = 0, Yes = 1, May = 2 };
 typedef enum Trit Trit;
+typedef Trit (* SwappedFn) (const void*, const void*);
 
     /** Define bool.**/
 #ifndef __cplusplus

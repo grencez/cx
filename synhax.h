@@ -34,6 +34,7 @@
 #define BLose() }
 #define BLoopT( T, i, bel )  T i; for (i = 0; i < (bel); ++i) BInit()
 #define BLoop( i, bel )  BLoopT( uint, i, bel )
+#define BUjFor( i, bel )  BLoopT( ujint, i, bel )
 
 #define Claim( x )  assert(x)
 #define Claim2( a ,op, b )  assert((a) op (b))
@@ -44,6 +45,8 @@
      : 0)
 
 #define DecloStack( T, x )  T onstack_##x; T* const restrict x = &onstack_##x
+#define DecloStack1( T, x, v ) \
+    T onstack_##x = (v); T* const restrict x = &onstack_##x
 
 #define AllocT( T, n ) \
     ((n) == 0 ? (T*) 0 : \

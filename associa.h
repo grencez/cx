@@ -24,7 +24,7 @@ struct Associa
     Table keys;
     Table vals;
     TableT(Assoc) nodes;
-    Trit (* swapped) (const void* lhs, const void* rhs);
+    SwappedFn swapped;
     RBTree rbt;
     Assoc sentinel;
     bool ensize;
@@ -36,7 +36,7 @@ Trit swapped_Assoc (const BSTNode* lhs_bst, const BSTNode* rhs_bst);
 qual_inline
     void
 init3_Associa (Associa* map, size_t keysz, size_t valsz,
-               Trit (* swapped) (const void* lhs, const void* rhs))
+               SwappedFn swapped)
 {
     init1_Table (&map->keys, keysz);
     init1_Table (&map->vals, valsz);
@@ -242,7 +242,7 @@ lookup_Associa (Associa* map, const void* key)
 
 qual_inline
     Assoc*
-ensure_Associa (Associa* map, const void* key)
+ensure1_Associa (Associa* map, const void* key, bool* added)
 {
     DecloStack( Assoc, b );
     Assoc* a;
@@ -255,7 +255,8 @@ ensure_Associa (Associa* map, const void* key)
         /* If /b/ was added to the tree,
          * we must replace it with a node which is on the heap.
          */
-    if (a == b)
+    *added = (a == b);
+    if (*added)
     {
         Bit side = side_of_BSTNode (&b->rbt.bst);
         bool root = (&map->sentinel.rbt.bst == b->rbt.bst.joint);
@@ -272,6 +273,14 @@ ensure_Associa (Associa* map, const void* key)
         plac_Assoc (a, b, key, 0);
     }
     return a;
+}
+
+qual_inline
+    Assoc*
+ensure_Associa (Associa* map, const void* key)
+{
+    bool added = false;
+    return ensure1_Associa (map, key, &added);
 }
 
 qual_inline
