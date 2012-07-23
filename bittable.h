@@ -112,6 +112,19 @@ lose_BitTable (BitTable* bt)
 }
 
 qual_inline
+    void
+grow_BitTable (BitTable* bt, ujint n)
+{
+    const ujint sz = bt->sz;
+    const ujint grow_sz = sz + n;
+    ujint nelems = CeilQuot( sz, NBits_BitTableEl );
+    bt->sz = nelems;
+    EnsizeTable( *bt, CeilQuot( grow_sz, NBits_BitTableEl ) );
+    while (nelems < bt->sz)  bt->s[nelems++] = 0;
+    bt->sz = grow_sz;
+}
+
+qual_inline
     Bit
 test_BitTable (const BitTable bt, ujint i)
 {
