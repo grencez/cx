@@ -312,11 +312,10 @@ cstr_SyntaxKind (SyntaxKind kind)
     void
 init_lexwords (Associa* map)
 {
-    SyntaxKind kind;
     init3_Associa (map, sizeof(TabStr), sizeof(SyntaxKind),
                    (Trit (*) (const void*, const void*)) swapped_TabStr);
 
-    for (kind = Beg_Syntax_LexWords;
+    for (SyntaxKind kind = Beg_Syntax_LexWords;
          kind < End_Syntax_LexWords;
          kind = (SyntaxKind) (kind + 1))
     {
@@ -468,12 +467,11 @@ wsnode_AST (AST* ast)
 parse_escaped (XFileB* xf, TabStr* t, char delim)
 {
     char delims[2];
-    char* s;
 
     delims[0] = delim;
     delims[1] = 0;
 
-    for (s = nextds_XFileB (xf, 0, delims);
+    for (char* s = nextds_XFileB (xf, 0, delims);
          s;
          s = nextds_XFileB (xf, 0, delims))
     {
@@ -516,7 +514,6 @@ count_newlines (const char* s)
 lex_AST (XFileB* xf, AST* ast)
 {
     char match = 0;
-    char* s;
     const char delims[] = "'\"(){}[];#+-*/%&^|~!.,?:><=";
     ujint off;
     ujint line = 0;
@@ -524,7 +521,7 @@ lex_AST (XFileB* xf, AST* ast)
 
     init_lexwords (keyword_map);
 
-    for (s = nextds_XFileB (xf, &match, delims);
+    for (char* s = nextds_XFileB (xf, &match, delims);
          s;
          s = nextds_XFileB (xf, &match, delims))
     {
@@ -954,22 +951,40 @@ build_stmts_AST (AST* ast)
     void
 xfrm_stmts_AST (AST* ast)
 {
-    for (; ast; ast = split_of_AST (ast, 1))
+    while (ast)
     {
         AST* lo_ast = split_of_AST (ast, 0);
-        if (!lo_ast)  continue;
+        if (!lo_ast)  break;
 
         xfrm_stmts_AST (lo_ast);
 
-        if (lo_ast->kind == Syntax_ForLoop)
+        if (lo_ast->kind == Syntax_LineComment)
         {
-                /* (L_For (S_Parens (S_Stmt '.*) (S_Stmt '.*) '.*)
-                 *  (('or S_Braces S_Stmt) '.*))
-                 * (S_Braces
-                 *  (S_Stmt '.*)
-                 *  (L_For (S_Parens (S_Stmt) (S_Stmt '.*) '.*)
-                 *   (('or S_Braces S_Stmt) '.*)))
-                 */
+            TabStr ts = dflt1_TabStr ("\n");
+            AST* next = split_of_AST (ast, 1);
+            lose_AST (lo_ast);
+
+            join_AST (ast, 0, 0);
+            PackTable( ast->txt );
+            cat_TabStr (&ast->txt, &ts);
+
+            if (next)
+            {
+                cat_TabStr (&ast->txt, &next->txt);
+                join_AST (ast, split_of_AST (next, 0), 0);
+                join_AST (ast, split_of_AST (next, 1), 1);
+                lose_AST (next);
+                continue;
+            }
+        }
+        else if (lo_ast->kind == Syntax_ForLoop)
+        {
+                // (L_For (S_Parens (S_Stmt '.*) (S_Stmt '.*) '.*)
+                //  (('or S_Braces S_Stmt) '.*))
+                // (S_Braces
+                //  (S_Stmt '.*)
+                //  (L_For (S_Parens (S_Stmt) (S_Stmt '.*) '.*)
+                //   (('or S_Braces S_Stmt) '.*)))
             AST* d_braces = make1_AST (Syntax_Braces);
             AST* d_0 = make1_AST (Syntax_Cons);
             AST* d_stmt = make1_AST (Syntax_Stmt);
@@ -986,6 +1001,7 @@ xfrm_stmts_AST (AST* ast)
             join_AST (d_stmt1, 0, 0);
             join_AST (d_stmt1, 0, 1);
         }
+        ast = split_of_AST (ast, 1);
     }
 }
 

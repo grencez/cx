@@ -310,7 +310,7 @@ void lose_TabStr (TabStr* ts) { LoseTable( *ts ); }
 
 qual_inline
     void
-cat_TabStr (TabStr* a, TabStr* b)
+cat_TabStr (TabStr* a, const TabStr* b)
 {
     ujint n = b->sz;
     if (n == 0)  return;
@@ -321,6 +321,21 @@ cat_TabStr (TabStr* a, TabStr* b)
 
     RepliT( char, &a->s[a->sz-(n+1)], b->s, n );
     a->s[a->sz-1] = 0;
+}
+
+qual_inline
+    void
+tac_TabStr (TabStr* a, const TabStr* b)
+{
+    ujint n = b->sz;
+    if (n == 0)  return;
+    if (!b->s[n-1])  -- n;
+    if (n == 0)  return;
+
+    GrowTable( *a, n );
+    if (a->sz > n)
+        memmove (&a->s[n], a->s, (a->sz-n)*sizeof(char));
+    RepliT( char, a->s, b->s, n );
 }
 
 qual_inline
