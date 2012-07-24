@@ -9,18 +9,47 @@ CFLAGS += -g
 
 CExes = cx verify
 
+CFiles = bstree.c fileb.c rbtree.c sys-cx.c cx.c verif.c
+HFiles = associa.h bittable.h bstree.h def.h fileb.h rbtree.h synhax.h sys-cx.h table.h
+
+CxDeps = bstree fileb rbtree sys-cx
+CxObjs = $(addsuffix .o,$(CxDeps))
+
+CxPpPath = ../cx-pp
+BldPath = ../cx-bld
+
 all: $(CExes)
 
-verify: verif.c bstree.o fileb.o rbtree.o sys-cx.o
+verify: $(addprefix $(BldPath)/,verif.o $(CxObjs))
 	$(CC) $(CFLAGS) $^ -o $@ $(LFLAGS)
 
-cx: cx.c bstree.o fileb.o rbtree.o sys-cx.o
+cx: $(addprefix $(BldPath)/,cx.o $(CxObjs))
 	$(CC) $(CFLAGS) $^ -o $@ $(LFLAGS)
 
-%.o: %.c
-	$(CC) -c $(CFLAGS) $< -o $@
+$(CxPpPath)/cx: $(addprefix $(CxPpPath)/,cx.o $(CxObjs))
+	$(CC) $(CFLAGS) $^ -o $@ $(LFLAGS)
+
+$(CxPpPath)/%.o: $(CxPpPath)/%.c
+	$(CC) -c $(CFLAGS) -I. $< -o $@
+
+$(BldPath)/%.c: %.c $(CxPpPath)/cx
+	$(CxPpPath)/cx -x $< -o $@
+
+$(BldPath)/%.o: $(BldPath)/%.c
+	$(CC) -c $(CFLAGS) -I. $< -o $@
+
+.PHONY: pp
+pp:
+	$(foreach f,$(addsuffix .c,cx $(CxDeps)), \
+		./cx -x $(f) -o $(CxPpPath)/$(f) ;)
+
+$(addprefix $(BldPath)/,$(CFiles)): | $(BldPath)
+
+$(BldPath):
+	mkdir -p $(BldPath)
 
 .PHONY: clean
 clean:
-	rm -f *.o $(CExes)
+	rm -f $(CxPpPath)/*.o $(CExes)
+	rm -fr $(BldPath)
 
