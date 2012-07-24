@@ -277,6 +277,18 @@ load_chunk_XFileB (XFileB* xf)
 }
 
     void
+close_XFileB (XFileB* xf)
+{
+    xf->op (xf, FileB_Close, 0);
+}
+
+    void
+close_OFileB (OFileB* of)
+{
+    of->op (of, FileB_Close, 0);
+}
+
+    void
 flushx_FileB (FileB* fb)
 {
     OFileB* const f = &fb->xo;
@@ -629,6 +641,9 @@ op_FileB (XOFileB* xo, FileB_Op op, FileBOpArg* arg)
             break;
         case FileB_FlushO:
             flusho_FileB (fb);
+            break;
+        case FileB_Close:
+            close_FileB (fb);
             break;
         case FileB_NOps:
             Claim(0);

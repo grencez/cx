@@ -27,6 +27,7 @@ enum FileB_Op {
     FileB_LoadChunk,
     FileB_DumpChunk,
     FileB_FlushO,
+    FileB_Close,
     FileB_NOps
 };
 typedef enum FileB_Op FileB_Op;
@@ -123,6 +124,11 @@ void
 set_FILE_FileB (FileB* f, FILE* file);
 char*
 load_FileB (FileB* f);
+
+void
+close_XFileB (XFileB* xf);
+void
+close_OFileB (OFileB* of);
 
 void
 flushx_FileB (FileB* f);

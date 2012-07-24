@@ -29,6 +29,7 @@ enum SyntaxKind
     ,Syntax_Brackets
     ,Syntax_Stmt
 
+    ,Syntax_ForLoop
     /* TODO */
     ,Syntax_Struct
     ,Syntax_Typedef
@@ -161,6 +162,14 @@ make_AST ()
 {
     AST* ast = AllocT( AST, 1 );
     *ast = dflt_AST ();
+    return ast;
+}
+
+    AST*
+make1_AST (SyntaxKind kind)
+{
+    AST* ast = make_AST ();
+    ast->kind = kind;
     return ast;
 }
 
@@ -374,6 +383,12 @@ dump_AST (OFileB* of, AST* ast)
         dump_TabStr_OFileB (of, &ast->txt);
         dump_char_OFileB (of, ';');
         break;
+    case Syntax_ForLoop:
+        dump_cstr_OFileB (of, "for");
+        dump_TabStr_OFileB (of, &ast->txt);
+        dump_AST (of, split_of_AST (ast, 0));
+        dump_AST (of, split_of_AST (ast, 1));
+        break;
     case Syntax_LineComment:
         dump_cstr_OFileB (of, "//");
         dump_TabStr_OFileB (of, &ast->txt);
@@ -404,7 +419,7 @@ dump_AST (OFileB* of, AST* ast)
         }
         else
         {
-            DBog0( "No Good!" );
+            DBog1( "No Good! Enum value: %u", (uint) ast->kind );
         }
         break;
     }
@@ -776,6 +791,61 @@ lex_AST (XFileB* xf, AST* ast)
     lose_Associa (keyword_map);
 }
 
+    AST*
+next_semicolon_or_braces_AST (AST* ast)
+{
+    for (; ast; ast = split_of_AST (ast, 1))
+    {
+        AST* lo_ast = split_of_AST (ast, 0);
+        if (lo_ast && lo_ast->kind == Lexical_Semicolon)  return ast;
+        if (lo_ast && lo_ast->kind == Syntax_Braces)  return ast;
+    }
+    return 0;
+}
+
+void
+build_stmts_AST (AST* ast);
+
+    void
+build_ForLoop_AST (AST* ast)
+{
+    AST* pending = ast;
+        /*   \                 \
+         *    p                 p
+         *   / \               / \
+         * for  0      =>    for  2
+         *     / \           / \
+         * parens \      parens \
+         *        ...           ...
+         *        / \           /  \
+         *      ...  1        ...   1
+         *          / \            /
+         *         ;   2          ;
+         */
+    AST* d_for;  AST* d_0;  AST* d_parens;
+
+    d_for = split_of_AST (pending, 0);
+    d_for->kind = Syntax_ForLoop;
+    d_0 = split_of_AST (pending, 1);
+    cat_TabStr (&d_for->txt, &d_0->txt);
+
+    d_parens = split_of_AST (d_0, 0);
+        /* Only gets first two statements in for loop.*/
+    build_stmts_AST (d_parens);
+
+    join_AST (d_for, d_parens, 0);
+
+    ast = next_semicolon_or_braces_AST (ast);
+    join_AST (pending, split_of_AST (ast, 1), 1);
+    join_AST (ast, 0, 1);
+
+    pending = split_of_AST (d_0, 1);
+    join_AST (d_for, pending, 1);
+    build_stmts_AST (pending);
+
+    lose_AST (d_0);
+}
+
     void
 build_stmts_AST (AST* ast)
 {
@@ -807,12 +877,10 @@ build_stmts_AST (AST* ast)
         case Syntax_LineComment:
         case Syntax_BlockComment:
             break;
+        case Lexical_For:
+            build_ForLoop_AST (ast);
+            break;
         case Syntax_Parens:
-            if (pending_kind == Lexical_For)
-            {
-                    /* Only gets first two statements in for loop.*/
-                build_stmts_AST (lo_ast);
-            }
             if (!pending)
             {
                 pending = ast;
@@ -884,6 +952,44 @@ build_stmts_AST (AST* ast)
 }
 
     void
+xfrm_stmts_AST (AST* ast)
+{
+    for (; ast; ast = split_of_AST (ast, 1))
+    {
+        AST* lo_ast = split_of_AST (ast, 0);
+        if (!lo_ast)  continue;
+
+        xfrm_stmts_AST (lo_ast);
+
+        if (lo_ast->kind == Syntax_ForLoop)
+        {
+                /* (L_For (S_Parens (S_Stmt '.*) (S_Stmt '.*) '.*)
+                 *  (('or S_Braces S_Stmt) '.*))
+                 * (S_Braces
+                 *  (S_Stmt '.*)
+                 *  (L_For (S_Parens (S_Stmt) (S_Stmt '.*) '.*)
+                 *   (('or S_Braces S_Stmt) '.*)))
+                 */
+            AST* d_braces = make1_AST (Syntax_Braces);
+            AST* d_0 = make1_AST (Syntax_Cons);
+            AST* d_stmt = make1_AST (Syntax_Stmt);
+            AST* d_stmt1;
+
+            join_AST (ast, d_braces, 0);
+            join_AST (d_braces, d_stmt, 0);
+            join_AST (d_braces, d_0, 1);
+            join_AST (d_0, lo_ast, 0);
+
+            d_stmt1 = split_of_AST (split_of_AST (lo_ast, 0), 0);
+            join_AST (d_stmt, split_of_AST (d_stmt1, 0), 0);
+            join_AST (d_stmt, split_of_AST (d_stmt1, 1), 1);
+            join_AST (d_stmt1, 0, 0);
+            join_AST (d_stmt1, 0, 1);
+        }
+    }
+}
+
+    void
 load_ASTree (XFileB* xf, ASTree* t)
 {
     DecloStack( CxCtx, ctx );
@@ -894,6 +1000,7 @@ load_ASTree (XFileB* xf, ASTree* t)
     lex_AST (xf, t->root);
 
     build_stmts_AST (ctx->ast.root);
+    xfrm_stmts_AST (ctx->ast.root);
 
     *t = ctx->ast;
     lose_Associa (&ctx->type_lookup);
@@ -901,28 +1008,60 @@ load_ASTree (XFileB* xf, ASTree* t)
 
 int main (int argc, char** argv)
 {
+    int argi = 1;
     ASTree t;
-    DecloStack( FileB, fb );
+    FileB xfb;  XFileB* xf = 0;
+    FileB ofb;  OFileB* of = 0;
 
     init_sys_cx ();
+    init_FileB (&xfb);
+    init_FileB (&ofb);
+    seto_FileB (&ofb, 1);
 
-    if (argc != 3)
+    while (argi < argc)
     {
-        DBog0( "Use 2 arguments." );
-        return 1;
+        if (0 == strcmp (argv[argi], "-x"))
+        {
+            ++ argi;
+            if (!open_FileB (&xfb, 0, argv[argi++]))
+            {
+                fail_exit_sys_cx ("Could not open file for reading.");
+            }
+            xf = &xfb.xo;
+        }
+        else if (0 == strcmp (argv[argi], "-o"))
+        {
+            ++ argi;
+            if (!open_FileB (&ofb, 0, argv[argi++]))
+            {
+                fail_exit_sys_cx ("Could not open file for writing.");
+            }
+            of = &ofb.xo;
+        }
+        else
+        {
+            bool good = (0 == strcmp (argv[argi], "-h"));
+            OFileB* of = (good ? stdout_OFileB () : stderr_OFileB ());
+            printf_OFileB (of, "Usage: %s [-x IN] [-o OUT]\n", argv[0]);
+            dump_cstr_OFileB (of, "  If -x is not specified, stdin is used.\n");
+            dump_cstr_OFileB (of, "  If -o is not specified, stdout is used.\n");
+            if (!good)  fail_exit_sys_cx ("Exiting in failure...");
+            lose_sys_cx ();
+            return 0;
+        }
     }
 
-    init_FileB (fb);
-    open_FileB (fb, 0, argv[1]);
+    if (!xf)  xf = stdin_XFileB ();
+    if (!of)  of = stdout_OFileB ();
 
     init_ASTree (&t);
-    load_ASTree (&fb->xo, &t);
-    close_FileB (fb);
+    load_ASTree (xf, &t);
+    close_XFileB (xf);
+    lose_FileB (&xfb);
 
-    seto_FileB (fb, 1);
-    open_FileB (fb, 0, argv[2]);
-    dump_ASTree (&fb->xo, &t);
-    lose_FileB (fb);
+    dump_ASTree (of, &t);
+    close_OFileB (of);
+    lose_FileB (&ofb);
 
     lose_ASTree (&t);
     lose_sys_cx ();
