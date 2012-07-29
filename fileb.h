@@ -2,7 +2,7 @@
 #ifndef FileB_H_
 #define FileB_H_
 
-#include "table.h"
+#include "alphatab.h"
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -12,9 +12,6 @@ typedef struct XOFileB XOFileB;
 typedef XOFileB XFileB;
 typedef XOFileB OFileB;
 typedef struct FileBOpArg FileBOpArg;
-typedef TableT(char) TabStr;
-#define DeclTableT_TabStr
-DeclTableT( TabStr, TabStr );
 
 enum FileB_Format {
     FileB_Ascii,
@@ -164,7 +161,7 @@ dump_real_OFileB (OFileB* f, real x);
 void
 dump_char_OFileB (OFileB* f, char c);
 void
-dump_TabStr_OFileB (OFileB* f, const TabStr* t);
+dump_AlphaTab_OFileB (OFileB* f, const AlphaTab* t);
 void
 vprintf_OFileB (OFileB* f, const char* fmt, va_list args);
 void
@@ -195,7 +192,7 @@ bool
 loadn_byte_FileB (FileB* f, byte* a, ujint n);
 
 Trit
-swapped_TabStr (const TabStr* a, const TabStr* b);
+swapped_AlphaTab (const AlphaTab* a, const AlphaTab* b);
 
 qual_inline
     void
@@ -222,8 +219,8 @@ qual_inline
 XFileB olay_OFileB (OFileB* of, uint off) { return olay_XFileB (of, off); }
 
 qual_inline
-    TabStr
-TabStr_XFileB (XFileB* xf, ujint off)
+    AlphaTab
+AlphaTab_XFileB (XFileB* xf, ujint off)
 {
     DeclTable( char, t );
     t.s = (char*) &xf->buf.s[off];
@@ -267,7 +264,7 @@ dump_cstr_OFileB (OFileB* of, const char* s)
     DeclTable( char, t );
     t.s = (char*) s;
     t.sz = strlen (s) + 1;
-    dump_TabStr_OFileB (of, &t);
+    dump_AlphaTab_OFileB (of, &t);
 }
 
     /* Implemented in sys-cx.c */
@@ -277,95 +274,6 @@ FileB* stderr_FileB ();
 XFileB* stdin_XFileB ();
 OFileB* stdout_OFileB ();
 OFileB* stderr_OFileB ();
-
-
-qual_inline
-    char*
-dup_cstr (const char* s)
-{
-    uint n = strlen (s) + 1;
-    return DupliT( char, s, n );
-}
-
-qual_inline
-    TabStr
-dflt_TabStr ()
-{
-    DeclTable( char, t );
-    return t;
-}
-
-qual_inline
-    TabStr
-dflt1_TabStr (const char* s)
-{
-    TabStr t = dflt_TabStr ();
-    t.s = (char*) s;
-    t.sz = strlen (s);
-    return t;
-}
-
-qual_inline
-void lose_TabStr (TabStr* ts) { LoseTable( *ts ); }
-
-qual_inline
-    void
-cat_TabStr (TabStr* a, const TabStr* b)
-{
-    ujint n = b->sz;
-    if (n == 0)  return;
-    if (!b->s[n-1])  -- n;
-
-    if (a->sz > 0)  -- a->sz;
-    GrowTable( *a, n+1 );
-
-    RepliT( char, &a->s[a->sz-(n+1)], b->s, n );
-    a->s[a->sz-1] = 0;
-}
-
-qual_inline
-    void
-tac_TabStr (TabStr* a, const TabStr* b)
-{
-    ujint n = b->sz;
-    if (n == 0)  return;
-    if (!b->s[n-1])  -- n;
-    if (n == 0)  return;
-
-    GrowTable( *a, n );
-    if (a->sz > n)
-        memmove (&a->s[n], a->s, (a->sz-n)*sizeof(char));
-    RepliT( char, a->s, b->s, n );
-}
-
-qual_inline
-    TabStr
-cons1_TabStr (const char* s)
-{
-    TabStr a = dflt_TabStr ();
-    TabStr b = dflt1_TabStr (s);
-    cat_TabStr (&a, &b);
-    return a;
-}
-
-qual_inline
-    char*
-cstr_TabStr (TabStr* ts)
-{
-    if (ts->sz == 0 || ts->s[ts->sz-1] != '\0')
-        PushTable( *ts, '\0' );
-    return ts->s;
-}
-
-qual_inline
-    void
-app_TabStr (TabStr* t, const char* s)
-{
-    DeclTable( char, b );
-    b.s = (char*) s;
-    b.sz = strlen (s) + 1;
-    cat_TabStr (t, &b);
-}
 
 #ifdef IncludeC
 #include "fileb.c"

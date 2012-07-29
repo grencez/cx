@@ -677,7 +677,7 @@ dump_char_OFileB (OFileB* f, char c)
 }
 
     void
-dump_TabStr_OFileB (OFileB* of, const TabStr* t)
+dump_AlphaTab_OFileB (OFileB* of, const AlphaTab* t)
 {
     ujint n = t->sz;
     if (n == 0)  return;
@@ -922,7 +922,7 @@ loadn_byte_FileB (FileB* f, byte* a, ujint n)
 }
 
     Trit
-swapped_TabStr (const TabStr* a, const TabStr* b)
+swapped_AlphaTab (const AlphaTab* a, const AlphaTab* b)
 {
     ujint na = a->sz;
     ujint nb = b->sz;

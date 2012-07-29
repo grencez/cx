@@ -30,7 +30,7 @@ $(CxPpPath)/cx: $(addprefix $(CxPpPath)/,cx.o $(CxObjs))
 	$(CC) $(CFLAGS) $^ -o $@ $(LFLAGS)
 
 $(CxPpPath)/%.o: $(CxPpPath)/%.c
-	$(CC) -c $(CFLAGS) -I. $< -o $@
+	$(CC) -c $(CFLAGS) $< -o $@
 
 $(BldPath)/%.c: %.c $(CxPpPath)/cx
 	$(CxPpPath)/cx -x $< -o $@
@@ -42,6 +42,7 @@ $(BldPath)/%.o: $(BldPath)/%.c
 pp:
 	$(foreach f,$(addsuffix .c,cx $(CxDeps)), \
 		./cx -x $(f) -o $(CxPpPath)/$(f) ;)
+	cp *.h $(CxPpPath)
 
 $(addprefix $(BldPath)/,$(CFiles)): | $(BldPath)
 

@@ -129,7 +129,7 @@ struct AST
     SyntaxKind kind;
     BSTNode bst;
     ujint line;
-    TabStr txt;
+    AlphaTab txt;
 };
 
 struct ASTree
@@ -312,14 +312,14 @@ cstr_SyntaxKind (SyntaxKind kind)
     void
 init_lexwords (Associa* map)
 {
-    init3_Associa (map, sizeof(TabStr), sizeof(SyntaxKind),
-                   (Trit (*) (const void*, const void*)) swapped_TabStr);
+    init3_Associa (map, sizeof(AlphaTab), sizeof(SyntaxKind),
+                   (Trit (*) (const void*, const void*)) swapped_AlphaTab);
 
     for (SyntaxKind kind = Beg_Syntax_LexWords;
          kind < End_Syntax_LexWords;
          kind = (SyntaxKind) (kind + 1))
     {
-        TabStr key = dflt1_TabStr (cstr_SyntaxKind (kind));
+        AlphaTab key = dflt1_AlphaTab (cstr_SyntaxKind (kind));
         insert_Associa (map, &key, &kind);
     }
 }
@@ -334,44 +334,44 @@ dump_AST (OFileB* of, AST* ast)
     case Syntax_Cons:
         do
         {
-            dump_TabStr_OFileB (of, &ast->txt);
+            dump_AlphaTab_OFileB (of, &ast->txt);
             dump_AST (of, split_of_AST (ast, 0));
             ast = split_of_AST (ast, 1);
         } while (ast);
         break;
     case Syntax_Iden:
         Claim( ast->txt.sz > 0 );
-        dump_TabStr_OFileB (of, &ast->txt);
+        dump_AlphaTab_OFileB (of, &ast->txt);
         break;
     case Syntax_CharLit:
         dump_char_OFileB (of, '\'');
         Claim( ast->txt.sz > 0 );
-        dump_TabStr_OFileB (of, &ast->txt);
+        dump_AlphaTab_OFileB (of, &ast->txt);
         dump_char_OFileB (of, '\'');
         break;
     case Syntax_StringLit:
         dump_char_OFileB (of, '"');
         Claim( ast->txt.sz > 0 );
-        dump_TabStr_OFileB (of, &ast->txt);
+        dump_AlphaTab_OFileB (of, &ast->txt);
         dump_char_OFileB (of, '"');
         break;
     case Syntax_Parens:
         dump_char_OFileB (of, '(');
-        dump_TabStr_OFileB (of, &ast->txt);
+        dump_AlphaTab_OFileB (of, &ast->txt);
         dump_AST (of, split_of_AST (ast, 0));
         dump_AST (of, split_of_AST (ast, 1));
         dump_char_OFileB (of, ')');
         break;
     case Syntax_Braces:
         dump_char_OFileB (of, '{');
-        dump_TabStr_OFileB (of, &ast->txt);
+        dump_AlphaTab_OFileB (of, &ast->txt);
         dump_AST (of, split_of_AST (ast, 0));
         dump_AST (of, split_of_AST (ast, 1));
         dump_char_OFileB (of, '}');
         break;
     case Syntax_Brackets:
         dump_char_OFileB (of, '[');
-        dump_TabStr_OFileB (of, &ast->txt);
+        dump_AlphaTab_OFileB (of, &ast->txt);
         dump_AST (of, split_of_AST (ast, 0));
         dump_AST (of, split_of_AST (ast, 1));
         dump_char_OFileB (of, ']');
@@ -379,28 +379,28 @@ dump_AST (OFileB* of, AST* ast)
     case Syntax_Stmt:
         dump_AST (of, split_of_AST (ast, 0));
         dump_AST (of, split_of_AST (ast, 1));
-        dump_TabStr_OFileB (of, &ast->txt);
+        dump_AlphaTab_OFileB (of, &ast->txt);
         dump_char_OFileB (of, ';');
         break;
     case Syntax_ForLoop:
         dump_cstr_OFileB (of, "for");
-        dump_TabStr_OFileB (of, &ast->txt);
+        dump_AlphaTab_OFileB (of, &ast->txt);
         dump_AST (of, split_of_AST (ast, 0));
         dump_AST (of, split_of_AST (ast, 1));
         break;
     case Syntax_LineComment:
         dump_cstr_OFileB (of, "//");
-        dump_TabStr_OFileB (of, &ast->txt);
+        dump_AlphaTab_OFileB (of, &ast->txt);
         dump_char_OFileB (of, '\n');
         break;
     case Syntax_BlockComment:
         dump_cstr_OFileB (of, "/*");
-        dump_TabStr_OFileB (of, &ast->txt);
+        dump_AlphaTab_OFileB (of, &ast->txt);
         dump_cstr_OFileB (of, "*/");
         break;
     case Syntax_Directive:
         dump_char_OFileB (of, '#');
-        dump_TabStr_OFileB (of, &ast->txt);
+        dump_AlphaTab_OFileB (of, &ast->txt);
         dump_char_OFileB (of, '\n');
         break;
     case Syntax_Inc:
@@ -464,7 +464,7 @@ wsnode_AST (AST* ast)
 }
 
     bool
-parse_escaped (XFileB* xf, TabStr* t, char delim)
+parse_escaped (XFileB* xf, AlphaTab* t, char delim)
 {
     char delims[2];
 
@@ -478,7 +478,7 @@ parse_escaped (XFileB* xf, TabStr* t, char delim)
         bool escaped = false;
         ujint off;
 
-        app_TabStr (t, s);
+        app_AlphaTab (t, s);
         off = t->sz-1;
 
         while (off > 0 && t->s[off-1] == '\\')
@@ -487,7 +487,7 @@ parse_escaped (XFileB* xf, TabStr* t, char delim)
             -- off;
         }
         if (escaped)
-            app_TabStr (t, delims);
+            app_AlphaTab (t, delims);
         else
             return true;
     }
@@ -539,10 +539,10 @@ lex_AST (XFileB* xf, AST* ast)
                 skipds_XFileB (olay, 0);
                 if (olay->off > 0)
                 {
-                    TabStr ts = TabStr_XFileB (olay, 0);
+                    AlphaTab ts = AlphaTab_XFileB (olay, 0);
                     ast = wsnode_AST (ast);
                     AffyTable( ast->txt, ts.sz+1 );
-                    cat_TabStr (&ast->txt, &ts);
+                    cat_AlphaTab (&ast->txt, &ts);
                     line += count_newlines (ast->txt.s);
                 }
                 off += olay->off;
@@ -552,7 +552,7 @@ lex_AST (XFileB* xf, AST* ast)
                 olay->off = IdxEltTable( olay->buf, tods_XFileB (olay, 0) );
                 if (olay->off > 0)
                 {
-                    TabStr ts = TabStr_XFileB (olay, 0);
+                    AlphaTab ts = AlphaTab_XFileB (olay, 0);
                     Assoc* luk = lookup_Associa (keyword_map, &ts);
 
                     ast = app_AST (ast);
@@ -565,7 +565,7 @@ lex_AST (XFileB* xf, AST* ast)
                     {
                         ast->kind = Syntax_Iden;
                         AffyTable( ast->txt, ts.sz+1 );
-                        cat_TabStr (&ast->txt, &ts);
+                        cat_AlphaTab (&ast->txt, &ts);
                     }
                     ast->line = line;
                     ast = joint_of_AST (ast);
@@ -640,7 +640,7 @@ lex_AST (XFileB* xf, AST* ast)
             ast = app_AST (ast);
             ast->kind = Syntax_Directive;
             ast->line = line;
-            app_TabStr (&ast->txt, getlined_XFileB (xf, "\n"));
+            app_AlphaTab (&ast->txt, getlined_XFileB (xf, "\n"));
             ++ line;
             ast = joint_of_AST (ast);
             break;
@@ -672,7 +672,7 @@ lex_AST (XFileB* xf, AST* ast)
             if (lo_ast && lo_ast->kind == Lexical_Div)
             {
                 lo_ast->kind = Syntax_BlockComment;
-                app_TabStr (&lo_ast->txt, getlined_XFileB (xf, "*/"));
+                app_AlphaTab (&lo_ast->txt, getlined_XFileB (xf, "*/"));
                 line += count_newlines (lo_ast->txt.s);
             }
             else
@@ -687,7 +687,7 @@ lex_AST (XFileB* xf, AST* ast)
             if (lo_ast && lo_ast->kind == Lexical_Div)
             {
                 lo_ast->kind = Syntax_LineComment;
-                app_TabStr (&lo_ast->txt, getlined_XFileB (xf, "\n"));
+                app_AlphaTab (&lo_ast->txt, getlined_XFileB (xf, "\n"));
                 ++ line;
             }
             else
@@ -824,7 +824,7 @@ build_ForLoop_AST (AST* ast)
     d_for = split_of_AST (pending, 0);
     d_for->kind = Syntax_ForLoop;
     d_0 = split_of_AST (pending, 1);
-    cat_TabStr (&d_for->txt, &d_0->txt);
+    cat_AlphaTab (&d_for->txt, &d_0->txt);
 
     d_parens = split_of_AST (d_0, 0);
         /* Only gets first two statements in for loop.*/
@@ -931,7 +931,7 @@ build_stmts_AST (AST* ast)
             join_AST (joint_of_AST (ast), 0, 1);
 
             lo_ast->txt = ast->txt;
-            ast->txt = dflt_TabStr ();
+            ast->txt = dflt_AlphaTab ();
             lose_AST (ast);
             ast = pending;
 
@@ -960,17 +960,17 @@ xfrm_stmts_AST (AST* ast)
 
         if (lo_ast->kind == Syntax_LineComment)
         {
-            TabStr ts = dflt1_TabStr ("\n");
+            AlphaTab ts = dflt1_AlphaTab ("\n");
             AST* next = split_of_AST (ast, 1);
             lose_AST (lo_ast);
 
             join_AST (ast, 0, 0);
             PackTable( ast->txt );
-            cat_TabStr (&ast->txt, &ts);
+            cat_AlphaTab (&ast->txt, &ts);
 
             if (next)
             {
-                cat_TabStr (&ast->txt, &next->txt);
+                cat_AlphaTab (&ast->txt, &next->txt);
                 join_AST (ast, split_of_AST (next, 0), 0);
                 join_AST (ast, split_of_AST (next, 1), 1);
                 lose_AST (next);
@@ -1010,8 +1010,8 @@ load_ASTree (XFileB* xf, ASTree* t)
 {
     DecloStack( CxCtx, ctx );
     ctx->ast = *t;
-    init3_Associa (&ctx->type_lookup, sizeof(TabStr), sizeof(uint),
-                   (Trit (*) (const void*, const void*)) swapped_TabStr);
+    init3_Associa (&ctx->type_lookup, sizeof(AlphaTab), sizeof(uint),
+                   (Trit (*) (const void*, const void*)) swapped_AlphaTab);
 
     lex_AST (xf, t->root);
 

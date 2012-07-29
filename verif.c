@@ -201,15 +201,15 @@ testfn_Associa ()
     DecloStack( Associa, map );
     uint n_expect = 0;
 
-    init3_Associa (map, sizeof(TabStr), sizeof(uint),
-                   (Trit (*) (const void*, const void*)) swapped_TabStr);
+    init3_Associa (map, sizeof(AlphaTab), sizeof(uint),
+                   (Trit (*) (const void*, const void*)) swapped_AlphaTab);
     map->ensize = false;
 
     { BLoop( mi, nmuls )
         { BLoop( mj, nmuls )
             { BLoop( i, nkeys )
                 const uint idx = (muls[mi] * i) % nkeys;
-                const TabStr key = dflt1_TabStr (keys[idx]);
+                const AlphaTab key = dflt1_AlphaTab (keys[idx]);
                 if (mj % 2 == 0)
                 {
                     insert_Associa (map, &key, &idx);
@@ -228,7 +228,7 @@ testfn_Associa ()
 
             { BLoop( i, nkeys )
                 const uint idx = (muls[mj] * i) % nkeys;
-                const TabStr key = dflt1_TabStr (keys[idx]);
+                const AlphaTab key = dflt1_AlphaTab (keys[idx]);
                 Assoc* a;
                 if (mj % 2 == 0)
                 {

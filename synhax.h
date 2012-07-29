@@ -1,5 +1,6 @@
 
     /* Included from def.h */
+#include <assert.h>
 
 #define Concatify(a,b) a ## b
 #define ConcatifyDef(a,b)  Concatify(a,b)
@@ -13,6 +14,10 @@
     ((void*) ((size_t) a + (size_t) ((idx) * (elsz))))
 
 #define Elt( a, idx )  (&(a)[idx])
+
+#define EltInZ( a, e, n, elsz ) \
+    (((size_t) (a) <= (size_t) (e)) && \
+     ((size_t) (e) < ((size_t) (a) + (n * elsz))))
 
 #define IdxEltZ( a, e, elsz ) \
     ((size_t) ((size_t) (e) - (size_t) (a)) / (elsz))

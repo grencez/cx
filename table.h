@@ -30,6 +30,8 @@ struct Table
         TableLgSz alloc_lgsz; \
     }
 
+#define DeclTableT_MemLoc
+DeclTableT( MemLoc, void* );
 #define DeclTableT_byte
 DeclTableT( byte, byte );
 #define DeclTableT_char
@@ -180,7 +182,16 @@ top_Table (Table* t)
     return elt_Table (t, t->sz - 1);
 }
 #define TopTable( t )  Elt((t).s, (t).sz-1)
-    
+
+qual_inline
+    bool
+elt_in_Table (Table* t, void* el)
+{
+    return EltInZ( t->s, el, t->sz, t->elsz );
+}
+#define EltInTable( t, el ) \
+    EltInZ( (t).s, (el), (t).sz, sizeof(*(t).s) )
+
 qual_inline
     void*
 grow1_Table (Table* t)
