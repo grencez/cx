@@ -313,7 +313,7 @@ cstr_SyntaxKind (SyntaxKind kind)
 init_lexwords (Associa* map)
 {
     init3_Associa (map, sizeof(AlphaTab), sizeof(SyntaxKind),
-                   (Trit (*) (const void*, const void*)) swapped_AlphaTab);
+                   (SwappedFn) swapped_AlphaTab);
 
     for (SyntaxKind kind = Beg_Syntax_LexWords;
          kind < End_Syntax_LexWords;
@@ -334,44 +334,44 @@ dump_AST (OFileB* of, AST* ast)
     case Syntax_Cons:
         do
         {
-            dump_AlphaTab_OFileB (of, &ast->txt);
+            dump_AlphaTab (of, &ast->txt);
             dump_AST (of, split_of_AST (ast, 0));
             ast = split_of_AST (ast, 1);
         } while (ast);
         break;
     case Syntax_Iden:
         Claim( ast->txt.sz > 0 );
-        dump_AlphaTab_OFileB (of, &ast->txt);
+        dump_AlphaTab (of, &ast->txt);
         break;
     case Syntax_CharLit:
         dump_char_OFileB (of, '\'');
         Claim( ast->txt.sz > 0 );
-        dump_AlphaTab_OFileB (of, &ast->txt);
+        dump_AlphaTab (of, &ast->txt);
         dump_char_OFileB (of, '\'');
         break;
     case Syntax_StringLit:
         dump_char_OFileB (of, '"');
         Claim( ast->txt.sz > 0 );
-        dump_AlphaTab_OFileB (of, &ast->txt);
+        dump_AlphaTab (of, &ast->txt);
         dump_char_OFileB (of, '"');
         break;
     case Syntax_Parens:
         dump_char_OFileB (of, '(');
-        dump_AlphaTab_OFileB (of, &ast->txt);
+        dump_AlphaTab (of, &ast->txt);
         dump_AST (of, split_of_AST (ast, 0));
         dump_AST (of, split_of_AST (ast, 1));
         dump_char_OFileB (of, ')');
         break;
     case Syntax_Braces:
         dump_char_OFileB (of, '{');
-        dump_AlphaTab_OFileB (of, &ast->txt);
+        dump_AlphaTab (of, &ast->txt);
         dump_AST (of, split_of_AST (ast, 0));
         dump_AST (of, split_of_AST (ast, 1));
         dump_char_OFileB (of, '}');
         break;
     case Syntax_Brackets:
         dump_char_OFileB (of, '[');
-        dump_AlphaTab_OFileB (of, &ast->txt);
+        dump_AlphaTab (of, &ast->txt);
         dump_AST (of, split_of_AST (ast, 0));
         dump_AST (of, split_of_AST (ast, 1));
         dump_char_OFileB (of, ']');
@@ -379,28 +379,28 @@ dump_AST (OFileB* of, AST* ast)
     case Syntax_Stmt:
         dump_AST (of, split_of_AST (ast, 0));
         dump_AST (of, split_of_AST (ast, 1));
-        dump_AlphaTab_OFileB (of, &ast->txt);
+        dump_AlphaTab (of, &ast->txt);
         dump_char_OFileB (of, ';');
         break;
     case Syntax_ForLoop:
         dump_cstr_OFileB (of, "for");
-        dump_AlphaTab_OFileB (of, &ast->txt);
+        dump_AlphaTab (of, &ast->txt);
         dump_AST (of, split_of_AST (ast, 0));
         dump_AST (of, split_of_AST (ast, 1));
         break;
     case Syntax_LineComment:
         dump_cstr_OFileB (of, "//");
-        dump_AlphaTab_OFileB (of, &ast->txt);
+        dump_AlphaTab (of, &ast->txt);
         dump_char_OFileB (of, '\n');
         break;
     case Syntax_BlockComment:
         dump_cstr_OFileB (of, "/*");
-        dump_AlphaTab_OFileB (of, &ast->txt);
+        dump_AlphaTab (of, &ast->txt);
         dump_cstr_OFileB (of, "*/");
         break;
     case Syntax_Directive:
         dump_char_OFileB (of, '#');
-        dump_AlphaTab_OFileB (of, &ast->txt);
+        dump_AlphaTab (of, &ast->txt);
         dump_char_OFileB (of, '\n');
         break;
     case Syntax_Inc:
@@ -1011,7 +1011,7 @@ load_ASTree (XFileB* xf, ASTree* t)
     DecloStack( CxCtx, ctx );
     ctx->ast = *t;
     init3_Associa (&ctx->type_lookup, sizeof(AlphaTab), sizeof(uint),
-                   (Trit (*) (const void*, const void*)) swapped_AlphaTab);
+                   (SwappedFn) swapped_AlphaTab);
 
     lex_AST (xf, t->root);
 

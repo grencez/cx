@@ -652,10 +652,26 @@ op_FileB (XOFileB* xo, FileB_Op op, FileBOpArg* arg)
 }
 
     void
+dump_int_OFileB (OFileB* f, int x)
+{
+    EnsizeTable( f->buf, f->off + 50 );
+    f->off += sprintf (cstr_OFileB (f), "%i", x);
+    mayflush_OFileB (f);
+}
+
+    void
 dump_uint_OFileB (OFileB* f, uint x)
 {
     EnsizeTable( f->buf, f->off + 50 );
     f->off += sprintf (cstr_OFileB (f), "%u", x);
+    mayflush_OFileB (f);
+}
+
+    void
+dump_ujint_OFileB (OFileB* f, ujint x)
+{
+    EnsizeTable( f->buf, f->off + 50 );
+    f->off += sprintf (cstr_OFileB (f), "%lu", x);
     mayflush_OFileB (f);
 }
 
@@ -677,7 +693,7 @@ dump_char_OFileB (OFileB* f, char c)
 }
 
     void
-dump_AlphaTab_OFileB (OFileB* of, const AlphaTab* t)
+dump_AlphaTab (OFileB* of, const AlphaTab* t)
 {
     ujint n = t->sz;
     if (n == 0)  return;

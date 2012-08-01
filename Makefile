@@ -10,7 +10,7 @@ CFLAGS += -g
 CExes = cx verify
 
 CFiles = bstree.c fileb.c rbtree.c sys-cx.c cx.c verif.c
-HFiles = associa.h bittable.h bstree.h def.h fileb.h rbtree.h synhax.h sys-cx.h table.h
+HFiles = associa.h bittable.h bstree.h cons.h def.h fileb.h rbtree.h synhax.h sys-cx.h table.h
 
 CxDeps = bstree fileb rbtree sys-cx
 CxObjs = $(addsuffix .o,$(CxDeps))

@@ -87,7 +87,6 @@ struct FileB
     bool good;
     bool sink;
     bool byline;
-        /* TODO - Flag for auto-flush so packets can be sent.*/
     FileB_Format fmt;
     TableT(char) pathname;
     TableT(char) filename;
@@ -155,13 +154,17 @@ flush_OFileB (OFileB* f);
 void
 mayflush_OFileB (OFileB* of);
 void
+dump_int_OFileB (OFileB* f, int x);
+void
 dump_uint_OFileB (OFileB* f, uint x);
+void
+dump_ujint_OFileB (OFileB* f, ujint x);
 void
 dump_real_OFileB (OFileB* f, real x);
 void
 dump_char_OFileB (OFileB* f, char c);
 void
-dump_AlphaTab_OFileB (OFileB* f, const AlphaTab* t);
+dump_AlphaTab (OFileB* f, const AlphaTab* t);
 void
 vprintf_OFileB (OFileB* f, const char* fmt, va_list args);
 void
@@ -228,6 +231,13 @@ AlphaTab_XFileB (XFileB* xf, ujint off)
     return t;
 }
 
+qual_inline
+    void
+cat_AlphaTab_OFileB (AlphaTab* t, OFileB* of)
+{
+    AlphaTab tmp = AlphaTab_XFileB (of, 0);
+    cat_AlphaTab (t, &tmp);
+}
 
 qual_inline
     bool
@@ -264,7 +274,7 @@ dump_cstr_OFileB (OFileB* of, const char* s)
     DeclTable( char, t );
     t.s = (char*) s;
     t.sz = strlen (s) + 1;
-    dump_AlphaTab_OFileB (of, &t);
+    dump_AlphaTab (of, &t);
 }
 
     /* Implemented in sys-cx.c */

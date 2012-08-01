@@ -1,6 +1,11 @@
-
+/**
+ * \file verif.c
+ * Tests for cx.
+ * Be sure to run this through valgrind sometimes, it should not leak!
+ **/
 #include "associa.h"
 #include "bittable.h"
+#include "cons.h"
 #include "fileb.h"
 #include "rbtree.h"
 #include "sys-cx.h"
@@ -66,7 +71,7 @@ claim_TNode (BSTNode* x, void* args)
 
     Claim( x->joint );
     Claim2( x ,==, x->joint->split[side_of_BSTNode (x)]);
-    
+
     if (x->split[0])
         Claim2( x ,==, x->split[0]->joint );
     if (x->split[1])
@@ -183,6 +188,10 @@ remove_TNode (RBTree* t, const char* key, uint* n_expect)
 }
 
 
+/** \test
+ * Test Associa structure.
+ * \sa testfn_RBTree()
+ **/
 static
     void
 testfn_Associa ()
@@ -202,7 +211,7 @@ testfn_Associa ()
     uint n_expect = 0;
 
     init3_Associa (map, sizeof(AlphaTab), sizeof(uint),
-                   (Trit (*) (const void*, const void*)) swapped_AlphaTab);
+                   (SwappedFn) swapped_AlphaTab);
     map->ensize = false;
 
     { BLoop( mi, nmuls )
@@ -257,6 +266,9 @@ testfn_Associa ()
 }
 
 
+/** \test
+ * Set and test at a bunch of indices.
+ **/
 static
     void
 testfn_BitTable ()
@@ -283,11 +295,12 @@ testfn_BitTable ()
     lose_BitTable (&bt);
 }
 
-    /** This mimics the dirty bit in a set associative cache,
-     * but is unrealistic since it disregards any values.
-     * Now, if all values fall inside [0..255], then we have a useful tool,
-     * but then LowBits() would not be tested.
-     **/
+/** \test
+ * This mimics the dirty bit in a set associative cache,
+ * but is unrealistic since it disregards any values.
+ * Now, if all values fall inside [0..255], then we have a useful tool,
+ * but then LowBits() would not be tested.
+ **/
 static
     void
 testfn_cache_BitTable ()
@@ -326,6 +339,40 @@ testfn_cache_BitTable ()
     Claim2( flag ,==, 1 );
 }
 
+/** \test
+ * Simple test for the Cons structure.
+ * Cons uses reference counting, to know when memory is safe to free.
+ **/
+    void
+testfn_Cons ()
+{
+    Cons* c = make_Cons ();
+    Cons* b = make2_Cons (dflt_Cons_ConsAtom (c), 0);
+    Cons* a = make1_Cons (b);
+    OFileB* of = stderr_OFileB ();
+
+    c->car.kind = Cons_AlphaTab;
+    c->car.as.alphatab = dflt1_AlphaTab ("c");
+    a->car.kind = Cons_AlphaTab;
+    a->car.as.alphatab = dflt1_AlphaTab ("a");
+
+    dump_Cons (of, a);
+    dump_char_OFileB (of, '\n');
+    dump_Cons (of, b);
+    dump_char_OFileB (of, '\n');
+    dump_Cons (of, c);
+    dump_char_OFileB (of, '\n');
+    dump_cstr_OFileB (of, "------------\n");
+
+    lose_Cons (b);
+    lose_Cons (a);
+    lose_Cons (c);
+}
+
+/** \test
+ * Test FileB ability to skip whitespace.
+ * This also shows how FileB overlays work.
+ **/
     void
 testfn_skipws_FileB ()
 {
@@ -370,6 +417,16 @@ testfn_skipws_FileB ()
     flush_OFileB (of);
 }
 
+/** \test
+ * Rigorously test red-black tree with different combinations of insert
+ * and remove operations.
+ * Set up and tear down a tree of 26 strings (ascii letters) in many different
+ * orders. To ensure many orders, use sequential multiples of coprimes with 26
+ * to index the array of keys.
+ *
+ * Ex: The following sequence is generated from the first 26 multiples of 3.\n
+ * 0 3 6 9 12 15 18 21 24 1 4 7 10 13 16 19 22 25 2 5 8 11 14 17 20 23
+ **/
     void
 testfn_RBTree ()
 {
@@ -444,7 +501,7 @@ claim_allocsz_Table (Table* t)
         grow_Table (t, CeilQuot( sz, 2 ));
         Claim2( allocsz / 2 ,==, allocsz_Table (t) );
 
-            /* Get allocsz back.*/
+        /* Get allocsz back.*/
         grow_Table (t, allocsz / 2);
         Claim2( allocsz ,==, allocsz_Table (t) );
         mpop_Table (t, allocsz / 2);
@@ -457,7 +514,7 @@ claim_allocsz_Table (Table* t)
         mpop_Table (t, sz);
         Claim2( allocsz * 2 ,==, allocsz_Table (t) );
 
-            /* Get allocsz back.*/
+        /* Get allocsz back.*/
         mpop_Table (t, sz / 2 + 1);
         Claim2( allocsz ,==, allocsz_Table (t) );
         grow_Table (t, sz / 2 + 1);
@@ -468,6 +525,12 @@ claim_allocsz_Table (Table* t)
     Claim2( allocsz ,==, allocsz_Table (t));
 }
 
+/** \test
+ * Rigorously test Table structure.
+ * At each push/pop step, assertions are made about when the table should
+ * resize. This ensures the Table has proper a proper amortized constant
+ * cost.
+ **/
     void
 testfn_Table ()
 {
@@ -528,6 +591,7 @@ int main ()
 {
     init_sys_cx ();
 
+    testfn_Cons ();
     testfn_Table ();
     testfn_BitTable ();
     testfn_cache_BitTable ();
