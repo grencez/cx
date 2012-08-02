@@ -36,8 +36,8 @@ init_FileB (FileB* f)
     f->sink = false;
     f->byline = false;
     f->fmt = FileB_Ascii;
-    InitTable( f->pathname );
-    InitTable( f->filename );
+    f->pathname = dflt_AlphaTab ();
+    f->filename = dflt_AlphaTab ();
 }
 
     void
@@ -59,8 +59,8 @@ lose_FileB (FileB* f)
 {
     close_FileB (f);
     LoseTable( f->xo.buf );
-    LoseTable( f->pathname );
-    LoseTable( f->filename );
+    lose_AlphaTab (&f->pathname);
+    lose_AlphaTab (&f->filename);
 }
 
     void

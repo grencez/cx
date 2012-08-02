@@ -88,8 +88,8 @@ struct FileB
     bool sink;
     bool byline;
     FileB_Format fmt;
-    TableT(char) pathname;
-    TableT(char) filename;
+    AlphaTab pathname;
+    AlphaTab filename;
 };
 
 static const char WhiteSpaceChars[] = " \t\v\r\n";
@@ -271,9 +271,7 @@ qual_inline
     void
 dump_cstr_OFileB (OFileB* of, const char* s)
 {
-    DeclTable( char, t );
-    t.s = (char*) s;
-    t.sz = strlen (s) + 1;
+    const AlphaTab t = dflt1_AlphaTab (s);
     dump_AlphaTab (of, &t);
 }
 

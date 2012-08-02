@@ -24,7 +24,7 @@ typedef unsigned char byte;
 typedef unsigned int uint;
 #define Max_uint UINT_MAX
 
-typedef size_t ujint;
+typedef unsigned long int ujint;
 #define Max_ujint ((ujint)0 - 1)
 
 #if 0

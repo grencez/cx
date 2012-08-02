@@ -478,7 +478,7 @@ parse_escaped (XFileB* xf, AlphaTab* t, char delim)
         bool escaped = false;
         ujint off;
 
-        app_AlphaTab (t, s);
+        cat_cstr_AlphaTab (t, s);
         off = t->sz-1;
 
         while (off > 0 && t->s[off-1] == '\\')
@@ -487,7 +487,7 @@ parse_escaped (XFileB* xf, AlphaTab* t, char delim)
             -- off;
         }
         if (escaped)
-            app_AlphaTab (t, delims);
+            cat_cstr_AlphaTab (t, delims);
         else
             return true;
     }
@@ -640,7 +640,7 @@ lex_AST (XFileB* xf, AST* ast)
             ast = app_AST (ast);
             ast->kind = Syntax_Directive;
             ast->line = line;
-            app_AlphaTab (&ast->txt, getlined_XFileB (xf, "\n"));
+            cat_cstr_AlphaTab (&ast->txt, getlined_XFileB (xf, "\n"));
             ++ line;
             ast = joint_of_AST (ast);
             break;
@@ -672,7 +672,7 @@ lex_AST (XFileB* xf, AST* ast)
             if (lo_ast && lo_ast->kind == Lexical_Div)
             {
                 lo_ast->kind = Syntax_BlockComment;
-                app_AlphaTab (&lo_ast->txt, getlined_XFileB (xf, "*/"));
+                cat_cstr_AlphaTab (&lo_ast->txt, getlined_XFileB (xf, "*/"));
                 line += count_newlines (lo_ast->txt.s);
             }
             else
@@ -687,7 +687,7 @@ lex_AST (XFileB* xf, AST* ast)
             if (lo_ast && lo_ast->kind == Lexical_Div)
             {
                 lo_ast->kind = Syntax_LineComment;
-                app_AlphaTab (&lo_ast->txt, getlined_XFileB (xf, "\n"));
+                cat_cstr_AlphaTab (&lo_ast->txt, getlined_XFileB (xf, "\n"));
                 ++ line;
             }
             else

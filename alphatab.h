@@ -86,7 +86,7 @@ cstr_AlphaTab (AlphaTab* ts)
 
 qual_inline
     void
-app_AlphaTab (AlphaTab* t, const char* s)
+cat_cstr_AlphaTab (AlphaTab* t, const char* s)
 {
     DeclTable( char, b );
     b.s = (char*) s;
