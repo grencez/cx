@@ -41,9 +41,6 @@
 #define BLoop( i, bel )  BLoopT( uint, i, bel )
 #define BUjFor( i, bel )  BLoopT( ujint, i, bel )
 
-#define Claim( x )  assert(x)
-#define Claim2( a ,op, b )  assert((a) op (b))
-
 #define AccepTok( line, tok ) \
     ((0 == strncmp ((line), (tok), strlen(tok))) \
      ? ((line) = &(line)[strlen(tok)]) \
@@ -83,6 +80,22 @@ dbglog_printf3 (const char* file,
 #define DBog2(s,a,b)  dbglog_printf3 (__FILE__,__FUNC__,__LINE__,s,a,b)
 #define DBog3(s,a,b,c)  dbglog_printf3 (__FILE__,__FUNC__,__LINE__,s,a,b,c)
 #define DBog_ujint(x)  DBog2( "%s:%lu", #x, (ujint)(x) )
+
+void fail_exit_sysCx (const char* msg);
+#ifndef NDEBUG
+#define Claim( x )  assert(x)
+#else
+#define Claim( x )  do \
+{ \
+    if (!(x)) \
+    { \
+        DBog1( "%s failed.", #x ); \
+        fail_exit_sysCx (""); \
+    } \
+} while (0)
+#endif
+#define Claim2( a ,op, b )  Claim((a) op (b))
+
 
     /** Cascading if statement.**/
 #define BCasc(cond, inv, msg) \

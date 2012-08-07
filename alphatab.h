@@ -15,6 +15,16 @@ dup_cstr (const char* s)
 }
 
 qual_inline
+    bool
+eql_cstr (const char* a, const char* b)
+{
+    if (a == b)  return true;
+    if (!a)  return false;
+    if (!b)  return false;
+    return (0 == strcmp (a, b));
+}
+
+qual_inline
     AlphaTab
 dflt_AlphaTab ()
 {

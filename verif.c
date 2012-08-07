@@ -3,12 +3,13 @@
  * Tests for cx.
  * Be sure to run this through valgrind sometimes, it should not leak!
  **/
+#include "syscx.h"
 #include "associa.h"
 #include "bittable.h"
 #include "cons.h"
 #include "fileb.h"
+#include "ospc.h"
 #include "rbtree.h"
-#include "sys-cx.h"
 #include "table.h"
 
 #include <assert.h>
@@ -400,7 +401,9 @@ testfn_skipws_FileB ()
     {
         XFileB olay = olay_XFileB (&in->xo, IdxEltTable( in->xo.buf, s ));
 
-        while ((s = nextok_XFileB (&olay, 0, 0)))
+        for (s = nextok_XFileB (&olay, 0, 0);
+             s;
+             s = nextok_XFileB (&olay, 0, 0))
         {
             int cmp_ret;
             Claim2(idx ,<, ArraySz( expect_text ));
@@ -415,6 +418,28 @@ testfn_skipws_FileB ()
     lose_FileB (in);
     dump_cstr_OFileB (of, "------------\n");
     flush_OFileB (of);
+}
+
+    void
+testfn_OSPc ()
+{
+    bool good = true;
+    const char* s;
+    DecloStack1( OSPc, ospc, dflt_OSPc () );
+    /* stdxpipe_OSPc (ospc); */
+    stdopipe_OSPc (ospc);
+    ospc->cmd = cons1_AlphaTab (exename_of_sysCx ());
+    PushTable( ospc->args, cons1_AlphaTab ("echo") );
+    PushTable( ospc->args, cons1_AlphaTab ("hello") );
+    PushTable( ospc->args, cons1_AlphaTab ("world") );
+    good = spawn_OSPc (ospc);
+    Claim( good );
+    /* close_OFileB (ospc->of); */
+    load_XFileB (ospc->xf);
+    s = cstr_XFileB (ospc->xf);
+    /* DBog1( "got: %s", s ); */
+    Claim( eql_cstr (s, "hello world\n") );
+    lose_OSPc (ospc);
 }
 
 /** \test
@@ -587,9 +612,23 @@ testfn_Table ()
 }
 
 
-int main ()
+int main (int argc, char** argv)
 {
-    init_sys_cx ();
+    init_sysCx (&argc, &argv);
+
+    /* Special test as child process.*/
+    if (eql_cstr (argv[1], "echo"))
+    {
+        int argi;
+        OFileB* of = stdout_OFileB ();
+        for (argi = 2; argi < argc; ++argi)
+        {
+            dump_cstr_OFileB (of, argv[argi]);
+            dump_char_OFileB (of, (argi + 1 < argc) ? ' ' : '\n');
+        }
+        lose_sysCx ();
+        return 0;
+    }
 
     testfn_Cons ();
     testfn_Table ();
@@ -598,8 +637,9 @@ int main ()
     testfn_skipws_FileB ();
     testfn_RBTree ();
     testfn_Associa ();
+    testfn_OSPc ();
 
-    lose_sys_cx ();
+    lose_sysCx ();
     return 0;
 }
 

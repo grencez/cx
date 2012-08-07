@@ -84,6 +84,7 @@ struct FileB
 {
     XOFileB xo;
     FILE* f;
+    int fd;
     bool good;
     bool sink;
     bool byline;
@@ -175,6 +176,8 @@ dumpn_byte_FileB (FileB* f, const byte* a, ujint n);
 void
 dumpn_char_OFileB (OFileB* of, const char* a, ujint n);
 
+void
+load_XFileB (XFileB* xf);
 char*
 load_uint_cstr (uint* ret, const char* in);
 char*
@@ -255,17 +258,19 @@ byline_FileB (const FileB* f)
 
 
 qual_inline
-    char*
-cstr_XOFileB (XOFileB* f)
+char* cstr1_XFileB (XFileB* f, ujint off) { return (char*) &f->buf.s[off]; }
+qual_inline
+char* cstr1_OFileB (OFileB* f, ujint off) { return (char*) &f->buf.s[off]; }
+qual_inline
+char* cstr_XFileB (XFileB* xf) { return cstr1_XFileB (xf, xf->off); }
+qual_inline
+char* cstr_OFileB (OFileB* of) { return cstr1_OFileB (of, 0); }
+qual_inline
+char* cstr_FileB (FileB* f)
 {
-    return (char*) &f->buf.s[f->off];
+    if (f->sink)  return cstr_OFileB (&f->xo);
+    else          return cstr_XFileB (&f->xo);
 }
-qual_inline
-char* cstr_XFileB (XFileB* xf) { return cstr_XOFileB (xf); }
-qual_inline
-char* cstr_OFileB (OFileB* of) { return cstr_XOFileB (of); }
-qual_inline
-char* cstr_FileB (FileB* f) { return cstr_XOFileB (&f->xo); }
 
 qual_inline
     void
@@ -273,6 +278,18 @@ dump_cstr_OFileB (OFileB* of, const char* s)
 {
     const AlphaTab t = dflt1_AlphaTab (s);
     dump_AlphaTab (of, &t);
+}
+
+qual_inline
+    char*
+itoa_dup_cstr (int x)
+{
+    OFileB of = dflt_OFileB ();
+    char* s = 0;
+    dump_int_OFileB (&of, x);
+    s = dup_cstr (cstr_OFileB (&of));
+    lose_OFileB (&of);
+    return s;
 }
 
     /* Implemented in sys-cx.c */

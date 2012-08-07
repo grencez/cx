@@ -1,18 +1,24 @@
 
 CC = gcc
+#CC = wine "$(HOME)/.wine/drive_c/Program Files (x86)/CodeBlocks/MinGW/bin/mingw32-gcc-4.4.1.exe"
+#CC = winegcc -mno-cygwin
+
 
 CFLAGS =
 CFLAGS += -ansi -pedantic
 CFLAGS += -Wall -Wextra -Wstrict-aliasing
 CFLAGS += -g
 #CFLAGS += -O3
+#CFLAGS += -DNDEBUG
+
+#CFLAGS := $(filter-out -ansi,$(CFLAGS))
 
 CExes = cx verify
 
-CFiles = bstree.c fileb.c rbtree.c sys-cx.c cx.c verif.c
-HFiles = associa.h bittable.h bstree.h cons.h def.h fileb.h rbtree.h synhax.h sys-cx.h table.h
+CFiles = bstree.c fileb.c rbtree.c syscx.c cx.c verif.c ospc.c
+HFiles = associa.h bittable.h bstree.h cons.h def.h fileb.h rbtree.h synhax.h syscx.h table.h ospc.h
 
-CxDeps = bstree fileb rbtree sys-cx
+CxDeps = bstree fileb rbtree syscx
 CxObjs = $(addsuffix .o,$(CxDeps))
 
 CxPpPath = ../cx-pp
@@ -20,7 +26,7 @@ BldPath = ../cx-bld
 
 all: $(CExes)
 
-verify: $(addprefix $(BldPath)/,verif.o $(CxObjs))
+verify: $(addprefix $(BldPath)/,verif.o ospc.o $(CxObjs))
 	$(CC) $(CFLAGS) $^ -o $@ $(LFLAGS)
 
 cx: $(addprefix $(BldPath)/,cx.o $(CxObjs))
@@ -49,8 +55,14 @@ $(addprefix $(BldPath)/,$(CFiles)): | $(BldPath)
 $(BldPath):
 	mkdir -p $(BldPath)
 
+.PHONY: killcmake
+killcmake:
+	rm -fr CMakeFiles
+	rm -f cmake_install.cmake CMakeCache.txt Makefile
+	ln -s Makefile.raw Makefile
+
 .PHONY: clean
 clean:
-	rm -f $(CxPpPath)/*.o $(CExes)
+	rm -f $(CxPpPath)/*.o $(CExes) *.exe *.exe.so
 	rm -fr $(BldPath)
 

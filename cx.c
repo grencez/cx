@@ -1,9 +1,9 @@
 
+#include "syscx.h"
 #include "associa.h"
 #include "fileb.h"
 #include "bstree.h"
 #include "rbtree.h"
-#include "sys-cx.h"
 #include "table.h"
 
 #include <assert.h>
@@ -340,18 +340,18 @@ dump_AST (OFileB* of, AST* ast)
         } while (ast);
         break;
     case Syntax_Iden:
-        Claim( ast->txt.sz > 0 );
+        Claim2( ast->txt.sz ,>, 0 );
         dump_AlphaTab (of, &ast->txt);
         break;
     case Syntax_CharLit:
         dump_char_OFileB (of, '\'');
-        Claim( ast->txt.sz > 0 );
+        Claim2( ast->txt.sz ,>, 0 );
         dump_AlphaTab (of, &ast->txt);
         dump_char_OFileB (of, '\'');
         break;
     case Syntax_StringLit:
         dump_char_OFileB (of, '"');
-        Claim( ast->txt.sz > 0 );
+        Claim2( ast->txt.sz ,>, 0 );
         dump_AlphaTab (of, &ast->txt);
         dump_char_OFileB (of, '"');
         break;
@@ -1029,7 +1029,7 @@ int main (int argc, char** argv)
     FileB xfb;  XFileB* xf = 0;
     FileB ofb;  OFileB* of = 0;
 
-    init_sys_cx ();
+    init_sysCx (&argc, &argv);
     init_FileB (&xfb);
     init_FileB (&ofb);
     seto_FileB (&ofb, 1);
@@ -1041,7 +1041,7 @@ int main (int argc, char** argv)
             ++ argi;
             if (!open_FileB (&xfb, 0, argv[argi++]))
             {
-                fail_exit_sys_cx ("Could not open file for reading.");
+                fail_exit_sysCx ("Could not open file for reading.");
             }
             xf = &xfb.xo;
         }
@@ -1050,7 +1050,7 @@ int main (int argc, char** argv)
             ++ argi;
             if (!open_FileB (&ofb, 0, argv[argi++]))
             {
-                fail_exit_sys_cx ("Could not open file for writing.");
+                fail_exit_sysCx ("Could not open file for writing.");
             }
             of = &ofb.xo;
         }
@@ -1061,8 +1061,8 @@ int main (int argc, char** argv)
             printf_OFileB (of, "Usage: %s [-x IN] [-o OUT]\n", argv[0]);
             dump_cstr_OFileB (of, "  If -x is not specified, stdin is used.\n");
             dump_cstr_OFileB (of, "  If -o is not specified, stdout is used.\n");
-            if (!good)  fail_exit_sys_cx ("Exiting in failure...");
-            lose_sys_cx ();
+            if (!good)  fail_exit_sysCx ("Exiting in failure...");
+            lose_sysCx ();
             return 0;
         }
     }
@@ -1080,7 +1080,7 @@ int main (int argc, char** argv)
     lose_FileB (&ofb);
 
     lose_ASTree (&t);
-    lose_sys_cx ();
+    lose_sysCx ();
     return 0;
 }
 

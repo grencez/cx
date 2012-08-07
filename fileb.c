@@ -2,6 +2,7 @@
 #include "fileb.h"
 
 #include <assert.h>
+#include <errno.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
@@ -32,6 +33,7 @@ init_FileB (FileB* f)
     f->xo.flushsz = BUFSIZ;
     f->xo.op = op_FileB;
     f->f = 0;
+    f->fd = -1;
     f->good = true;
     f->sink = false;
     f->byline = false;
@@ -48,6 +50,7 @@ close_FileB (FileB* f)
     {
         fclose (f->f);
         f->f = 0;
+        f->fd = -1;
     }
     f->xo.off = 0;
     f->xo.buf.s[0] = 0;
@@ -184,19 +187,19 @@ load_FileB (FileB* f)
 {
     XFileB* const xf = &f->xo;
     bool good = true;
-    long ret = 0;
+    long ret = -1;
 
-    if (good && (good = !!f->f))
-    {
+    good = !!f->f;
+#ifndef _MSC_VER
+    if (good)
         ret = fseek (f->f, 0, SEEK_END);
-    }
+#endif
 
-        /* Some streams cannot be seeked.*/
+    /* Some streams cannot be seeked.*/
     if (good && ret != 0)
     {
-        bool more = true;
-        while (more)
-            more = load_chunk_FileB (f);
+        errno = 0; /* Not an error.*/
+        load_XFileB (xf);
     }
     else
     {
@@ -708,7 +711,7 @@ dump_AlphaTab (OFileB* of, const AlphaTab* t)
     void
 vprintf_OFileB (OFileB* f, const char* fmt, va_list args)
 {
-    uint sz = 2048;  /* Not good :( */
+    ujint sz = 2048;  /* Not good :( */
     int iret = 0;
 
     EnsizeTable( f->buf, f->off + sz );
@@ -775,6 +778,14 @@ dumpn_char_OFileB (OFileB* of, const char* a, ujint n)
     memcpy (&of->buf.s[of->off], a, (n+1)*sizeof(char));
     of->off += n;
     mayflush_OFileB (of);
+}
+
+    void
+load_XFileB (XFileB* xf)
+{
+    bool more = true;
+    while (more)
+        more = load_chunk_XFileB (xf);
 }
 
     char*

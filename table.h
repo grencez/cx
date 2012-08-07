@@ -36,6 +36,8 @@ DeclTableT( MemLoc, void* );
 DeclTableT( byte, byte );
 #define DeclTableT_char
 DeclTableT( char, char );
+#define DeclTableT_cstr
+DeclTableT( cstr, char* );
 #define DeclTableT_uint
 DeclTableT( uint, uint );
 #define DeclTableT_ujint
