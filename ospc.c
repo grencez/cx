@@ -9,6 +9,7 @@ close_OSPc (OSPc* ospc)
 {
     int ret = 0;
     int status = 0;
+    if (ospc->pid < 0)  return 0;
     close_FileB (&ospc->xfb);
     close_FileB (&ospc->ofb);
     /* if (ospc->pid > 0)  kill (ospc->pid, SIGKILL); */

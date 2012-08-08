@@ -264,7 +264,7 @@ char* cstr1_OFileB (OFileB* f, ujint off) { return (char*) &f->buf.s[off]; }
 qual_inline
 char* cstr_XFileB (XFileB* xf) { return cstr1_XFileB (xf, xf->off); }
 qual_inline
-char* cstr_OFileB (OFileB* of) { return cstr1_OFileB (of, 0); }
+char* cstr_OFileB (OFileB* of) { return cstr1_OFileB (of, of->off); }
 qual_inline
 char* cstr_FileB (FileB* f)
 {
@@ -287,7 +287,7 @@ itoa_dup_cstr (int x)
     OFileB of = dflt_OFileB ();
     char* s = 0;
     dump_int_OFileB (&of, x);
-    s = dup_cstr (cstr_OFileB (&of));
+    s = dup_cstr (cstr1_OFileB (&of, 0));
     lose_OFileB (&of);
     return s;
 }
