@@ -25,7 +25,7 @@ static
 signal_hook_sysCx (int sig)
 {
     DBog1( "Caught signal: %d", sig );
-    fail_exit_sysCx ("");
+    failout_sysCx ("");
 }
 
 #if 0
@@ -80,7 +80,7 @@ parse_args_sysCx (int* pargc, char*** pargv)
             else
             {
                 DBog1( "Bad -stdxfd argument: %s", argv[argi-1] );
-                fail_exit_sysCx ("");
+                failout_sysCx ("");
             }
         }
         else if (eql_cstr (arg, "-stdofd"))
@@ -90,7 +90,7 @@ parse_args_sysCx (int* pargc, char*** pargv)
             else
             {
                 DBog1( "Bad -stdofd argument: %s", argv[argi-1] );
-                fail_exit_sysCx ("");
+                failout_sysCx ("");
             }
         }
         if (eql_cstr (arg, "-closefd"))
@@ -100,7 +100,7 @@ parse_args_sysCx (int* pargc, char*** pargv)
             else
             {
                 DBog1( "Bad -closefd argument: %s", argv[argi-1] );
-                fail_exit_sysCx ("");
+                failout_sysCx ("");
             }
         }
         else if (eql_cstr (arg, "-exe"))
@@ -174,16 +174,23 @@ lose_sysCx ()
 }
 
     void
-fail_exit_sysCx (const char* msg)
+failout_sysCx (const char* msg)
 {
     if (msg)
     {
         int err = errno;
-        flusho_FileB (stderr_FileB ());
         /* Use literal stderr just in case we have memory problems.*/
-        fprintf (stderr, "Failing out! %s\n", msg);
+        FILE* f = stderr;
+
+        /* Flush these so the next message is last.*/
+        flusho_FileB (stdout_FileB ());
+        flusho_FileB (stderr_FileB ());
+
+        fprintf (f, "FAILOUT: %s\n", exename_of_sysCx ());
+        if (msg[0])
+            fprintf (f, "^^^ Reason: %s\n", msg);
         if (err != 0)
-            fprintf (stderr, "^^^ errno:%d %s\n", err, strerror (err));
+            fprintf (f, "^^^ errno:%d %s\n", err, strerror (err));
     }
     lose_sysCx ();
     exit (1);
@@ -347,7 +354,7 @@ spawnvp_sysCx (char* const* argv)
     if (pid > 0)  return pid;
     if (pid < 0)  return -1;
     execvp (argv[0], argv);
-    fail_exit_sysCx ("execvp() failed");
+    failout_sysCx ("execvp() failed");
     return -1;
 #else
     return _spawnvp (_P_NOWAIT, argv[0], argv);
@@ -362,7 +369,7 @@ execvp_sysCx (char* const* argv)
 #else
     _execvp (argv[0], argv);
 #endif
-    fail_exit_sysCx ("execvp()");
+    failout_sysCx ("execvp()");
 }
 
     int

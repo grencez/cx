@@ -18,6 +18,9 @@ enum  ConsKind {
 };
 typedef enum ConsKind ConsKind;
 
+#define DeclTableT_Cons
+DeclTableT( Cons, Cons );
+
 struct ConsAtom
 {
     union ConsAtom_union

@@ -38,6 +38,10 @@ DeclTableT( byte, byte );
 DeclTableT( char, char );
 #define DeclTableT_cstr
 DeclTableT( cstr, char* );
+#define DeclTableT_const_cstr
+DeclTableT( const_cstr, const char* );
+#define DeclTableT_int
+DeclTableT( int, int );
 #define DeclTableT_uint
 DeclTableT( uint, uint );
 #define DeclTableT_ujint

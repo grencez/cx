@@ -14,18 +14,21 @@ void
 push_losefn1_sysCx (void (*f) (void*), void* x);
 void
 lose_sysCx ();
-void
-fail_exit_sysCx (const char* msg);
 
-    /* synhax.h - dbglog_printf3() */
-    /* fileb.h - stdin_FileB () */
-    /* fileb.h - stdout_FileB () */
-    /* fileb.h - stderr_FileB () */
+/* synhax.h - failout_sysCx() */
+/* synhax.h - dbglog_printf3() */
+/* fileb.h - stdin_FileB () */
+/* fileb.h - stdout_FileB () */
+/* fileb.h - stderr_FileB () */
 
 #ifndef _WIN32
 /* TODO: Figure out the correct POSIX_SOURCE to use!*/
+#ifndef POSIX_SOURCE
 #define POSIX_SOURCE
+#endif
+#ifndef _POSIX_SOURCE
 #define _POSIX_SOURCE
+#endif
 #endif
 
 #ifdef POSIX_SOURCE

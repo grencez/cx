@@ -1,4 +1,7 @@
-
+/**
+ * \file fileb.c
+ * Simple and advanced file I/O and parsing.
+ **/
 #include "fileb.h"
 
 #include <assert.h>
@@ -26,20 +29,27 @@ lose_XOFileB (XOFileB* xo)
 void lose_OFileB (OFileB* of) { lose_XOFileB (of); }
 void lose_XFileB (OFileB* xf) { lose_XOFileB (xf); }
 
+    FileB
+dflt_FileB ()
+{
+    FileB fb;
+    fb.xo = dflt_XOFileB ();
+    fb.xo.flushsz = BUFSIZ;
+    fb.xo.op = op_FileB;
+    fb.f = 0;
+    fb.fd = -1;
+    fb.good = true;
+    fb.sink = false;
+    fb.byline = false;
+    fb.fmt = FileB_Ascii;
+    fb.pathname = dflt_AlphaTab ();
+    fb.filename = dflt_AlphaTab ();
+    return fb;
+}
     void
 init_FileB (FileB* f)
 {
-    f->xo = dflt_XOFileB ();
-    f->xo.flushsz = BUFSIZ;
-    f->xo.op = op_FileB;
-    f->f = 0;
-    f->fd = -1;
-    f->good = true;
-    f->sink = false;
-    f->byline = false;
-    f->fmt = FileB_Ascii;
-    f->pathname = dflt_AlphaTab ();
-    f->filename = dflt_AlphaTab ();
+    *f = dflt_FileB ();
 }
 
     void
@@ -491,33 +501,30 @@ nextok_XFileB (XFileB* xf, char* ret_match, const char* delims)
     return nextds_XFileB (xf, ret_match, delims);
 }
 
-    /** Inject content from a file /src/
-     * at the current read position of file /in/.
-     * This allows a trivial implementation of #include.
-     **/
+/** Inject content from a file /src/
+ * at the current read position of file /in/.
+ * This allows a trivial implementation of #include.
+ **/
     void
-inject_FileB (FileB* in_fb, FileB* src_fb, const char* delim)
+inject_XFileB (XFileB* in, XFileB* src, const char* delim)
 {
-    XFileB* const in = &in_fb->xo;
-    XFileB* const src = &src_fb->xo;
     uint delim_sz = strlen (delim);
-    uint sz;
+    const ujint sz = in->buf.sz - in->off;
 
-    load_FileB (src_fb);
+    load_XFileB (src);
     Claim2( src->buf.sz ,>, 0 );
-    sz = in->buf.sz - in->off;
 
     GrowTable( in->buf, src->buf.sz-1 + delim_sz );
-        /* Make room for injection.*/
+    /* Make room for injection.*/
     memmove (&in->buf.s[in->off + src->buf.sz-1 + delim_sz],
              &in->buf.s[in->off],
              sz * sizeof (char));
-        /* Inject file contents, assume src->buf.sz is strlen!*/
+    /* Inject file contents, assume src->buf.sz is strlen!*/
     memcpy (&in->buf.s[in->off],
             src->buf.s,
             (src->buf.sz-1) * sizeof (char));
 
-        /* Add the delimiter at the end.*/
+    /* Add the delimiter at the end.*/
     if (delim_sz > 0)
         memcpy (&in->buf.s[in->off + src->buf.sz-1],
                 delim,

@@ -6,6 +6,9 @@ typedef TableT(char) AlphaTab;
 #define DeclTableT_AlphaTab
 DeclTableT( AlphaTab, AlphaTab );
 
+static const char WhiteSpaceChars[] = " \t\v\r\n";
+
+
 qual_inline
     char*
 dup_cstr (const char* s)
@@ -38,7 +41,7 @@ dflt1_AlphaTab (const char* s)
 {
     AlphaTab t = dflt_AlphaTab ();
     t.s = (char*) s;
-    t.sz = strlen (s);
+    t.sz = strlen (s) + 1;
     return t;
 }
 
@@ -102,6 +105,13 @@ cat_cstr_AlphaTab (AlphaTab* t, const char* s)
     b.s = (char*) s;
     b.sz = strlen (s) + 1;
     cat_AlphaTab (t, &b);
+}
+
+qual_inline
+    void
+copy_AlphaTab (AlphaTab* a, const AlphaTab* b)
+{
+    CopyTable( *a, *b );
 }
 
 #endif

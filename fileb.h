@@ -93,9 +93,6 @@ struct FileB
     AlphaTab filename;
 };
 
-static const char WhiteSpaceChars[] = " \t\v\r\n";
-
-
 void
 lose_XOFileB (XOFileB* xo);
 void
@@ -103,6 +100,8 @@ lose_OFileB (OFileB* of);
 void
 lose_XFileB (OFileB* xf);
 
+FileB
+dflt_FileB ();
 void
 init_FileB (FileB* f);
 void
@@ -144,7 +143,7 @@ tods_XFileB (XFileB* xf, const char* delims);
 char*
 nextok_XFileB (XFileB* xf, char* ret_match, const char* delims);
 void
-inject_FileB (FileB* in, FileB* src, const char* delim);
+inject_XFileB (XFileB* in, XFileB* src, const char* delim);
 void
 skipto_FileB (FileB* in, const char* pos);
 
@@ -240,6 +239,14 @@ cat_AlphaTab_OFileB (AlphaTab* t, OFileB* of)
 {
     AlphaTab tmp = AlphaTab_XFileB (of, 0);
     cat_AlphaTab (t, &tmp);
+}
+
+qual_inline
+    void
+copy_AlphaTab_OFileB (AlphaTab* t, OFileB* of)
+{
+    AlphaTab tmp = AlphaTab_XFileB (of, 0);
+    copy_AlphaTab (t, &tmp);
 }
 
 qual_inline

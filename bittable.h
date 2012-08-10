@@ -189,6 +189,13 @@ set0_BitTable (BitTable bt, ujint i)
 }
 
 qual_inline
+    Bit
+setb_BitTable (BitTable bt, ujint i, Bit b)
+{
+    return (b ? set1_BitTable (bt, i) : set0_BitTable (bt, i));
+}
+
+qual_inline
     void
 op_BitTable (BitTable a, const BitTable b, BitOp op)
 {

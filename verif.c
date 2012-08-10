@@ -149,19 +149,18 @@ output_dot_fn (BSTNode* x, void* args)
 output_dot (BSTree* t)
 {
     void* args[1];
-    DecloStack( FileB, out );
-    OFileB* of = &out->xo;
+    FileB ofb = dflt_FileB ();
+    OFileB* of = &ofb.xo;
     args[0] = of;
 
-    init_FileB (out);
-    seto_FileB (out, true);
-    open_FileB (out, "", "out.dot");
+    seto_FileB (&ofb, true);
+    open_FileB (&ofb, "", "out.dot");
 
     dump_cstr_OFileB (of, "digraph tree {\n");
     output_dot_fn (t->sentinel, args);
     walk_BSTree (t, Yes, output_dot_fn, args);
     dump_cstr_OFileB (of, "}\n");
-    lose_FileB (out);
+    lose_OFileB (of);
 }
 
 static
@@ -382,24 +381,23 @@ testfn_skipws_FileB ()
         "hello", "i", "am", "some", "text!"
     };
     uint idx = 0;
-    DecloStack( FileB, in );
+    FileB xfb = dflt_FileB ();
+    XFileB* xf = &xfb.xo;
     OFileB* of = stderr_OFileB ();
     char* s;
 
-    init_FileB (in);
 #if 0
-    open_FileB (in, "", "test");
-    in->f = fopen ("test", "rb");
+    open_FileB (&xfb, "", "test");
 #else
-    SizeTable (in->xo.buf, sizeof(text));
-    memcpy (in->xo.buf.s, text, in->xo.buf.sz);
+    SizeTable (xf->buf, sizeof(text));
+    memcpy (xf->buf.s, text, xf->buf.sz);
 #endif
 
-    for (s = getline_XFileB (&in->xo);
+    for (s = getline_XFileB (xf);
          s;
-         s = getline_XFileB (&in->xo))
+         s = getline_XFileB (xf))
     {
-        XFileB olay = olay_XFileB (&in->xo, IdxEltTable( in->xo.buf, s ));
+        XFileB olay = olay_XFileB (xf, IdxEltTable( xf->buf, s ));
 
         for (s = nextok_XFileB (&olay, 0, 0);
              s;
@@ -415,7 +413,7 @@ testfn_skipws_FileB ()
         }
     }
 
-    lose_FileB (in);
+    lose_XFileB (xf);
     dump_cstr_OFileB (of, "------------\n");
     flush_OFileB (of);
 }
@@ -614,14 +612,15 @@ testfn_Table ()
 
 int main (int argc, char** argv)
 {
-    init_sysCx (&argc, &argv);
+    int argi =
+        (init_sysCx (&argc, &argv),
+         1);
 
     /* Special test as child process.*/
-    if (eql_cstr (argv[1], "echo"))
+    if (eql_cstr (argv[argi], "echo"))
     {
-        int argi;
         OFileB* of = stdout_OFileB ();
-        for (argi = 2; argi < argc; ++argi)
+        for (argi += 1; argi < argc; ++argi)
         {
             dump_cstr_OFileB (of, argv[argi]);
             dump_char_OFileB (of, (argi + 1 < argc) ? ' ' : '\n');

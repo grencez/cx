@@ -81,7 +81,8 @@ dbglog_printf3 (const char* file,
 #define DBog3(s,a,b,c)  dbglog_printf3 (__FILE__,__FUNC__,__LINE__,s,a,b,c)
 #define DBog_ujint(x)  DBog2( "%s:%lu", #x, (ujint)(x) )
 
-void fail_exit_sysCx (const char* msg);
+void
+failout_sysCx (const char* msg);
 #ifndef NDEBUG
 #define Claim( x )  assert(x)
 #else
@@ -90,7 +91,7 @@ void fail_exit_sysCx (const char* msg);
     if (!(x)) \
     { \
         DBog1( "%s failed.", #x ); \
-        fail_exit_sysCx (""); \
+        failout_sysCx (""); \
     } \
 } while (0)
 #endif

@@ -1024,14 +1024,15 @@ load_ASTree (XFileB* xf, ASTree* t)
 
 int main (int argc, char** argv)
 {
-    int argi = 1;
+    int argi =
+        (init_sysCx (&argc, &argv),
+         1);
     ASTree t;
-    FileB xfb;  XFileB* xf = 0;
-    FileB ofb;  OFileB* of = 0;
+    FileB xfb = dflt_FileB ();
+    XFileB* xf = 0;
+    FileB ofb = dflt_FileB ();
+    OFileB* of = 0;
 
-    init_sysCx (&argc, &argv);
-    init_FileB (&xfb);
-    init_FileB (&ofb);
     seto_FileB (&ofb, 1);
 
     while (argi < argc)
@@ -1041,7 +1042,7 @@ int main (int argc, char** argv)
             ++ argi;
             if (!open_FileB (&xfb, 0, argv[argi++]))
             {
-                fail_exit_sysCx ("Could not open file for reading.");
+                failout_sysCx ("Could not open file for reading.");
             }
             xf = &xfb.xo;
         }
@@ -1050,7 +1051,7 @@ int main (int argc, char** argv)
             ++ argi;
             if (!open_FileB (&ofb, 0, argv[argi++]))
             {
-                fail_exit_sysCx ("Could not open file for writing.");
+                failout_sysCx ("Could not open file for writing.");
             }
             of = &ofb.xo;
         }
@@ -1061,7 +1062,7 @@ int main (int argc, char** argv)
             printf_OFileB (of, "Usage: %s [-x IN] [-o OUT]\n", argv[0]);
             dump_cstr_OFileB (of, "  If -x is not specified, stdin is used.\n");
             dump_cstr_OFileB (of, "  If -o is not specified, stdout is used.\n");
-            if (!good)  fail_exit_sysCx ("Exiting in failure...");
+            if (!good)  failout_sysCx ("Exiting in failure...");
             lose_sysCx ();
             return 0;
         }
