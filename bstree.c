@@ -52,25 +52,6 @@ lose_BSTree (BSTree* t, void (* lose) (BSTNode*))
     }
 }
 
-    bool
-root_BSTree (const BSTree* t, const BSTNode* x)
-{
-    return (x->joint == t->sentinel);
-}
-
-    BSTNode*
-root_of_BSTree (BSTree* t)
-{
-    return t->sentinel->split[0];
-}
-
-    void
-root_fo_BSTree (BSTree* t, BSTNode* x)
-{
-    x->joint = t->sentinel;
-    t->sentinel->split[0] = x;
-}
-
     /**
      * Preorder, postorder, and inorder traversals are supported by
      * values of Nil, Yes, and May for /postorder/ respectively.

@@ -1,4 +1,7 @@
-
+/**
+ * \file bstree.h
+ * Binary search tree.
+ **/
 #ifndef BSTree_H_
 #define BSTree_H_
 
@@ -27,13 +30,6 @@ init_BSTree (BSTree* t, BSTNode* sentinel,
              Trit (* swapped) (const BSTNode* lhs, const BSTNode* rhs));
 void
 lose_BSTree (BSTree* t, void (* lose) (BSTNode*));
-
-bool
-root_BSTree (const BSTree* t, const BSTNode* x);
-BSTNode*
-root_of_BSTree (BSTree* t);
-void
-root_fo_BSTree (BSTree* t, BSTNode* x);
 
 void
 walk_BSTree (BSTree* t, Trit postorder,
@@ -83,6 +79,73 @@ plac_BSTNode (BSTNode* a, BSTNode* b)
     join_BSTNode (b->joint, a, side_of_BSTNode (b));
     join_BSTNode (a, b->split[0], 0);
     join_BSTNode (a, b->split[1], 1);
+}
+
+qual_inline
+    BSTNode*
+root_of_BSTree (BSTree* t)
+{
+    return t->sentinel->split[0];
+}
+
+qual_inline
+    void
+root_fo_BSTree (BSTree* t, BSTNode* x)
+{
+    x->joint = t->sentinel;
+    t->sentinel->split[0] = x;
+}
+
+qual_inline
+    bool
+root_ck_BSTree (const BSTree* t, const BSTNode* x)
+{
+    return (x->joint == t->sentinel);
+}
+
+
+qual_inline
+    BSTNode*
+beg_BSTree (BSTree* t)
+{
+    BSTNode* x = root_of_BSTree (t);
+    BSTNode* y = 0;
+
+    while (x)
+    {
+        y = x;
+        x = y->split[0];
+    }
+    return y;
+}
+
+qual_inline
+    BSTNode*
+next_BSTNode (BSTNode* x)
+{
+    if (x->split[1])
+    {
+        BSTNode* y;
+        x = x->split[1];
+        do
+        {
+            y = x;
+            x = y->split[0];
+        } while (x);
+        return y;
+    }
+
+    while (x)
+    {
+        Bit side = side_of_BSTNode (x);
+        x = x->joint;
+        if (side == 0)
+        {
+            if (x->joint)  return x;
+            return 0;
+        }
+    }
+    return 0;
 }
 
 #ifdef IncludeC

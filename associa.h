@@ -288,26 +288,25 @@ remove_Associa (Associa* map, const void* key)
     giv_Associa (map, a);
 }
 
-static
-    void
-walkfn_bst_Assoc (BSTNode* bst, void* dats)
-{
-    Assoc* a = CastUp( Assoc, rbt, CastUp( RBTNode, bst, bst ) );
-    void* f = ((void**) dats)[0];
-    void* dat = ((void**) dats)[1];
 
-    (* (void (**) (Assoc*, void*)) f) (a, dat);
+/** Get the first association in the map.**/
+qual_inline
+    Assoc*
+beg_Associa (Associa* map)
+{
+    BSTNode* bst = beg_BSTree (&map->rbt.bst);
+    if (!bst)  return 0;
+    return CastUp( Assoc, rbt, CastUp( RBTNode, bst, bst ) );
 }
 
-/** Call a function for every association in the map.**/
+/** Get the next association in the map.**/
 qual_inline
-    void
-walk_Associa (Associa* map, void (* f) (Assoc*, void*), void* dat)
+    Assoc*
+next_Assoc (Assoc* a)
 {
-    void* dats[2];
-    dats[0] = &f;
-    dats[1] = dat;
-    walk_BSTree (&map->rbt.bst, Nil, walkfn_bst_Assoc, dats);
+    BSTNode* bst = next_BSTNode (&a->rbt.bst);
+    if (!bst)  return 0;
+    return CastUp( Assoc, rbt, CastUp( RBTNode, bst, bst ) );
 }
 
 

@@ -5,7 +5,7 @@
 static Bit
 root (const RBTree* t, const RBTNode* x)
 {
-    return root_BSTree (&t->bst, &x->bst);
+    return root_ck_BSTree (&t->bst, &x->bst);
 }
 
 static RBTNode*
