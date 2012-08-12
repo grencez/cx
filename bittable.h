@@ -1,4 +1,6 @@
-
+/**
+ * \file bittable.h
+ **/
 #ifndef BitTable_H_
 #define BitTable_H_
 
@@ -21,9 +23,9 @@ typedef TableElT(Bit) BitTableEl;
 
 
 enum BitOp {
-        /*     a = 0011
-         *     b = 0101
-         */
+    /*         a = 0011
+     *         b = 0101
+     */
     BitOp_NIL,  /* 0000 */
     BitOp_AND,  /* 0001 */
     BitOp_NIMP, /* 0010 */
@@ -39,6 +41,55 @@ enum BitOp {
     NBitOps
 };
 typedef enum BitOp BitOp;
+
+
+/** Most significant 1 bit.**/
+qual_inline
+    ujint
+msb_ujint (ujint x)
+{
+    ujintlg i;
+    for (i = 1; i < NBits_ujint; i *= 2)
+        x |= (x >> i);
+    return (x & ~(x >> 1));
+}
+
+/** Least significant 1 bit.**/
+qual_inline
+    ujint
+lsb_ujint (ujint x)
+{
+    return (x & (~x + 1));
+}
+
+/** Floor of the lg (log base 2) of some integer.
+ * - 0..1 -> 0
+ * - 2..3 -> 1
+ * - 4..7 -> 2
+ * - 8..15 -> 3
+ * - 16..31 -> 4
+ * - 32..63 -> 5
+ * - 64..127 -> 6
+ **/
+qual_inline
+    ujintlg
+lg_ujint (ujint x)
+{
+    ujintlg i;
+    ujintlg n = 0;
+    for (i = msb_ujint (NBits_ujint-1); i > 0; i /= 2)
+    {
+        ujint y = (x >> i);
+        n *= 2;
+        if (y != 0)
+        {
+            n += 1;
+            x = y;
+        }
+    }
+    return n;
+}
+
 
 #define DeclBitTableIdcs( p, q, i ) \
     const ujint p = (i) / NBits_BitTableEl; \
@@ -142,6 +193,7 @@ mpop_BitTable (BitTable* bt, ujint n)
 }
 
 
+/** Test if a bit is set (to one).**/
 qual_inline
     Bit
 test_BitTable (const BitTable bt, ujint i)
@@ -150,6 +202,7 @@ test_BitTable (const BitTable bt, ujint i)
     return (0 != (bt.s[p] & (1 << q)));
 }
 
+/** Set a bit to one.**/
 qual_inline
     Bit
 set1_BitTable (BitTable bt, ujint i)
@@ -169,6 +222,7 @@ set1_BitTable (BitTable bt, ujint i)
     }
 }
 
+/** Set a bit to zero.**/
 qual_inline
     Bit
 set0_BitTable (BitTable bt, ujint i)
@@ -188,6 +242,10 @@ set0_BitTable (BitTable bt, ujint i)
     }
 }
 
+/** Set a bit.
+ * \sa set0_BitTable()
+ * \sa set1_BitTable()
+ **/
 qual_inline
     Bit
 setb_BitTable (BitTable bt, ujint i, Bit b)

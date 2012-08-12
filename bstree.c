@@ -2,15 +2,24 @@
 #include "bstree.h"
 #include <assert.h>
 
+    BSTree
+dflt2_BSTree (BSTNode* sentinel,
+              Trit (* swapped) (const BSTNode* lhs, const BSTNode* rhs))
+{
+    BSTree t;
+    sentinel->joint = 0;
+    sentinel->split[0] = 0;
+    sentinel->split[1] = 0;
+    t.sentinel = sentinel;
+    t.swapped = swapped;
+    return t;
+}
+
     void
 init_BSTree (BSTree* t, BSTNode* sentinel,
              Trit (* swapped) (const BSTNode* lhs, const BSTNode* rhs))
 {
-    sentinel->joint = 0;
-    sentinel->split[0] = 0;
-    sentinel->split[1] = 0;
-    t->sentinel = sentinel;
-    t->swapped = swapped;
+    *t = dflt2_BSTree (sentinel, swapped);
 }
 
     void

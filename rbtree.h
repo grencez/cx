@@ -17,6 +17,9 @@ struct RBTree
     BSTree bst;
 };
 
+RBTree
+dflt2_RBTree (RBTNode* sentinel,
+              Trit (* swapped) (const BSTNode* lhs, const BSTNode* rhs));
 void
 init_RBTree (RBTree* t, RBTNode* sentinel,
              Trit (* swapped) (const BSTNode* lhs, const BSTNode* rhs));

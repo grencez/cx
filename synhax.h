@@ -1,12 +1,23 @@
-
-    /* Included from def.h */
+/**
+ * \file synhax.h
+ * All important macros.
+ *
+ * Included from def.h.
+ **/
 #include <assert.h>
 
 #define Concatify(a,b) a ## b
 #define ConcatifyDef(a,b)  Concatify(a,b)
 
+/** Get size of an array (allocated on the stack in your current scope).**/
 #define ArraySz( a )  (sizeof(a) / sizeof(*a))
 
+/** Given the memory address of a structure's field,
+ * get the address of the structure.
+ * \param T      Type.
+ * \param field  Name of the field.
+ * \param p      Memory address of the field.
+ **/
 #define CastUp( T, field, p ) \
     ((T*) ((size_t) p - offsetof( T, field )))
 
@@ -25,6 +36,10 @@
 #define IdxElt( a, e ) \
     IdxEltZ( a, e, sizeof(*a) )
 
+/** Ceiling of integer division.
+ * \param a  Dividend.
+ * \param b  Divisor.
+ **/
 #define CeilQuot( a, b ) \
     (((a) + (b) - 1) / (b))
 
@@ -35,7 +50,9 @@
 
 #define UFor( i, bel )  for (i = 0; i < (bel); ++i)
 
+/** Open a scope block (open curly brace).**/
 #define BInit() {
+/** Close a scope block (close curly brace).**/
 #define BLose() }
 #define BLoopT( T, i, bel )  T i; for (i = 0; i < (bel); ++i) BInit()
 #define BLoop( i, bel )  BLoopT( uint, i, bel )
@@ -46,28 +63,62 @@
      ? ((line) = &(line)[strlen(tok)]) \
      : 0)
 
+/** Declare a variable pointing to an "anonymous" object on the stack.
+ * \param T  Type of variable when dereferenced.
+ * \param x  Name of variable.
+ **/
 #define DecloStack( T, x )  T onstack_##x; T* const restrict x = &onstack_##x
+
+/** Declare a variable pointing to an "anonymous" object on the stack
+ * and initialize that object.
+ * \param T  Type of variable when dereferenced.
+ * \param x  Name of variable.
+ * \param v  Initial value for the object.
+ **/
 #define DecloStack1( T, x, v ) \
     T onstack_##x = (v); T* const restrict x = &onstack_##x
 
+/** Allocate memory via malloc() with lest casting.
+ * \param T  Type.
+ * \param n  Number of elements.
+ * \return  NULL when the number of elements is zero.
+ **/
 #define AllocT( T, n ) \
     ((n) == 0 ? (T*) 0 : \
      (T*) malloc ((n) * sizeof (T)))
 
+/** Replace memory via memcpy.
+ * \param T  Type.
+ * \param a  Destination block.
+ * \param b  Source block.
+ * \param n  Number of elements to copy.
+ **/
 #define RepliT( T, a, b, n )  do \
 { \
     if ((n) > 0)  memcpy (a, b, (n) * sizeof (T)); \
 } while (0)
 
+/** Duplicate memory.
+ * \param T  Type.
+ * \param a  Source block.
+ * \param n  Number of elements to duplicate.
+ * \return  NULL when the number of elements is zero.
+ **/
 #define DupliT( T, a, n ) \
     ((n) == 0 ? (T*) 0 : \
      (T*) memcpy (malloc ((n) * sizeof (T)), a, (n) * sizeof (T)))
 
+/** Declare a variable pointing to heap-allocated memory.
+ * \param T  Type.
+ * \param a  Variable name.
+ * \param n  Number of elements to duplicate.
+ * \sa AllocT()
+ **/
 #define DeclAlloc( T, a, n ) \
     T* const restrict a = AllocT( T, n )
 
 
-    /** Implemented in sys-cx.c **/
+/** Implemented in sys-cx.c **/
 void
 dbglog_printf3 (const char* file,
                 const char* func,
@@ -98,7 +149,10 @@ failout_sysCx (const char* msg);
 #define Claim2( a ,op, b )  Claim((a) op (b))
 
 
-    /** Cascading if statement.**/
+/** Cascading if statement.
+ * This must be called in the same scope somewhere after
+ * a BInit() and before a BLose().
+ **/
 #define BCasc(cond, inv, msg) \
     if (!(inv) || !(cond)) \
     { \

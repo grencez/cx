@@ -19,6 +19,9 @@ struct BSTree
     Trit (* swapped) (const BSTNode* lhs, const BSTNode* rhs);
 };
 
+BSTree
+dflt2_BSTree (BSTNode* sentinel,
+              Trit (* swapped) (const BSTNode* lhs, const BSTNode* rhs));
 void
 init_BSTree (BSTree* t, BSTNode* sentinel,
              Trit (* swapped) (const BSTNode* lhs, const BSTNode* rhs));

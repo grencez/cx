@@ -1,4 +1,7 @@
-
+/**
+ * \file def.h
+ * All important definitions.
+ **/
 #ifndef DEF_H_
 #define DEF_H_
 #include <float.h>
@@ -8,6 +11,12 @@
 typedef int Bit;
 enum Trit { Nil = 0, Yes = 1, May = 2 };
 typedef enum Trit Trit;
+/** Type of function which compares two objects.
+ * Return values should conform to:
+ * - Nil: lhs < rhs
+ * - May: lhs == rhs
+ * - Yes: lhs > rhs
+ **/
 typedef Trit (* SwappedFn) (const void*, const void*);
 
     /** Define bool.**/
@@ -25,7 +34,9 @@ typedef unsigned int uint;
 #define Max_uint UINT_MAX
 
 typedef unsigned long int ujint;
-#define Max_ujint ((ujint)0 - 1)
+#define Max_ujint (~(ujint)0)
+typedef byte ujintlg;
+#define NBits_ujint (NBits_byte*sizeof(ujint))
 
 #if 0
 typedef double real;

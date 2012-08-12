@@ -532,10 +532,9 @@ inject_XFileB (XFileB* in, XFileB* src, const char* delim)
 }
 
     void
-skipto_FileB (FileB* f, const char* pos)
+skipto_XFileB (XFileB* xf, const char* pos)
 {
-    XFileB* const in = &f->xo;
-    in->off = IdxElt( in->buf.s, pos );
+    xf->off = IdxElt( xf->buf.s, pos );
 }
 
 static

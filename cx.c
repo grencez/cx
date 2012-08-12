@@ -135,10 +135,11 @@ struct AST
 struct ASTree
 {
     BSTree bst;
-    BSTNode sentinel;
     AST* root;
+    LgTable lgt;
 };
 
+/** Unused.**/
 struct CxCtx
 {
     ASTree ast;
@@ -157,20 +158,57 @@ dflt_AST ()
     return ast;
 }
 
-    AST*
-make_AST ()
+static
+    void
+lose_bst_AST (BSTNode* bst)
 {
-    AST* ast = AllocT( AST, 1 );
+    AST* ast = CastUp( AST, bst, bst );
+    LoseTable( ast->txt );
+}
+
+    AST*
+req_ASTree (ASTree* t)
+{
+    AST* ast = (AST*) req_LgTable (&t->lgt);
     *ast = dflt_AST ();
     return ast;
 }
 
     AST*
-make1_AST (SyntaxKind kind)
+req1_ASTree (ASTree* t, SyntaxKind kind)
 {
-    AST* ast = make_AST ();
+    AST* ast = req_ASTree (t);
     ast->kind = kind;
     return ast;
+}
+
+    void
+giv_ASTree (ASTree* t, AST* ast)
+{
+    LoseTable( ast->txt );
+    giv_LgTable (&t->lgt, ast);
+}
+
+    ASTree
+cons_ASTree ()
+{
+    ASTree t;
+    AST* sentinel;
+
+    t.lgt = dflt1_LgTable (sizeof (AST));
+    sentinel = req_ASTree (&t);
+    t.bst = dflt2_BSTree (&sentinel->bst, NULL);
+
+    t.root = req1_ASTree (&t, Syntax_Root);
+    root_fo_BSTree (&t.bst, &t.root->bst);
+    return t;
+}
+
+    void
+lose_ASTree (ASTree* t)
+{
+    lose_BSTree (&t->bst, lose_bst_AST);
+    lose_LgTable (&t->lgt);
 }
 
     AST*
@@ -193,36 +231,6 @@ joint_of_AST (AST* ast)
 join_AST (AST* y, AST* x, Bit side)
 {
     join_BSTNode (&y->bst, (x ? &x->bst : 0), side);
-}
-
-    void
-init_ASTree (ASTree* t)
-{
-    init_BSTree (&t->bst, &t->sentinel, NULL);
-    t->root = make_AST ();
-    t->root->kind = Syntax_Root;
-    root_fo_BSTree (&t->bst, &t->root->bst);
-}
-
-static
-    void
-lose_AST (AST* ast)
-{
-    LoseTable( ast->txt );
-    free (ast);
-}
-
-static
-    void
-lose_bst_AST (BSTNode* bst)
-{
-    lose_AST (CastUp( AST, bst, bst ));
-}
-
-    void
-lose_ASTree (ASTree* ast)
-{
-    lose_BSTree (&ast->bst, lose_bst_AST);
 }
 
     const char*
@@ -312,8 +320,9 @@ cstr_SyntaxKind (SyntaxKind kind)
     void
 init_lexwords (Associa* map)
 {
-    init3_Associa (map, sizeof(AlphaTab), sizeof(SyntaxKind),
-                   (SwappedFn) swapped_AlphaTab);
+    DeclAssocia( AlphaTab, SyntaxKind, tmp_map,
+                 (SwappedFn) swapped_AlphaTab );
+    *map = *tmp_map;
 
     for (SyntaxKind kind = Beg_Syntax_LexWords;
          kind < End_Syntax_LexWords;
@@ -431,31 +440,30 @@ dump_ASTree (OFileB* of, ASTree* t)
 }
 
     AST*
-app_AST (AST* ast)
+app_AST (AST* ast, ASTree* t)
 {
     AST* b;
     if (ast->bst.split[0])
     {
         Claim( !ast->bst.split[1] );
-        b = make_AST ();
-        b->kind = Syntax_Cons;
+        b = req1_ASTree (t, Syntax_Cons);
         join_BSTNode (&ast->bst, &b->bst, 1);
         ast = b;
     }
 
-    b = make_AST ();
+    b = req_ASTree (t);
     join_BSTNode (&ast->bst, &b->bst, 0);
     return b;
 }
 
     AST*
-wsnode_AST (AST* ast)
+wsnode_AST (AST* ast, ASTree* t)
 {
     if (ast->bst.split[0])
     {
         AST* b;
         Claim( !ast->bst.split[1] );
-        b = make_AST ();
+        b = req1_ASTree (t, Syntax_Cons);
         b->kind = Syntax_Cons;
         join_BSTNode (&ast->bst, &b->bst, 1);
         ast = b;
@@ -511,12 +519,13 @@ count_newlines (const char* s)
      * - statement ending with semicolon
      **/
     void
-lex_AST (XFileB* xf, AST* ast)
+lex_AST (XFileB* xf, ASTree* t)
 {
     char match = 0;
     const char delims[] = "'\"(){}[];#+-*/%&^|~!.,?:><=";
     ujint off;
     ujint line = 0;
+    AST* ast = t->root;
     DecloStack( Associa, keyword_map );
 
     init_lexwords (keyword_map);
@@ -540,7 +549,7 @@ lex_AST (XFileB* xf, AST* ast)
                 if (olay->off > 0)
                 {
                     AlphaTab ts = AlphaTab_XFileB (olay, 0);
-                    ast = wsnode_AST (ast);
+                    ast = wsnode_AST (ast, t);
                     AffyTable( ast->txt, ts.sz+1 );
                     cat_AlphaTab (&ast->txt, &ts);
                     line += count_newlines (ast->txt.s);
@@ -555,7 +564,7 @@ lex_AST (XFileB* xf, AST* ast)
                     AlphaTab ts = AlphaTab_XFileB (olay, 0);
                     Assoc* luk = lookup_Associa (keyword_map, &ts);
 
-                    ast = app_AST (ast);
+                    ast = app_AST (ast, t);
 
                     if (luk)
                     {
@@ -584,7 +593,7 @@ lex_AST (XFileB* xf, AST* ast)
                 /* End of file has been reached.*/
             break;
         case '\'':
-            ast = app_AST (ast);
+            ast = app_AST (ast, t);
             ast->kind = Syntax_CharLit;
             ast->line = line;
             if (!parse_escaped (xf, &ast->txt, '\''))
@@ -593,7 +602,7 @@ lex_AST (XFileB* xf, AST* ast)
             ast = joint_of_AST (ast);
             break;
         case '"':
-            ast = app_AST (ast);
+            ast = app_AST (ast, t);
             ast->kind = Syntax_StringLit;
             ast->line = line;
             if (!parse_escaped (xf, &ast->txt, '"'))
@@ -602,17 +611,17 @@ lex_AST (XFileB* xf, AST* ast)
             ast = joint_of_AST (ast);
             break;
         case '(':
-            ast = app_AST (ast);
+            ast = app_AST (ast, t);
             ast->kind = Syntax_Parens;
             ast->line = line;
             break;
         case '{':
-            ast = app_AST (ast);
+            ast = app_AST (ast, t);
             ast->kind = Syntax_Braces;
             ast->line = line;
             break;
         case '[':
-            ast = app_AST (ast);
+            ast = app_AST (ast, t);
             ast->kind = Syntax_Brackets;
             ast->line = line;
             break;
@@ -637,7 +646,7 @@ lex_AST (XFileB* xf, AST* ast)
             }
             break;
         case '#':
-            ast = app_AST (ast);
+            ast = app_AST (ast, t);
             ast->kind = Syntax_Directive;
             ast->line = line;
             cat_cstr_AlphaTab (&ast->txt, getlined_XFileB (xf, "\n"));
@@ -646,7 +655,7 @@ lex_AST (XFileB* xf, AST* ast)
             break;
 
 #define LexiCase( c, k )  case c: \
-            ast = app_AST (ast); \
+            ast = app_AST (ast, t); \
             ast->kind = k; \
             ast->line = line; \
             ast = joint_of_AST (ast); \
@@ -659,7 +668,7 @@ lex_AST (XFileB* xf, AST* ast)
             } \
             else \
             { \
-                ast = app_AST (ast); \
+                ast = app_AST (ast, t); \
                 ast->kind = k1; \
                 ast->line = line; \
                 ast = joint_of_AST (ast); \
@@ -677,7 +686,7 @@ lex_AST (XFileB* xf, AST* ast)
             }
             else
             {
-                ast = app_AST (ast);
+                ast = app_AST (ast, t);
                 ast->kind = Lexical_Mul;
                 ast->line = line;
                 ast = joint_of_AST (ast);
@@ -692,7 +701,7 @@ lex_AST (XFileB* xf, AST* ast)
             }
             else
             {
-                ast = app_AST (ast);
+                ast = app_AST (ast, t);
                 ast->kind = Lexical_Div;
                 ast->line = line;
                 ast = joint_of_AST (ast);
@@ -720,7 +729,7 @@ lex_AST (XFileB* xf, AST* ast)
             }
             else
             {
-                ast = app_AST (ast);
+                ast = app_AST (ast, t);
                 ast->kind = Lexical_GT;
                 ast = joint_of_AST (ast);
             }
@@ -757,7 +766,7 @@ lex_AST (XFileB* xf, AST* ast)
                 lo_ast->kind = Lexical_Eq;
             else
             {
-                ast = app_AST (ast);
+                ast = app_AST (ast, t);
                 ast->kind = Lexical_Assign;
                 ast->line = line;
                 ast = joint_of_AST (ast);
@@ -801,10 +810,10 @@ next_semicolon_or_braces_AST (AST* ast)
 }
 
 void
-build_stmts_AST (AST* ast);
+build_stmts_AST (AST* ast, ASTree* t);
 
     void
-build_ForLoop_AST (AST* ast)
+build_ForLoop_AST (AST* ast, ASTree* t)
 {
     AST* pending = ast;
         /*   \                 \
@@ -828,7 +837,7 @@ build_ForLoop_AST (AST* ast)
 
     d_parens = split_of_AST (d_0, 0);
         /* Only gets first two statements in for loop.*/
-    build_stmts_AST (d_parens);
+    build_stmts_AST (d_parens, t);
 
     join_AST (d_for, d_parens, 0);
 
@@ -838,13 +847,13 @@ build_ForLoop_AST (AST* ast)
 
     pending = split_of_AST (d_0, 1);
     join_AST (d_for, pending, 1);
-    build_stmts_AST (pending);
+    build_stmts_AST (pending, t);
 
-    lose_AST (d_0);
+    giv_ASTree (t, d_0);
 }
 
     void
-build_stmts_AST (AST* ast)
+build_stmts_AST (AST* ast, ASTree* t)
 {
     AST* pending = 0;
     SyntaxKind pending_kind = NSyntaxKinds;
@@ -875,7 +884,7 @@ build_stmts_AST (AST* ast)
         case Syntax_BlockComment:
             break;
         case Lexical_For:
-            build_ForLoop_AST (ast);
+            build_ForLoop_AST (ast, t);
             break;
         case Syntax_Parens:
             if (!pending)
@@ -885,7 +894,7 @@ build_stmts_AST (AST* ast)
             }
             break;
         case Syntax_Braces:
-            build_stmts_AST (lo_ast);
+            build_stmts_AST (lo_ast, t);
             if (pending_kind != Lexical_Do)
             {
                 pending = 0;
@@ -932,7 +941,7 @@ build_stmts_AST (AST* ast)
 
             lo_ast->txt = ast->txt;
             ast->txt = dflt_AlphaTab ();
-            lose_AST (ast);
+            giv_ASTree (t, ast);
             ast = pending;
 
             pending = 0;
@@ -949,20 +958,20 @@ build_stmts_AST (AST* ast)
 }
 
     void
-xfrm_stmts_AST (AST* ast)
+xfrm_stmts_AST (AST* ast, ASTree* t)
 {
     while (ast)
     {
         AST* lo_ast = split_of_AST (ast, 0);
         if (!lo_ast)  break;
 
-        xfrm_stmts_AST (lo_ast);
+        xfrm_stmts_AST (lo_ast, t);
 
         if (lo_ast->kind == Syntax_LineComment)
         {
             AlphaTab ts = dflt1_AlphaTab ("\n");
             AST* next = split_of_AST (ast, 1);
-            lose_AST (lo_ast);
+            giv_ASTree (t, lo_ast);
 
             join_AST (ast, 0, 0);
             PackTable( ast->txt );
@@ -973,21 +982,21 @@ xfrm_stmts_AST (AST* ast)
                 cat_AlphaTab (&ast->txt, &next->txt);
                 join_AST (ast, split_of_AST (next, 0), 0);
                 join_AST (ast, split_of_AST (next, 1), 1);
-                lose_AST (next);
+                giv_ASTree (t, next);
                 continue;
             }
         }
         else if (lo_ast->kind == Syntax_ForLoop)
         {
-                // (L_For (S_Parens (S_Stmt '.*) (S_Stmt '.*) '.*)
-                //  (('or S_Braces S_Stmt) '.*))
-                // (S_Braces
-                //  (S_Stmt '.*)
-                //  (L_For (S_Parens (S_Stmt) (S_Stmt '.*) '.*)
-                //   (('or S_Braces S_Stmt) '.*)))
-            AST* d_braces = make1_AST (Syntax_Braces);
-            AST* d_0 = make1_AST (Syntax_Cons);
-            AST* d_stmt = make1_AST (Syntax_Stmt);
+            // (L_For (S_Parens (S_Stmt '.*) (S_Stmt '.*) '.*)
+            //  (('or S_Braces S_Stmt) '.*))
+            // (S_Braces
+            //  (S_Stmt '.*)
+            //  (L_For (S_Parens (S_Stmt) (S_Stmt '.*) '.*)
+            //   (('or S_Braces S_Stmt) '.*)))
+            AST* d_braces = req1_ASTree (t, Syntax_Braces);
+            AST* d_0 = req1_ASTree (t, Syntax_Cons);
+            AST* d_stmt = req1_ASTree (t, Syntax_Stmt);
             AST* d_stmt1;
 
             join_AST (ast, d_braces, 0);
@@ -1008,18 +1017,14 @@ xfrm_stmts_AST (AST* ast)
     void
 load_ASTree (XFileB* xf, ASTree* t)
 {
-    DecloStack( CxCtx, ctx );
-    ctx->ast = *t;
-    init3_Associa (&ctx->type_lookup, sizeof(AlphaTab), sizeof(uint),
-                   (SwappedFn) swapped_AlphaTab);
+    DeclAssocia( AlphaTab, uint, type_lookup,
+                 (SwappedFn) swapped_AlphaTab );
 
-    lex_AST (xf, t->root);
+    lex_AST (xf, t);
+    build_stmts_AST (t->root, t);
+    xfrm_stmts_AST (t->root, t);
 
-    build_stmts_AST (ctx->ast.root);
-    xfrm_stmts_AST (ctx->ast.root);
-
-    *t = ctx->ast;
-    lose_Associa (&ctx->type_lookup);
+    lose_Associa (type_lookup);
 }
 
 int main (int argc, char** argv)
@@ -1027,7 +1032,7 @@ int main (int argc, char** argv)
     int argi =
         (init_sysCx (&argc, &argv),
          1);
-    ASTree t;
+    DecloStack1( ASTree, t, cons_ASTree () );
     FileB xfb = dflt_FileB ();
     XFileB* xf = 0;
     FileB ofb = dflt_FileB ();
@@ -1071,16 +1076,15 @@ int main (int argc, char** argv)
     if (!xf)  xf = stdin_XFileB ();
     if (!of)  of = stdout_OFileB ();
 
-    init_ASTree (&t);
-    load_ASTree (xf, &t);
+    load_ASTree (xf, t);
     close_XFileB (xf);
     lose_FileB (&xfb);
 
-    dump_ASTree (of, &t);
+    dump_ASTree (of, t);
     close_OFileB (of);
     lose_FileB (&ofb);
 
-    lose_ASTree (&t);
+    lose_ASTree (t);
     lose_sysCx ();
     return 0;
 }

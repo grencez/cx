@@ -8,6 +8,7 @@
 #include "bittable.h"
 #include "cons.h"
 #include "fileb.h"
+#include "lgtable.h"
 #include "ospc.h"
 #include "rbtree.h"
 #include "table.h"
@@ -42,7 +43,6 @@ lose_TNode (BSTNode* x)
 {
     TNode* a = CastUp( TNode, rbt, CastUp( RBTNode, bst, x ) );
     a->key = 0;
-    free (a);
 }
 
 static
@@ -116,9 +116,10 @@ claim_BSTree (BSTree* t, uint n_expect)
 
 static
     void
-insert_TNode (RBTree* t, const char* key, uint val, uint* n_expect)
+insert_TNode (RBTree* t, LgTable* lgt,
+              const char* key, uint val, uint* n_expect)
 {
-    DeclAlloc( TNode, a, 1 );
+    TNode* a = (TNode*) req_LgTable (lgt);
     a->key = key;
     a->val = val;
     insert_RBTree (t, &a->rbt);
@@ -177,12 +178,14 @@ find_TNode (RBTree* t, const char* s)
 
 static
     void
-remove_TNode (RBTree* t, const char* key, uint* n_expect)
+remove_TNode (RBTree* t, LgTable* lgt,
+              const char* key, uint* n_expect)
 {
     TNode* a = find_TNode (t, key);
     Claim( a );
     remove_RBTree (t, &a->rbt);
     lose_TNode (&a->rbt.bst);
+    giv_LgTable (lgt, a);
     *n_expect -= 1;
     claim_BSTree (&t->bst, *n_expect);
 }
@@ -207,13 +210,10 @@ testfn_Associa ()
     };
     const uint nkeys = ArraySz( keys );
     const uint nmuls = ArraySz( muls );
-    DecloStack( Associa, map );
-    uint n_expect = 0;
+    DeclAssocia( AlphaTab, uint, map, (SwappedFn) swapped_AlphaTab );
+    uint n_expect = 1; /* Sentinel node.*/
 
-    init3_Associa (map, sizeof(AlphaTab), sizeof(uint),
-                   (SwappedFn) swapped_AlphaTab);
-    map->ensize = false;
-
+    Claim2( map->nodes.sz ,==, n_expect );
     { BLoop( mi, nmuls )
         { BLoop( mj, nmuls )
             { BLoop( i, nkeys )
@@ -261,7 +261,9 @@ testfn_Associa ()
         } BLose()
     } BLose()
 
-    Claim2( map->nodes.sz ,==, 0 );
+    /* Claim the sentinel still exists.*/
+    Claim2( map->nodes.sz ,==, 1 );
+    Claim2( n_expect ,==, 1 );
     lose_Associa (map);
 }
 
@@ -418,6 +420,62 @@ testfn_skipws_FileB ()
     flush_OFileB (of);
 }
 
+/** \test
+ * Test the LgTable data structure.
+ * Actually, \ref testfn_RBTree() and \ref testfn_Associa() test this better,
+ * as they use the structure for memory allocation.
+ * This test merely hopes to weed out simple problems before those tests run.
+ **/
+    void
+testfn_LgTable ()
+{
+    DecloStack1( LgTable, lgt, dflt1_LgTable (sizeof (int)) );
+    ujint idx;
+    ujint n = 40;
+
+    Claim2( 4 ,==, msb_ujint (4) );
+    Claim2( 4 ,==, msb_ujint (5) );
+    Claim2( 8 ,==, msb_ujint (13) );
+
+    Claim2( 0 ,==, lg_ujint (0) );
+    Claim2( 0 ,==, lg_ujint (1) );
+    Claim2( 1 ,==, lg_ujint (2) );
+    Claim2( 1 ,==, lg_ujint (3) );
+    Claim2( 2 ,==, lg_ujint (4) );
+    Claim2( 2 ,==, lg_ujint (4) );
+
+    { BLoop( i, n )
+        int* el = (int*) req_LgTable (lgt);
+        *el = - (int) i;
+        idx = idxelt_LgTable (lgt, el);
+        Claim2( idx ,==, i );
+    } BLose()
+
+    gividx_LgTable (lgt, 1);
+    idx = reqidx_LgTable (lgt);
+    Claim2( idx ,==, 1 );
+
+    gividx_LgTable (lgt, 0);
+    idx = reqidx_LgTable (lgt);
+    Claim2( idx ,==, 0 );
+
+    gividx_LgTable (lgt, 5);
+    idx = reqidx_LgTable (lgt);
+    Claim2( idx ,==, 5 );
+
+    gividx_LgTable (lgt, 7);
+    idx = reqidx_LgTable (lgt);
+    Claim2( idx ,==, 7 );
+
+    { BLoop( i, n )
+        ujint sz = n-i;
+        Claim2( lgt->allocs.sz ,<=, (ujint) lg_ujint (sz) + 2 );
+        gividx_LgTable (lgt, sz-1);
+    } BLose()
+
+    lose_LgTable (lgt);
+}
+
     void
 testfn_OSPc ()
 {
@@ -465,10 +523,10 @@ testfn_RBTree ()
     const uint nkeys = ArraySz( keys );
     const uint nmuls = ArraySz( muls );
     TNode sentinel;
-    DecloStack( RBTree, t );
+    DecloStack1( RBTree, t, dflt2_RBTree (&sentinel.rbt, swapped_TNode) );
+    DecloStack1( LgTable, lgt, dflt1_LgTable (sizeof(TNode)) );
     uint n_expect = 0;
 
-    init_RBTree (t, &sentinel.rbt, swapped_TNode);
     sentinel.key = "sentinel";
     sentinel.val = nkeys;
 
@@ -476,19 +534,20 @@ testfn_RBTree ()
         { BLoop( mj, nmuls )
             { BLoop( i, nkeys )
                 const uint idx = (muls[mi] * i) % nkeys;
-                insert_TNode (t, keys[idx], idx, &n_expect);
+                insert_TNode (t, lgt, keys[idx], idx, &n_expect);
             } BLose()
 #if 0
             output_dot (&t->bst);
 #endif
             { BLoop( i, nkeys )
                 const uint idx = (muls[mj] * i) % nkeys;
-                remove_TNode (t, keys[idx], &n_expect);
+                remove_TNode (t, lgt, keys[idx], &n_expect);
             } BLose()
         } BLose()
     } BLose()
 
     lose_BSTree (&t->bst, lose_TNode);
+    lose_LgTable (lgt);
 }
 
 static
@@ -609,7 +668,6 @@ testfn_Table ()
     LoseTable( t );
 }
 
-
 int main (int argc, char** argv)
 {
     int argi =
@@ -633,6 +691,7 @@ int main (int argc, char** argv)
     testfn_Table ();
     testfn_BitTable ();
     testfn_cache_BitTable ();
+    testfn_LgTable ();
     testfn_skipws_FileB ();
     testfn_RBTree ();
     testfn_Associa ();

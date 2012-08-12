@@ -1,4 +1,7 @@
-
+/**
+ * \file table.h
+ * Dynamic array.
+ **/
 #ifndef Table_H_
 #define Table_H_
 #include "def.h"

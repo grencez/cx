@@ -16,7 +16,8 @@ CFLAGS += -Wall -Wextra -Wstrict-aliasing
 CExes = cx verify
 
 CFiles = bstree.c fileb.c rbtree.c syscx.c cx.c verif.c ospc.c
-HFiles = associa.h bittable.h bstree.h cons.h def.h fileb.h rbtree.h synhax.h syscx.h table.h ospc.h
+HFiles = associa.h bittable.h bstree.h cons.h def.h fileb.h \
+		 lgtable.h rbtree.h synhax.h syscx.h table.h ospc.h
 
 CxDeps = bstree fileb rbtree syscx
 CxObjs = $(addsuffix .o,$(CxDeps))

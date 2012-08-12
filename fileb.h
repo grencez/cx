@@ -145,7 +145,7 @@ nextok_XFileB (XFileB* xf, char* ret_match, const char* delims);
 void
 inject_XFileB (XFileB* in, XFileB* src, const char* delim);
 void
-skipto_FileB (FileB* in, const char* pos);
+skipto_XFileB (XFileB* xf, const char* pos);
 
 bool
 flusho_FileB (FileB* f);

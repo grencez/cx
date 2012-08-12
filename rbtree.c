@@ -27,12 +27,21 @@ rotate (RBTNode* x, Bit lowup)
     rotate_BSTNode (&x->bst, lowup);
 }
 
+    RBTree
+dflt2_RBTree (RBTNode* sentinel,
+              Trit (* swapped) (const BSTNode* lhs, const BSTNode* rhs))
+{
+    RBTree t;
+    sentinel->red = 0;
+    t.bst = dflt2_BSTree (&sentinel->bst, swapped);
+    return t;
+}
+
     void
 init_RBTree (RBTree* t, RBTNode* sentinel,
              Trit (* swapped) (const BSTNode* lhs, const BSTNode* rhs))
 {
-    sentinel->red = Nil;
-    init_BSTree (&t->bst, &sentinel->bst, swapped);
+    *t = dflt2_RBTree (sentinel, swapped);
 }
 
 static void
