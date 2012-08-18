@@ -37,9 +37,9 @@ else ()
     set (CMAKE_BUILD_TYPE RELEASE)
 endif ()
 
-add_executable (verify verif.c ${CSources})
-set_target_properties (verify PROPERTIES
-    OUTPUT_NAME verify)
+add_executable (test test.c ${CSources})
+set_target_properties (test PROPERTIES
+    OUTPUT_NAME test)
 
 include_directories (".")
 

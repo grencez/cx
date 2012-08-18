@@ -1,5 +1,5 @@
 /**
- * \file verif.c
+ * \file test.c
  * Tests for cx.
  * Be sure to run this through valgrind sometimes, it should not leak!
  **/

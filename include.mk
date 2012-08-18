@@ -1,4 +1,14 @@
 
+# Required:
+#  CxPath
+#  PfxBldPath
+#  BldPath
+#  BinPath
+#  Objs
+#  ExeList
+# Suggested:
+#  CONFIG
+
 CxBldPath = $(PfxBldPath)/cx
 
 CxDeps = bstree fileb ospc rbtree sxpn syscx
@@ -15,6 +25,22 @@ CxHFiles = \
 CxHFiles := $(addsuffix .h,$(CxHFiles))
 
 CxObjs = $(addprefix $(CxBldPath)/,$(addsuffix .o,$(CxDeps)))
+
+ifneq (,$(filter debug,$(CONFIG)))
+	CFLAGS += -g
+endif
+ifneq (,$(filter fast,$(CONFIG)))
+	CFLAGS += -O3
+endif
+ifneq (,$(filter noassert,$(CONFIG)))
+	CFLAGS += -DNDEBUG
+endif
+ifneq (,$(filter ansi,$(CONFIG)))
+	CFLAGS += -ansi -pedantic
+endif
+
+CFLAGS += -Wall -Wextra -Wstrict-aliasing
+
 
 $(CxBldPath)/%.o: $(CxPath)/%.c
 	$(CC) -c $(CFLAGS) -I. $< -o $@
