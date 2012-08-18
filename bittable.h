@@ -325,5 +325,15 @@ all_BitTable (const BitTable bt)
 
 #undef DeclBitTableIdcs
 
+qual_inline
+    ujint
+next1_BitTable (const BitTable bt, ujint idx)
+{
+    while (++idx < bt.sz)
+        if (test_BitTable (bt, idx))
+            return idx;
+    return Max_ujint;
+}
+
 #endif
 

@@ -13,13 +13,15 @@ CFLAGS += -Wall -Wextra -Wstrict-aliasing
 
 #CFLAGS := $(filter-out -ansi,$(CFLAGS))
 
-CExes = cx verify
+BinPath = ../bin
 
-CFiles = bstree.c fileb.c rbtree.c syscx.c cx.c verif.c ospc.c
-HFiles = associa.h bittable.h bstree.h cons.h def.h fileb.h \
-		 lgtable.h rbtree.h synhax.h syscx.h table.h ospc.h
+CExes = $(BinPath)/cx verify
 
-CxDeps = bstree fileb rbtree syscx
+CFiles = bstree.c fileb.c rbtree.c syscx.c cx.c verif.c ospc.c sxpn.c
+HFiles = associa.h bittable.h bstree.h def.h fileb.h \
+		 lgtable.h rbtree.h sxpn.h synhax.h syscx.h table.h ospc.h
+
+CxDeps = bstree fileb rbtree sxpn syscx
 CxObjs = $(addsuffix .o,$(CxDeps))
 
 CxPpPath = ../cx-pp
@@ -30,14 +32,14 @@ all: $(CExes)
 verify: $(addprefix $(BldPath)/,verif.o ospc.o $(CxObjs))
 	$(CC) $(CFLAGS) $^ -o $@ $(LFLAGS)
 
-cx: $(addprefix $(BldPath)/,cx.o $(CxObjs))
+$(BinPath)/cx: $(addprefix $(BldPath)/,cx.o $(CxObjs))
 	$(CC) $(CFLAGS) $^ -o $@ $(LFLAGS)
 
-$(CxPpPath)/cx: $(addprefix $(CxPpPath)/,cx.o $(CxObjs))
+$(CxPpPath)/cx: $(patsubst %.c,%.o,$(shell find $(CxPpPath) -type f -regex '.*\.c'))
 	$(CC) $(CFLAGS) $^ -o $@ $(LFLAGS)
 
 $(CxPpPath)/%.o: $(CxPpPath)/%.c
-	$(CC) -c $(CFLAGS) $< -o $@
+	$(CC) -c $(CFLAGS) -I$(CxPpPath) $< -o $@
 
 $(BldPath)/%.c: %.c $(CxPpPath)/cx
 	$(CxPpPath)/cx -x $< -o $@
@@ -46,7 +48,7 @@ $(BldPath)/%.o: $(BldPath)/%.c
 	$(CC) -c $(CFLAGS) -I. $< -o $@
 
 .PHONY: pp
-pp:
+pp: cx
 	$(foreach f,$(addsuffix .c,cx $(CxDeps)), \
 		./cx -x $(f) -o $(CxPpPath)/$(f) ;)
 	cp *.h $(CxPpPath)

@@ -4,6 +4,7 @@
 #include "fileb.h"
 #include "bstree.h"
 #include "rbtree.h"
+#include "sxpn.h"
 #include "table.h"
 
 #include <assert.h>

@@ -6,11 +6,11 @@
 #include "syscx.h"
 #include "associa.h"
 #include "bittable.h"
-#include "cons.h"
 #include "fileb.h"
 #include "lgtable.h"
 #include "ospc.h"
 #include "rbtree.h"
+#include "sxpn.h"
 #include "table.h"
 
 #include <assert.h>
@@ -348,9 +348,10 @@ testfn_cache_BitTable ()
     void
 testfn_Cons ()
 {
-    Cons* c = make_Cons ();
-    Cons* b = make2_Cons (dflt_Cons_ConsAtom (c), 0);
-    Cons* a = make1_Cons (b);
+    DecloStack1( Sxpn, sx, dflt_Sxpn () );
+    Cons* c = req_Sxpn (sx);
+    Cons* b = req2_Sxpn (sx, dflt_Cons_ConsAtom (c), 0);
+    Cons* a = req1_Sxpn (sx, b);
     OFileB* of = stderr_OFileB ();
 
     c->car.kind = Cons_AlphaTab;
@@ -366,9 +367,11 @@ testfn_Cons ()
     dump_char_OFileB (of, '\n');
     dump_cstr_OFileB (of, "------------\n");
 
-    lose_Cons (b);
-    lose_Cons (a);
-    lose_Cons (c);
+    giv_Sxpn (sx, b);
+    giv_Sxpn (sx, a);
+    giv_Sxpn (sx, c);
+
+    lose_Sxpn (sx);
 }
 
 /** \test
@@ -687,11 +690,11 @@ int main (int argc, char** argv)
         return 0;
     }
 
-    testfn_Cons ();
     testfn_Table ();
     testfn_BitTable ();
     testfn_cache_BitTable ();
     testfn_LgTable ();
+    testfn_Cons ();
     testfn_skipws_FileB ();
     testfn_RBTree ();
     testfn_Associa ();

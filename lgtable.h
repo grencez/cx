@@ -279,5 +279,39 @@ giv_LgTable (LgTable* t, void* el)
     gividx_LgTable (t, idxelt_LgTable (t, el));
 }
 
+qual_inline
+    ujint
+nextidx_LgTable (const LgTable* t, ujint idx)
+{
+    ujintlg lgidx = lg_ujint (idx);
+    if (lgidx > 0)  idx &= ~((ujint) 1 << lgidx);
+    do
+    {
+        idx = next1_BitTable (t->allocs.s[lgidx].bt, idx);
+        if (idx < Max_ujint)
+        {
+            if (lgidx == 0)  return idx;
+            return (idx ^ ((ujint) 1 << lgidx));
+        }
+        idx = 0;
+        ++ lgidx;
+    } while (lgidx < t->allocs.sz);
+    return Max_ujint;
+}
+
+qual_inline
+    ujint
+begidx_LgTable (const LgTable* t)
+{
+    if (t->allocs.sz > 0)
+    {
+        const LgTableAlloc* a = &t->allocs.s[0];
+        if (a->bt.sz > 0 && test_BitTable (a->bt, 0))
+            return 0;
+        return next1_BitTable (a->bt, 0);
+    }
+    return Max_ujint;
+}
+
 #endif
 

@@ -18,10 +18,9 @@ set (CSources
     fileb.c
     ospc.c
     rbtree.c
+    sxpn.c
     syscx.c
     )
-
-set (GuiName gui)
 
 if (UNIX)
     if (NOT CMAKE_BUILD_TYPE)
