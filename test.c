@@ -3,15 +3,15 @@
  * Tests for cx.
  * Be sure to run this through valgrind sometimes, it should not leak!
  **/
-#include "syscx.h"
-#include "associa.h"
-#include "bittable.h"
-#include "fileb.h"
-#include "lgtable.h"
-#include "ospc.h"
-#include "rbtree.h"
-#include "sxpn.h"
-#include "table.h"
+#include "cx/syscx.h"
+#include "cx/associa.h"
+#include "cx/bittable.h"
+#include "cx/fileb.h"
+#include "cx/lgtable.h"
+#include "cx/ospc.h"
+#include "cx/rbtree.h"
+#include "cx/sxpn.h"
+#include "cx/table.h"
 
 #include <assert.h>
 #include <stdlib.h>
@@ -389,7 +389,6 @@ testfn_skipws_FileB ()
     FileB xfb = dflt_FileB ();
     XFileB* xf = &xfb.xo;
     OFileB* of = stderr_OFileB ();
-    char* s;
 
 #if 0
     open_FileB (&xfb, "", "test");
@@ -398,7 +397,7 @@ testfn_skipws_FileB ()
     memcpy (xf->buf.s, text, xf->buf.sz);
 #endif
 
-    for (s = getline_XFileB (xf);
+    for (char* s = getline_XFileB (xf);
          s;
          s = getline_XFileB (xf))
     {
@@ -447,12 +446,13 @@ testfn_LgTable ()
     Claim2( 2 ,==, lg_ujint (4) );
     Claim2( 2 ,==, lg_ujint (4) );
 
-    { BLoop( i, n )
+    for (uint i = 0; i < n; ++i)
+    {
         int* el = (int*) req_LgTable (lgt);
         *el = - (int) i;
         idx = idxelt_LgTable (lgt, el);
         Claim2( idx ,==, i );
-    } BLose()
+    }
 
     gividx_LgTable (lgt, 1);
     idx = reqidx_LgTable (lgt);
@@ -470,11 +470,12 @@ testfn_LgTable ()
     idx = reqidx_LgTable (lgt);
     Claim2( idx ,==, 7 );
 
-    { BLoop( i, n )
+    for (uint i = 0; i < n; ++i)
+    {
         ujint sz = n-i;
         Claim2( lgt->allocs.sz ,<=, (ujint) lg_ujint (sz) + 2 );
         gividx_LgTable (lgt, sz-1);
-    } BLose()
+    }
 
     lose_LgTable (lgt);
 }
@@ -629,26 +630,28 @@ testfn_Table ()
     claim_allocsz_Table (&tmp_table);
     XferCastTable( t, tmp_table );
 
-    { BLoop( i, n )
+    for (uint i = 0; i < n; ++i)
+    {
         DeclGrow1Table( V, x, t );
         *x = (int) i;
 
         tmp_table = MakeCastTable( t );
         claim_allocsz_Table (&tmp_table);
         XferCastTable( t, tmp_table );
-    } BLose()
+    }
 
     PackTable( t );
     Claim2( t.sz - 1 ,==, AllocszTable( t ));
 
-    { BLoop( i, n )
+    for (uint i = 0; i < n; ++i)
+    {
         t.s[t.sz-1] = val;
         MPopTable( t, 1 );
 
         tmp_table = MakeCastTable( t );
         claim_allocsz_Table (&tmp_table);
         XferCastTable( t, tmp_table );
-    } BLose()
+    }
 
     Claim2( 0 ,==, t.sz );
     Claim2( 0 ,<, AllocszTable( t ));
@@ -677,7 +680,7 @@ int main (int argc, char** argv)
         (init_sysCx (&argc, &argv),
          1);
 
-    /* Special test as child process.*/
+    // Special test as child process.
     if (eql_cstr (argv[argi], "echo"))
     {
         OFileB* of = stdout_OFileB ();

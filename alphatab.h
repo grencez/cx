@@ -114,5 +114,15 @@ copy_AlphaTab (AlphaTab* a, const AlphaTab* b)
     CopyTable( *a, *b );
 }
 
+qual_inline
+    bool
+endc_ck_AlphaTab (AlphaTab* a, char c)
+{
+    const char* s = cstr_AlphaTab (a);
+    if (!s)  return false;
+    s = strrchr (s, c);
+    return (s && !s[1]);
+}
+
 #endif
 

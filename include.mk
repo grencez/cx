@@ -22,6 +22,7 @@ CxDeps = bstree fileb ospc rbtree sxpn syscx
 CxHFiles = \
 	$(CxDeps) \
 	associa \
+	alphatab \
 	bittable \
 	def \
 	lgtable \
@@ -49,6 +50,7 @@ ifneq (,$(filter ansi,$(CONFIG)))
 endif
 
 CFLAGS += -Wall -Wextra -Wstrict-aliasing
+CFLAGS += -I$(PfxBldPath)
 ExecCx = $(CxExe)
 
 ifdef CxPpPath
@@ -94,6 +96,9 @@ $(CxPpExe): $(CxPpPath)/cx.o \
 $(CxBldPath)/%.c: $(CxPath)/%.c $(CxPpExe)
 	$(ExecCxPp) -x $< -o $@
 
+$(CxBldPath)/%.h: $(CxPath)/%.h $(CxPpExe)
+	$(ExecCxPp) -x $< -o $@
+
 $(CxBldPath)/cx.c: | $(CxBldPath)
 
 $(CxExe): $(CxBldPath)/cx.o $(CxObjs)
@@ -102,18 +107,27 @@ else
 
 $(CxBldPath)/%.c: $(CxPath)/%.c $(CxExe)
 	$(ExecCx) -x $< -o $@
+
+$(CxBldPath)/%.h: $(CxPath)/%.h $(CxExe)
+	$(ExecCx) -x $< -o $@
 endif
 
-$(BldPath)/%.c: %.c $(CxExe)
+include $(CxPath)/deps.mk
+
+$(BldPath)/%.c: %.c $(CxExe) $(addprefix $(CxBldPath)/,$(CxHFiles))
+	$(ExecCx) -x $< -o $@
+
+$(BldPath)/%.h: %.h $(CxExe) $(addprefix $(CxBldPath)/,$(CxHFiles))
 	$(ExecCx) -x $< -o $@
 
 $(CxBldPath)/%.o: $(CxBldPath)/%.c
-	$(CC) -c $(CFLAGS) -I$(CxPath) $< -o $@
+	$(CC) -c $(CFLAGS) $< -o $@
 
 $(BldPath)/%.o: $(BldPath)/%.c
-	$(CC) -c $(CFLAGS) -I. $< -o $@
+	$(CC) -c $(CFLAGS) $< -o $@
 
 $(patsubst %.o,%.c,$(CxObjs)): | $(CxBldPath)
+$(addprefix $(CxBldPath)/,$(CxHFiles)): | $(CxBldPath)
 $(ExeList): | $(BinPath)
 $(patsubst %.o,%.c,$(Objs)): | $(BldPath)
 
@@ -124,4 +138,10 @@ $(BinPath):
 	mkdir -p $@
 $(BldPath):
 	mkdir -p $@
+
+.PHONY: killcmake
+killcmake:
+	rm -fr CMakeFiles
+	rm -f cmake_install.cmake CMakeCache.txt Makefile
+	ln -s Makefile.raw Makefile
 

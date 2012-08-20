@@ -24,7 +24,6 @@ Objs = $(addprefix $(BldPath)/,$(addsuffix .o,$(Deps)))
 
 include $(CxPath)/include.mk
 
-
 TestExe = test
 ExecTest = ./$(TestExe)
 
@@ -48,17 +47,12 @@ $(TestExe): $(BldPath)/test.o $(CxObjs)
 pp: $(CxExe)
 	$(foreach f,$(addsuffix .c,cx $(CxDeps)), \
 		$(ExecCx) -x $(f) -o $(CxPpPath)/$(f) ;)
-	cp $(CxHFiles) $(CxPpPath)
+	$(foreach f,$(CxHFiles), \
+		$(ExecCx) -x $(f) -o $(CxPpPath)/$(f) ;)
 
 .PHONY: exectest
 exectest: $(TestExe)
 	$(ExecTest)
-
-.PHONY: killcmake
-killcmake:
-	rm -fr CMakeFiles
-	rm -f cmake_install.cmake CMakeCache.txt Makefile
-	ln -s Makefile.raw Makefile
 
 .PHONY: clean
 clean:

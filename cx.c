@@ -644,6 +644,12 @@ lex_AST (XFileB* xf, ASTree* t)
             ast->kind = Syntax_Directive;
             cat_cstr_AlphaTab (&ast->txt, getlined_XFileB (xf, "\n"));
             ++ line;
+            while (endc_ck_AlphaTab (&ast->txt, '\\'))
+            {
+                cat_cstr_AlphaTab (&ast->txt, "\n");
+                cat_cstr_AlphaTab (&ast->txt, getlined_XFileB (xf, "\n"));
+                ++ line;
+            }
             break;
 
 #define LexiCase( c, k )  case c: \
@@ -682,7 +688,6 @@ lex_AST (XFileB* xf, ASTree* t)
             if (ast->kind == Lexical_Div)
             {
                 ast->kind = Syntax_LineComment;
-                InitLeaf( ast );
                 cat_cstr_AlphaTab (&ast->txt, getlined_XFileB (xf, "\n"));
                 ++ line;
             }
