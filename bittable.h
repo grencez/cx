@@ -327,13 +327,23 @@ all_BitTable (const BitTable bt)
 
 qual_inline
     ujint
-next1_BitTable (const BitTable bt, ujint idx)
+next_BitTable (const BitTable bt, ujint idx)
 {
     while (++idx < bt.sz)
         if (test_BitTable (bt, idx))
             return idx;
     return Max_ujint;
 }
+
+qual_inline
+    ujint
+beg_BitTable (const BitTable bt)
+{
+    if (bt.sz == 0)  return Max_ujint;
+    if (test_BitTable (bt, 0))  return 0;
+    return next_BitTable (bt, 0);
+}
+
 
 #endif
 

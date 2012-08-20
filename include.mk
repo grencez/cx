@@ -9,7 +9,13 @@
 # Suggested:
 #  CONFIG
 
-CxBldPath = $(PfxBldPath)/cx
+# Defines:
+#  CxExe
+#  CxBldPath
+
+CxExe ?= $(BinPath)/cx
+
+CxBldPath ?= $(PfxBldPath)/cx
 
 CxDeps = bstree fileb ospc rbtree sxpn syscx
 
@@ -29,6 +35,9 @@ CxObjs = $(addprefix $(CxBldPath)/,$(addsuffix .o,$(CxDeps)))
 ifneq (,$(filter debug,$(CONFIG)))
 	CFLAGS += -g
 endif
+ifneq (,$(filter ultradebug,$(CONFIG)))
+	CFLAGS += -g3
+endif
 ifneq (,$(filter fast,$(CONFIG)))
 	CFLAGS += -O3
 endif
@@ -40,18 +49,73 @@ ifneq (,$(filter ansi,$(CONFIG)))
 endif
 
 CFLAGS += -Wall -Wextra -Wstrict-aliasing
+ExecCx = $(CxExe)
 
+ifdef CxPpPath
+	CxPpExe = $(CxPpPath)/cx
+	ExecCxPp = $(CxPpExe)
+endif
 
-$(CxBldPath)/%.o: $(CxPath)/%.c
+ifneq (,$(filter wine,$(CONFIG)))
+	CC = wine "$(HOME)/.wine/drive_c/Program Files (x86)/CodeBlocks/MinGW/bin/mingw32-gcc-4.4.1.exe"
+	#CC = wine "$(HOME)/.wine/drive_c/Program Files/CodeBlocks/MinGW/bin/mingw32-gcc-4.4.1.exe"
+	CFLAGS := $(filter-out -ansi,$(CFLAGS))
+	ifdef CxPpPath
+		CxPpExe := $(CxPpExe).exe
+		ExecCxPp = wine $(CxPpExe)
+	endif
+	CxExe := $(CxExe).exe
+	ExecCx = wine $(CxExe)
+	TestExe := $(TestExe).exe
+	ExecTest = wine $(TestExe)
+endif
+ifneq (,$(filter winegcc,$(CONFIG)))
+	CC = winegcc -mno-cygwin
+	CFLAGS := $(filter-out -ansi,$(CFLAGS))
+	ifdef CxPpPath
+		CxPpExe := $(CxPpExe).exe
+		ExecCxPp = wine $(CxPpExe)
+	endif
+	CxExe := $(CxExe).exe
+	ExecCx = $(CxExe)
+	TestExe := $(TestExe).exe
+	ExecTest := $(ExecTest)
+endif
+
+ifdef CxPpPath
+
+$(CxPpPath)/%.o: $(CxPpPath)/%.c
+	$(CC) -c $(CFLAGS) -I$(CxPpPath) $< -o $@
+	
+$(CxPpExe): $(CxPpPath)/cx.o \
+   	$(patsubst $(CxBldPath)/%,$(CxPpPath)/%,$(CxObjs))
+	$(CC) $(CFLAGS) $^ -o $@ $(LFLAGS)
+
+$(CxBldPath)/%.c: $(CxPath)/%.c $(CxPpExe)
+	$(ExecCxPp) -x $< -o $@
+
+$(CxBldPath)/cx.c: | $(CxBldPath)
+
+$(CxExe): $(CxBldPath)/cx.o $(CxObjs)
+	$(CC) $(CFLAGS) $^ -o $@ $(LFLAGS)
+else
+
+$(CxBldPath)/%.c: $(CxPath)/%.c $(CxExe)
+	$(ExecCx) -x $< -o $@
+endif
+
+$(BldPath)/%.c: %.c $(CxExe)
+	$(ExecCx) -x $< -o $@
+
+$(CxBldPath)/%.o: $(CxBldPath)/%.c
+	$(CC) -c $(CFLAGS) -I$(CxPath) $< -o $@
+
+$(BldPath)/%.o: $(BldPath)/%.c
 	$(CC) -c $(CFLAGS) -I. $< -o $@
 
-$(BldPath)/%.o: %.c
-	$(CC) -c $(CFLAGS) -I. $< -o $@
-
-
-$(CxObjs): | $(CxBldPath)
+$(patsubst %.o,%.c,$(CxObjs)): | $(CxBldPath)
 $(ExeList): | $(BinPath)
-$(Objs): | $(BldPath)
+$(patsubst %.o,%.c,$(Objs)): | $(BldPath)
 
 
 $(CxBldPath):

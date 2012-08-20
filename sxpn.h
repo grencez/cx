@@ -68,6 +68,24 @@ dflt_ConsAtom ()
     return ca;
 }
 
+/** Increment reference count.**/
+qual_inline
+    void
+inc_Cons (Cons* a)
+{
+    if (a && a->nrefs < DomMax( a->nrefs ))
+        ++ a->nrefs;
+}
+
+/** Decrement reference count.**/
+qual_inline
+    void
+dec_Cons (Cons* a)
+{
+    if (a && a->nrefs > 0 && a->nrefs < DomMax( a->nrefs ))
+        -- a->nrefs;
+}
+
 qual_inline
     ConsAtom
 dflt_Cons_ConsAtom (Cons* c)
@@ -75,7 +93,7 @@ dflt_Cons_ConsAtom (Cons* c)
     ConsAtom ca = dflt_ConsAtom ();
     ca.kind = Cons_Cons;
     ca.as.cons = c;
-    if (c)  ++ c->nrefs;
+    inc_Cons (c);
     return ca;
 }
 
@@ -87,7 +105,7 @@ dflt2_Cons (ConsAtom a, Cons* b)
     c->car = a;
     c->nrefs = 1;
     c->cdr = b;
-    if (b)  ++ b->nrefs;
+    inc_Cons (b);
     return *c;
 }
 
@@ -163,7 +181,7 @@ giv_Sxpn (Sxpn* sx, Cons* a)
     while (a)
     {
         Cons* b;
-        -- a->nrefs;
+        dec_Cons (a);
         if (a->nrefs > 0)  break;
 
         lose_ConsAtom (&a->car, sx);
@@ -172,6 +190,15 @@ giv_Sxpn (Sxpn* sx, Cons* a)
         a = a->cdr;
         giv_LgTable (&sx->cells, b);
     }
+}
+
+qual_inline
+    Cons*
+pop_Sxpn (Sxpn* sx, Cons* a)
+{
+    Cons* tmp = a->cdr;
+    giv_Sxpn (sx, a);
+    return tmp;
 }
 
 qual_inline

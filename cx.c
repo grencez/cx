@@ -2,8 +2,6 @@
 #include "syscx.h"
 #include "associa.h"
 #include "fileb.h"
-#include "bstree.h"
-#include "rbtree.h"
 #include "sxpn.h"
 #include "table.h"
 
@@ -17,8 +15,7 @@ typedef struct CxCtx CxCtx;
 
 typedef
 enum SyntaxKind
-{   Syntax_Root
-    ,Syntax_Cons
+{   Syntax_WS
     ,Syntax_Iden
     ,Syntax_LineComment
     ,Syntax_BlockComment
@@ -34,8 +31,6 @@ enum SyntaxKind
     /* TODO */
     ,Syntax_Struct
     ,Syntax_Typedef
-
-    ,Syntax_Inc
 
     ,Beg_Syntax_LexWords
     ,Lexical_Struct = Beg_Syntax_LexWords
@@ -128,16 +123,16 @@ enum SyntaxKind
 struct AST
 {
     SyntaxKind kind;
-    BSTNode bst;
     ujint line;
     AlphaTab txt;
+    Cons* cons;
 };
 
 struct ASTree
 {
-    BSTree bst;
-    AST* root;
     LgTable lgt;
+    Cons* head;
+    Sxpn sx;
 };
 
 /** Unused.**/
@@ -153,18 +148,10 @@ dflt_AST ()
 {
     AST ast;
     ast.kind = NSyntaxKinds;
-    ast.bst = dflt_BSTNode ();
     ast.line = 0;
-    InitTable( ast.txt );
+    ast.txt = dflt_AlphaTab ();
+    ast.cons = 0;
     return ast;
-}
-
-static
-    void
-lose_bst_AST (BSTNode* bst)
-{
-    AST* ast = CastUp( AST, bst, bst );
-    LoseTable( ast->txt );
 }
 
     AST*
@@ -172,6 +159,10 @@ req_ASTree (ASTree* t)
 {
     AST* ast = (AST*) req_LgTable (&t->lgt);
     *ast = dflt_AST ();
+    ast->cons = req_Sxpn (&t->sx);
+    /* InitDomMax( ast->cons->nrefs ); */
+    ast->cons->car.kind = Cons_MemLoc;
+    ast->cons->car.as.memloc = ast;
     return ast;
 }
 
@@ -188,50 +179,72 @@ giv_ASTree (ASTree* t, AST* ast)
 {
     LoseTable( ast->txt );
     giv_LgTable (&t->lgt, ast);
+    /* ast->cons->nrefs = 0; */
+    if (ast->cons->car.kind == Cons_Cons)
+        ast->cons->car.as.cons = 0;
+    ast->cons->cdr = 0;
+    giv_Sxpn (&t->sx, ast->cons);
 }
 
     ASTree
 cons_ASTree ()
 {
     ASTree t;
-    AST* sentinel;
-
     t.lgt = dflt1_LgTable (sizeof (AST));
-    sentinel = req_ASTree (&t);
-    t.bst = dflt2_BSTree (&sentinel->bst, NULL);
-
-    t.root = req1_ASTree (&t, Syntax_Root);
-    root_fo_BSTree (&t.bst, &t.root->bst);
+    t.sx = dflt_Sxpn ();
+    t.head = 0;
     return t;
 }
 
     void
 lose_ASTree (ASTree* t)
 {
-    lose_BSTree (&t->bst, lose_bst_AST);
+    for (ujint i = begidx_LgTable (&t->lgt);
+         i < Max_ujint;
+         i = nextidx_LgTable (&t->lgt, i))
+    {
+        AST* ast = (AST*) elt_LgTable (&t->lgt, i);
+        lose_AlphaTab (&ast->txt);
+    }
     lose_LgTable (&t->lgt);
+    lose_Sxpn (&t->sx);
 }
 
     AST*
-split_of_AST (AST* ast, Bit side)
+AST_of_Cons (Cons* c)
 {
-    BSTNode* bst = ast->bst.split[side];
-    if (!bst)  return 0;
-    return CastUp( AST, bst, bst );
+    if (!c)  return 0;
+    if (c->car.kind == Cons_Cons)
+    {
+        c = c->car.as.cons;
+        Claim( c );
+    }
+    Claim2( c->car.kind ,==, Cons_MemLoc );
+    return (AST*) c->car.as.memloc;
 }
 
     AST*
-joint_of_AST (AST* ast)
+cdar_of_AST (AST* ast, const ASTree* t)
 {
-    BSTNode* bst = ast->bst.joint;
-    if (!bst->joint)  return 0;
-    return CastUp( AST, bst, bst );
+    Cons* c = ast->cons;
+    (void) t;
+
+    Claim2( Cons_Cons ,==, c->car.kind );
+    c = c->car.as.cons;
+    Claim( c );
+    c = c->cdr;
+    if (!c)  return 0;
+    return AST_of_Cons (c);
 }
 
-    void
-join_AST (AST* y, AST* x, Bit side)
+    AST*
+cdr_of_AST (AST* ast, const ASTree* t)
 {
-    join_BSTNode (&y->bst, (x ? &x->bst : 0), side);
+    Cons* c = ast->cons->cdr;
+    (void) t;
+
+    if (!c)  return 0;
+    return AST_of_Cons (c);
 }
 
     const char*
@@ -334,20 +347,18 @@ init_lexwords (Associa* map)
     }
 }
 
+void
+dump_AST (OFileB* of, AST* ast, const ASTree* t);
+
     void
-dump_AST (OFileB* of, AST* ast)
+dump1_AST (OFileB* of, AST* ast, const ASTree* t)
 {
     if (!ast)  return;
+
     switch (ast->kind)
     {
-    case Syntax_Root:
-    case Syntax_Cons:
-        do
-        {
-            dump_AlphaTab (of, &ast->txt);
-            dump_AST (of, split_of_AST (ast, 0));
-            ast = split_of_AST (ast, 1);
-        } while (ast);
+    case Syntax_WS:
+        dump_AlphaTab (of, &ast->txt);
         break;
     case Syntax_Iden:
         Claim2( ast->txt.sz ,>, 0 );
@@ -367,36 +378,26 @@ dump_AST (OFileB* of, AST* ast)
         break;
     case Syntax_Parens:
         dump_char_OFileB (of, '(');
-        dump_AlphaTab (of, &ast->txt);
-        dump_AST (of, split_of_AST (ast, 0));
-        dump_AST (of, split_of_AST (ast, 1));
+        dump_AST (of, cdar_of_AST (ast, t), t);
         dump_char_OFileB (of, ')');
         break;
     case Syntax_Braces:
         dump_char_OFileB (of, '{');
-        dump_AlphaTab (of, &ast->txt);
-        dump_AST (of, split_of_AST (ast, 0));
-        dump_AST (of, split_of_AST (ast, 1));
+        dump_AST (of, cdar_of_AST (ast, t), t);
         dump_char_OFileB (of, '}');
         break;
     case Syntax_Brackets:
         dump_char_OFileB (of, '[');
-        dump_AlphaTab (of, &ast->txt);
-        dump_AST (of, split_of_AST (ast, 0));
-        dump_AST (of, split_of_AST (ast, 1));
+        dump_AST (of, cdar_of_AST (ast, t), t);
         dump_char_OFileB (of, ']');
         break;
     case Syntax_Stmt:
-        dump_AST (of, split_of_AST (ast, 0));
-        dump_AST (of, split_of_AST (ast, 1));
-        dump_AlphaTab (of, &ast->txt);
+        dump_AST (of, cdar_of_AST (ast, t), t);
         dump_char_OFileB (of, ';');
         break;
     case Syntax_ForLoop:
         dump_cstr_OFileB (of, "for");
-        dump_AlphaTab (of, &ast->txt);
-        dump_AST (of, split_of_AST (ast, 0));
-        dump_AST (of, split_of_AST (ast, 1));
+        dump_AST (of, cdar_of_AST (ast, t), t);
         break;
     case Syntax_LineComment:
         dump_cstr_OFileB (of, "//");
@@ -412,11 +413,6 @@ dump_AST (OFileB* of, AST* ast)
         dump_char_OFileB (of, '#');
         dump_AlphaTab (of, &ast->txt);
         dump_char_OFileB (of, '\n');
-        break;
-    case Syntax_Inc:
-        dump_AST (of, split_of_AST (ast, 0));
-        dump_cstr_OFileB (of, "++");
-        dump_AST (of, split_of_AST (ast, 1));
         break;
     default:
         if ((ast->kind >= Beg_Syntax_LexWords &&
@@ -435,41 +431,31 @@ dump_AST (OFileB* of, AST* ast)
 }
 
     void
+dump_AST (OFileB* of, AST* ast, const ASTree* t)
+{
+    while (ast)
+    {
+        dump1_AST (of, ast, t);
+        ast = cdr_of_AST (ast, t);
+    }
+}
+
+    void
 dump_ASTree (OFileB* of, ASTree* t)
 {
-    dump_AST (of, t->root);
+    dump_AST (of, AST_of_Cons (t->head), t);
 }
 
-    AST*
-app_AST (AST* ast, ASTree* t)
+    void
+bevel_AST (AST* ast, ASTree* t)
 {
-    AST* b;
-    if (ast->bst.split[0])
-    {
-        Claim( !ast->bst.split[1] );
-        b = req1_ASTree (t, Syntax_Cons);
-        join_BSTNode (&ast->bst, &b->bst, 1);
-        ast = b;
-    }
+    Cons* c = req_Sxpn (&t->sx);
 
-    b = req_ASTree (t);
-    join_BSTNode (&ast->bst, &b->bst, 0);
-    return b;
-}
+    c->car.kind = Cons_MemLoc;
+    c->car.as.memloc = ast;
 
-    AST*
-wsnode_AST (AST* ast, ASTree* t)
-{
-    if (ast->bst.split[0])
-    {
-        AST* b;
-        Claim( !ast->bst.split[1] );
-        b = req1_ASTree (t, Syntax_Cons);
-        b->kind = Syntax_Cons;
-        join_BSTNode (&ast->bst, &b->bst, 1);
-        ast = b;
-    }
-    return ast;
+    ast->cons->car.kind = Cons_Cons;
+    ast->cons->car.as.cons = c;
 }
 
     bool
@@ -507,18 +493,18 @@ parse_escaped (XFileB* xf, AlphaTab* t, char delim)
 count_newlines (const char* s)
 {
     ujint n = 0;
-    for (s = strchr (s, '\n');  s;  s = strchr (&s[1], '\n'))
+    for (s = strchr (s, '\n'); s;  s = strchr (&s[1], '\n'))
         ++ n;
     return n;
 }
 
-    /** Tokenize while dealing with
-     * - line/block comment
-     * - directive (perhaps this should happen later)
-     * - char, string
-     * - parentheses, braces, brackets
-     * - statement ending with semicolon
-     **/
+/** Tokenize while dealing with
+ * - line/block comment
+ * - directive (perhaps this should happen later)
+ * - char, string
+ * - parentheses, braces, brackets
+ * - statement ending with semicolon
+ **/
     void
 lex_AST (XFileB* xf, ASTree* t)
 {
@@ -526,8 +512,17 @@ lex_AST (XFileB* xf, ASTree* t)
     const char delims[] = "'\"(){}[];#+-*/%&^|~!.,?:><=";
     ujint off;
     ujint line = 0;
-    AST* ast = t->root;
     DecloStack( Associa, keyword_map );
+    Cons* up = 0;
+    AST dummy_ast = dflt_AST ();
+    AST* ast = &dummy_ast;
+    Cons** p = &t->head;
+
+#define InitLeaf(ast) \
+    (ast) = req_ASTree (t); \
+    (ast)->line = line; \
+    *p = (ast)->cons; \
+    p = &(ast)->cons->cdr;
 
     init_lexwords (keyword_map);
 
@@ -535,8 +530,6 @@ lex_AST (XFileB* xf, ASTree* t)
          s;
          s = nextds_XFileB (xf, &match, delims))
     {
-        AST* lo_ast;
-
         off = IdxEltTable( xf->buf, s );
 
         if (s[0])
@@ -550,10 +543,10 @@ lex_AST (XFileB* xf, ASTree* t)
                 if (olay->off > 0)
                 {
                     AlphaTab ts = AlphaTab_XFileB (olay, 0);
-                    ast = wsnode_AST (ast, t);
-                    AffyTable( ast->txt, ts.sz+1 );
+                    InitLeaf( ast );
+                    ast->kind = Syntax_WS;
                     cat_AlphaTab (&ast->txt, &ts);
-                    line += count_newlines (ast->txt.s);
+                    line += count_newlines (cstr_AlphaTab (&ast->txt));
                 }
                 off += olay->off;
                 *olay = olay_XFileB (xf, off);
@@ -565,7 +558,8 @@ lex_AST (XFileB* xf, ASTree* t)
                     AlphaTab ts = AlphaTab_XFileB (olay, 0);
                     Assoc* luk = lookup_Associa (keyword_map, &ts);
 
-                    ast = app_AST (ast, t);
+                    InitLeaf( ast );
+                    ast->kind = Syntax_WS;
 
                     if (luk)
                     {
@@ -577,8 +571,6 @@ lex_AST (XFileB* xf, ASTree* t)
                         AffyTable( ast->txt, ts.sz+1 );
                         cat_AlphaTab (&ast->txt, &ts);
                     }
-                    ast->line = line;
-                    ast = joint_of_AST (ast);
                 }
 
                 off += olay->off;
@@ -586,126 +578,118 @@ lex_AST (XFileB* xf, ASTree* t)
             }
         }
 
-        lo_ast = split_of_AST (ast, 0);
-
         switch (match)
         {
         case '\0':
-                /* End of file has been reached.*/
             break;
         case '\'':
-            ast = app_AST (ast, t);
+            InitLeaf( ast );
             ast->kind = Syntax_CharLit;
-            ast->line = line;
             if (!parse_escaped (xf, &ast->txt, '\''))
                 DBog1( "Gotta problem with single quotes! line:%u",
                        (uint) line );
-            ast = joint_of_AST (ast);
             break;
         case '"':
-            ast = app_AST (ast, t);
+            InitLeaf( ast );
             ast->kind = Syntax_StringLit;
-            ast->line = line;
             if (!parse_escaped (xf, &ast->txt, '"'))
                 DBog1( "Gotta problem with double quotes! line:%u",
                        (uint) line );
-            ast = joint_of_AST (ast);
             break;
         case '(':
-            ast = app_AST (ast, t);
+            InitLeaf( ast );
             ast->kind = Syntax_Parens;
-            ast->line = line;
+            bevel_AST (ast, t);
+            up = req2_Sxpn (&t->sx, dflt_Cons_ConsAtom (ast->cons), up);
+            p = &ast->cons->car.as.cons->cdr;
             break;
         case '{':
-            ast = app_AST (ast, t);
+            InitLeaf( ast );
             ast->kind = Syntax_Braces;
-            ast->line = line;
+            bevel_AST (ast, t);
+            up = req2_Sxpn (&t->sx, dflt_Cons_ConsAtom (ast->cons), up);
+            p = &ast->cons->car.as.cons->cdr;
             break;
         case '[':
-            ast = app_AST (ast, t);
+            InitLeaf( ast );
             ast->kind = Syntax_Brackets;
-            ast->line = line;
+            bevel_AST (ast, t);
+            up = req2_Sxpn (&t->sx, dflt_Cons_ConsAtom (ast->cons), up);
+            p = &ast->cons->car.as.cons->cdr;
             break;
         case ')':
         case '}':
         case ']':
-            while (ast)
+            if (!up)
             {
-                if ((match == ')' && ast->kind == Syntax_Parens) ||
-                    (match == '}' && ast->kind == Syntax_Braces) ||
-                    (match == ']' && ast->kind == Syntax_Brackets))
-                {
-                    ast = joint_of_AST (ast);
-                    break;
-                }
-                ast = joint_of_AST (ast);
+                DBog2( "Unmatched closing '%c', line: %u.", match, line );
+                return;
             }
-            if (!ast)
+            ast = AST_of_Cons (up->car.as.cons);
+            up = pop_Sxpn (&t->sx, up);
+            if ((match == ')' && ast->kind == Syntax_Parens) ||
+                (match == '}' && ast->kind == Syntax_Braces) ||
+                (match == ']' && ast->kind == Syntax_Brackets))
             {
-                DBog1( "Unmatched closing '%c'.", match );
+                p = &ast->cons->cdr;
+            }
+            else
+            {
+                DBog2( "Mismatched closing '%c', line: %u.", match, line );
                 return;
             }
             break;
         case '#':
-            ast = app_AST (ast, t);
+            InitLeaf( ast );
             ast->kind = Syntax_Directive;
-            ast->line = line;
             cat_cstr_AlphaTab (&ast->txt, getlined_XFileB (xf, "\n"));
             ++ line;
-            ast = joint_of_AST (ast);
             break;
 
 #define LexiCase( c, k )  case c: \
-            ast = app_AST (ast, t); \
+            InitLeaf( ast ); \
             ast->kind = k; \
-            ast->line = line; \
-            ast = joint_of_AST (ast); \
             break;
 
 #define Lex2Case( c, k1, k2 )  case c: \
-            if (lo_ast && lo_ast->kind == k1) \
+            if (ast->kind == k1) \
             { \
-                lo_ast->kind = k2; \
+                ast->kind = k2; \
             } \
             else \
             { \
-                ast = app_AST (ast, t); \
+                InitLeaf( ast ); \
                 ast->kind = k1; \
-                ast->line = line; \
-                ast = joint_of_AST (ast); \
             } \
             break;
 
             Lex2Case( '+', Lexical_Add, Lexical_Inc );
             Lex2Case( '-', Lexical_Sub, Lexical_Dec );
         case '*':
-            if (lo_ast && lo_ast->kind == Lexical_Div)
+            if (ast->kind == Lexical_Div)
             {
-                lo_ast->kind = Syntax_BlockComment;
-                cat_cstr_AlphaTab (&lo_ast->txt, getlined_XFileB (xf, "*/"));
-                line += count_newlines (lo_ast->txt.s);
+                ast->kind = Syntax_BlockComment;
+                cat_cstr_AlphaTab (&ast->txt, getlined_XFileB (xf, "*/"));
+                line += count_newlines (ast->txt.s);
             }
             else
             {
-                ast = app_AST (ast, t);
+                InitLeaf( ast );
                 ast->kind = Lexical_Mul;
-                ast->line = line;
-                ast = joint_of_AST (ast);
             }
             break;
         case '/':
-            if (lo_ast && lo_ast->kind == Lexical_Div)
+            if (ast->kind == Lexical_Div)
             {
-                lo_ast->kind = Syntax_LineComment;
-                cat_cstr_AlphaTab (&lo_ast->txt, getlined_XFileB (xf, "\n"));
+                ast->kind = Syntax_LineComment;
+                InitLeaf( ast );
+                cat_cstr_AlphaTab (&ast->txt, getlined_XFileB (xf, "\n"));
                 ++ line;
             }
             else
             {
-                ast = app_AST (ast, t);
+                InitLeaf( ast );
                 ast->kind = Lexical_Div;
-                ast->line = line;
-                ast = joint_of_AST (ast);
             }
             break;
             LexiCase( '%', Lexical_Mod );
@@ -720,65 +704,65 @@ lex_AST (XFileB* xf, ASTree* t)
             LexiCase( ':', Lexical_Colon );
             LexiCase( ';', Lexical_Semicolon );
         case '>':
-            if (lo_ast && lo_ast->kind == Lexical_GT)
+            if (ast->kind == Lexical_GT)
             {
-                lo_ast->kind = Lexical_RShift;
+                ast->kind = Lexical_RShift;
             }
-            else if (lo_ast && lo_ast->kind == Lexical_Sub)
+            else if (ast->kind == Lexical_Sub)
             {
-                lo_ast->kind = Lexical_PMemb;
+                ast->kind = Lexical_PMemb;
             }
             else
             {
-                ast = app_AST (ast, t);
+                InitLeaf( ast );
                 ast->kind = Lexical_GT;
-                ast = joint_of_AST (ast);
             }
             break;
             Lex2Case( '<', Lexical_LT, Lexical_LShift );
         case '=':
-            if (lo_ast && lo_ast->kind == Lexical_Add)
-                lo_ast->kind = Lexical_AddAssign;
-            else if (lo_ast && lo_ast->kind == Lexical_Sub)
-                lo_ast->kind = Lexical_SubAssign;
-            else if (lo_ast && lo_ast->kind == Lexical_Mul)
-                lo_ast->kind = Lexical_MulAssign;
-            else if (lo_ast && lo_ast->kind == Lexical_Div)
-                lo_ast->kind = Lexical_DivAssign;
-            else if (lo_ast && lo_ast->kind == Lexical_Mod)
-                lo_ast->kind = Lexical_ModAssign;
-            else if (lo_ast && lo_ast->kind == Lexical_BitAnd)
-                lo_ast->kind = Lexical_BitAndAssign;
-            else if (lo_ast && lo_ast->kind == Lexical_BitXor)
-                lo_ast->kind = Lexical_BitXorAssign;
-            else if (lo_ast && lo_ast->kind == Lexical_BitOr)
-                lo_ast->kind = Lexical_BitOrAssign;
-            else if (lo_ast && lo_ast->kind == Lexical_Not)
-                lo_ast->kind = Lexical_NotEq;
-            else if (lo_ast && lo_ast->kind == Lexical_GT)
-                lo_ast->kind = Lexical_GTEq;
-            else if (lo_ast && lo_ast->kind == Lexical_RShift)
-                lo_ast->kind = Lexical_RShiftAssign;
-            else if (lo_ast && lo_ast->kind == Lexical_LT)
-                lo_ast->kind = Lexical_LTEq;
-            else if (lo_ast && lo_ast->kind == Lexical_LShift)
-                lo_ast->kind = Lexical_LShiftAssign;
-            else if (lo_ast && lo_ast->kind == Lexical_Assign)
-                lo_ast->kind = Lexical_Eq;
+            if (ast->kind == Lexical_Add)
+                ast->kind = Lexical_AddAssign;
+            else if (ast->kind == Lexical_Sub)
+                ast->kind = Lexical_SubAssign;
+            else if (ast->kind == Lexical_Mul)
+                ast->kind = Lexical_MulAssign;
+            else if (ast->kind == Lexical_Div)
+                ast->kind = Lexical_DivAssign;
+            else if (ast->kind == Lexical_Mod)
+                ast->kind = Lexical_ModAssign;
+            else if (ast->kind == Lexical_BitAnd)
+                ast->kind = Lexical_BitAndAssign;
+            else if (ast->kind == Lexical_BitXor)
+                ast->kind = Lexical_BitXorAssign;
+            else if (ast->kind == Lexical_BitOr)
+                ast->kind = Lexical_BitOrAssign;
+            else if (ast->kind == Lexical_Not)
+                ast->kind = Lexical_NotEq;
+            else if (ast->kind == Lexical_GT)
+                ast->kind = Lexical_GTEq;
+            else if (ast->kind == Lexical_RShift)
+                ast->kind = Lexical_RShiftAssign;
+            else if (ast->kind == Lexical_LT)
+                ast->kind = Lexical_LTEq;
+            else if (ast->kind == Lexical_LShift)
+                ast->kind = Lexical_LShiftAssign;
+            else if (ast->kind == Lexical_Assign)
+                ast->kind = Lexical_Eq;
             else
             {
-                ast = app_AST (ast, t);
+                InitLeaf( ast );
                 ast->kind = Lexical_Assign;
-                ast->line = line;
-                ast = joint_of_AST (ast);
             }
             break;
 #undef Lex2Case
 #undef LexiCase
         }
     }
-    while (ast)
+
+    while (up)
     {
+        ast = AST_of_Cons (up->car.as.cons);
+        up = pop_Sxpn (&t->sx, up);
         switch (ast->kind)
         {
         case Syntax_Parens:
@@ -793,92 +777,104 @@ lex_AST (XFileB* xf, ASTree* t)
         default:
             break;
         }
-        ast = joint_of_AST (ast);
     }
     lose_Associa (keyword_map);
+#undef InitLeaf
 }
 
     AST*
 next_semicolon_or_braces_AST (AST* ast)
 {
-    for (; ast; ast = split_of_AST (ast, 1))
+    for (ast = cdr_of_AST (ast, 0);
+         ast;
+         ast = cdr_of_AST (ast, 0))
     {
-        AST* lo_ast = split_of_AST (ast, 0);
-        if (lo_ast && lo_ast->kind == Lexical_Semicolon)  return ast;
-        if (lo_ast && lo_ast->kind == Syntax_Braces)  return ast;
+        if (ast->kind == Lexical_Semicolon)  return ast;
+        if (ast->kind == Syntax_Braces)  return ast;
+    }
+    return 0;
+}
+
+    AST*
+next_parens (AST* ast)
+{
+    for (ast = cdr_of_AST (ast, 0);
+         ast;
+         ast = cdr_of_AST (ast, 0))
+    {
+        if (ast->kind == Syntax_Parens)  return ast;
     }
     return 0;
 }
 
 void
-build_stmts_AST (AST* ast, ASTree* t);
+build_stmts_AST (Cons** ast_p, ASTree* t);
 
     void
 build_ForLoop_AST (AST* ast, ASTree* t)
 {
-    AST* pending = ast;
-        /*   \                 \
-         *    p                 p
-         *   / \               / \
-         * for  0      =>    for  2
-         *     / \           / \
-         * parens \      parens \
-         *        ...           ...
-         *        / \           /  \
-         *      ...  1        ...   1
-         *          / \            /
-         *         ;   2          ;
-         */
-    AST* d_for;  AST* d_0;  AST* d_parens;
+    /* (... for (parens ...) ... ; ...)
+     *  -->
+     * (... (for (parens ..) (; ...)) ...)
+     */
+    AST* d_for;
+    AST* d_parens;
+    AST* d_semic;
 
-    d_for = split_of_AST (pending, 0);
+    d_for = ast;
+    Claim2( d_for->kind ,==, Lexical_For );
     d_for->kind = Syntax_ForLoop;
-    d_0 = split_of_AST (pending, 1);
-    cat_AlphaTab (&d_for->txt, &d_0->txt);
 
-    d_parens = split_of_AST (d_0, 0);
-        /* Only gets first two statements in for loop.*/
-    build_stmts_AST (d_parens, t);
+    d_parens = next_parens (d_for);
+    if (!d_parens)
+    {
+        DBog1( "No parens for for-loop. Line: %u", (uint) ast->line);
+        failout_sysCx ("");
+    }
 
-    join_AST (d_for, d_parens, 0);
+    d_semic = next_semicolon_or_braces_AST (d_parens);
+    if (!d_semic)
+    {
+        DBog1( "No end of for for-loop. Line: %u", (uint) ast->line);
+        failout_sysCx ("");
+    }
 
-    ast = next_semicolon_or_braces_AST (ast);
-    join_AST (pending, split_of_AST (ast, 1), 1);
-    join_AST (ast, 0, 1);
+    bevel_AST (d_for, t);
+    d_for->cons->car.as.cons->cdr = d_for->cons->cdr;
+    d_for->cons->cdr = d_semic->cons->cdr;
+    d_semic->cons->cdr = 0;
 
-    pending = split_of_AST (d_0, 1);
-    join_AST (d_for, pending, 1);
-    build_stmts_AST (pending, t);
+    /* Only gets first two statements in for loop.*/
+    build_stmts_AST (&d_parens->cons->car.as.cons->cdr, t);
 
-    giv_ASTree (t, d_0);
+    build_stmts_AST (&d_parens->cons->cdr, t);
 }
 
     void
-build_stmts_AST (AST* ast, ASTree* t)
+build_stmts_AST (Cons** ast_p, ASTree* t)
 {
     AST* pending = 0;
     SyntaxKind pending_kind = NSyntaxKinds;
+    Cons** pending_p = 0;
+    AST* ast = AST_of_Cons (*ast_p);
+    Cons** p = ast_p;
 
-    for (; ast; ast = split_of_AST (ast, 1))
+    for (; ast; ast = cdr_of_AST (ast, t))
     {
-        AST* lo_ast = split_of_AST (ast, 0);
-
         if (pending)
         {
             if (pending_kind == NSyntaxKinds)
-                pending_kind = split_of_AST (pending, 0) -> kind;
+                pending_kind = pending->kind;
+            if (!pending_p)
+                pending_p = p;
         }
         else
         {
             pending_kind = NSyntaxKinds;
+            pending_p = 0;
         }
 
-        if (!lo_ast)
-        {
-            Claim( !split_of_AST (ast, 1) );
-            return;
-        }
-        switch  (lo_ast->kind)
+        switch  (ast->kind)
         {
         case Syntax_Directive:
         case Syntax_LineComment:
@@ -891,11 +887,12 @@ build_stmts_AST (AST* ast, ASTree* t)
             if (!pending)
             {
                 pending = ast;
-                pending_kind = lo_ast->kind;
+                pending_kind = ast->kind;
+                pending_p = p;
             }
             break;
         case Syntax_Braces:
-            build_stmts_AST (lo_ast, t);
+            build_stmts_AST (&ast->cons->car.as.cons->cdr, t);
             if (pending_kind != Lexical_Do)
             {
                 pending = 0;
@@ -910,40 +907,21 @@ build_stmts_AST (AST* ast, ASTree* t)
             }
             else
             {
-                    /* TODO: Remember the damn ternary operator.*/
+                
             }
             pending = 0;
             break;
         case Lexical_Semicolon:
 
-            lo_ast->kind = Syntax_Stmt;
-                /* Empty statement.*/
+            ast->kind = Syntax_Stmt;
+            bevel_AST (ast, t);
+            /* Empty statement.*/
             if (!pending)  break;
 
-                /*   \               \
-                 *    p               p
-                 *   / \             / \
-                 *  a   0     =>   ';   2
-                 *     / \         / \
-                 *    b   1       a   0
-                 *       / \         /
-                 *     ';   2       b
-                 *
-                 * Where /';/ is the semicolon. It is changed to a statement.
-                 * Numbered nodes are known to be Cons.
-                 * Statement parts are just /a/ and /b/.
-                 */
-            join_AST (lo_ast, split_of_AST (pending, 0), 0);
-            join_AST (lo_ast, split_of_AST (pending, 1), 1);
-            join_AST (pending, lo_ast, 0);
-
-            join_AST (pending, split_of_AST (ast, 1), 1);
-            join_AST (joint_of_AST (ast), 0, 1);
-
-            lo_ast->txt = ast->txt;
-            ast->txt = dflt_AlphaTab ();
-            giv_ASTree (t, ast);
-            ast = pending;
+            
+            *p = 0;
+            *pending_p = ast->cons;
+            ast->cons->car.as.cons->cdr = pending->cons;
 
             pending = 0;
             break;
@@ -951,67 +929,67 @@ build_stmts_AST (AST* ast, ASTree* t)
             if (!pending)
             {
                 pending = ast;
-                pending_kind = lo_ast->kind;
+                pending_p = p;
+                pending_kind = ast->kind;
             }
             break;
         }
+        p = &ast->cons->cdr;
     }
 }
 
     void
-xfrm_stmts_AST (AST* ast, ASTree* t)
+xfrm_stmts_AST (Cons** ast_p, ASTree* t)
 {
+    AST* ast = AST_of_Cons (*ast_p);
+    Cons** p = ast_p;
+
     while (ast)
     {
-        AST* lo_ast = split_of_AST (ast, 0);
-        if (!lo_ast)  break;
-
-        xfrm_stmts_AST (lo_ast, t);
-
-        if (lo_ast->kind == Syntax_LineComment)
+        if (ast->cons->car.kind == Cons_Cons)
+            xfrm_stmts_AST (&ast->cons->car.as.cons->cdr, t);
+        if (ast->kind == Syntax_LineComment)
         {
             AlphaTab ts = dflt1_AlphaTab ("\n");
-            AST* next = split_of_AST (ast, 1);
-            giv_ASTree (t, lo_ast);
+            ast->kind = Syntax_WS;
+            copy_AlphaTab (&ast->txt, &ts);
+        }
+        else if (ast->kind == Syntax_ForLoop)
+        {
+            /* (... (for (parens (; a) ...) x) ...)
+             * -->
+             * (... (braces (for (parens (; a) ...) x)) ...)
+             */
+            AST* d_for = ast;
+            AST* d_parens;
+            AST* d_stmt;
 
-            join_AST (ast, 0, 0);
-            PackTable( ast->txt );
-            cat_AlphaTab (&ast->txt, &ts);
+            d_parens = cdar_of_AST (d_for, 0);
+            while (d_parens && d_parens->kind != Syntax_Parens)
+                d_parens = cdr_of_AST (d_parens, 0);
 
-            if (next)
+            Claim( d_parens );
+            d_stmt = cdar_of_AST (d_parens, 0);
+
+            if (d_stmt)
             {
-                cat_AlphaTab (&ast->txt, &next->txt);
-                join_AST (ast, split_of_AST (next, 0), 0);
-                join_AST (ast, split_of_AST (next, 1), 1);
-                giv_ASTree (t, next);
-                continue;
+                AST* d_braces = req1_ASTree (t, Syntax_Braces);
+                AST* d_stmt1 = req1_ASTree (t, Syntax_Stmt);
+
+                bevel_AST (d_stmt1, t);
+                d_parens->cons->car.as.cons->cdr = d_stmt1->cons;
+                d_stmt1->cons->cdr = d_stmt->cons->cdr;
+
+                *p = d_braces->cons;
+                bevel_AST (d_braces, t);
+                d_braces->cons->cdr = d_for->cons->cdr;
+                d_braces->cons->car.as.cons->cdr = d_stmt->cons;
+                d_stmt->cons->cdr = d_for->cons;
+                d_for->cons->cdr = 0;
             }
         }
-        else if (lo_ast->kind == Syntax_ForLoop)
-        {
-            // (L_For (S_Parens (S_Stmt '.*) (S_Stmt '.*) '.*)
-            //  (('or S_Braces S_Stmt) '.*))
-            // (S_Braces
-            //  (S_Stmt '.*)
-            //  (L_For (S_Parens (S_Stmt) (S_Stmt '.*) '.*)
-            //   (('or S_Braces S_Stmt) '.*)))
-            AST* d_braces = req1_ASTree (t, Syntax_Braces);
-            AST* d_0 = req1_ASTree (t, Syntax_Cons);
-            AST* d_stmt = req1_ASTree (t, Syntax_Stmt);
-            AST* d_stmt1;
-
-            join_AST (ast, d_braces, 0);
-            join_AST (d_braces, d_stmt, 0);
-            join_AST (d_braces, d_0, 1);
-            join_AST (d_0, lo_ast, 0);
-
-            d_stmt1 = split_of_AST (split_of_AST (lo_ast, 0), 0);
-            join_AST (d_stmt, split_of_AST (d_stmt1, 0), 0);
-            join_AST (d_stmt, split_of_AST (d_stmt1, 1), 1);
-            join_AST (d_stmt1, 0, 0);
-            join_AST (d_stmt1, 0, 1);
-        }
-        ast = split_of_AST (ast, 1);
+        p = &ast->cons->cdr;
+        ast = cdr_of_AST (ast, 0);
     }
 }
 
@@ -1022,8 +1000,8 @@ load_ASTree (XFileB* xf, ASTree* t)
                  (SwappedFn) swapped_AlphaTab );
 
     lex_AST (xf, t);
-    build_stmts_AST (t->root, t);
-    xfrm_stmts_AST (t->root, t);
+    build_stmts_AST (&t->head, t);
+    xfrm_stmts_AST (&t->head, t);
 
     lose_Associa (type_lookup);
 }

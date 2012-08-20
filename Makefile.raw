@@ -7,101 +7,48 @@ CC = gcc
 #CONFIG += winegcc
 CONFIG += ansi
 CONFIG += debug
+#CONFIG += ultradebug
 #CONFIG += fast
 #CONFIG += noassert
 
-CFLAGS =
-CFLAGS += -Wall -Wextra -Wstrict-aliasing
-
-ifneq (,$(filter debug,$(CONFIG)))
-	CFLAGS += -g
-endif
-ifneq (,$(filter fast,$(CONFIG)))
-	CFLAGS += -O3
-endif
-ifneq (,$(filter noassert,$(CONFIG)))
-	CFLAGS += -DNDEBUG
-endif
-ifneq (,$(filter ansi,$(CONFIG)))
-	CFLAGS += -ansi -pedantic
-endif
-
+CxPath = ../cx
 CxPpPath = ../cx-pp
-CxPpExe = $(CxPpPath)/cx
-ExecCxPp = $(CxPpExe)
-
 BinPath = ../bin
-CxExe = $(BinPath)/cx
-ExecCx = $(CxExe)
+PfxBldPath = ../cx-bld
+BldPath = $(PfxBldPath)/cx-new
+
+ExeList = cx test
+Deps := $(ExeList)
+ExeList := $(addprefix $(BinPath)/,$(ExeList))
+Objs = $(addprefix $(BldPath)/,$(addsuffix .o,$(Deps)))
+
+include $(CxPath)/include.mk
+
 
 TestExe = test
 ExecTest = ./$(TestExe)
 
 ifneq (,$(filter wine,$(CONFIG)))
-	CC = wine "$(HOME)/.wine/drive_c/Program Files (x86)/CodeBlocks/MinGW/bin/mingw32-gcc-4.4.1.exe"
-	CFLAGS := $(filter-out -ansi,$(CFLAGS))
-	CxPpExe := $(CxPpExe).exe
-	ExecCxPp = wine $(CxPpExe)
-	CxExe := $(CxExe).exe
-	ExecCx = wine $(CxExe)
 	TestExe := $(TestExe).exe
 	ExecTest = wine $(TestExe)
 endif
 ifneq (,$(filter winegcc,$(CONFIG)))
-	CC = winegcc -mno-cygwin
-	CFLAGS := $(filter-out -ansi,$(CFLAGS))
-	CxPpExe := $(CxPpExe).exe
-	ExecCxPp = $(CxPpExe)
-	CxExe := $(CxExe).exe
-	ExecCx = $(CxExe)
 	TestExe := $(TestExe).exe
 	ExecTest := $(ExecTest)
 endif
 
 CExes = $(CxExe) $(TestExe)
 
-CFiles = bstree.c fileb.c rbtree.c syscx.c cx.c test.c ospc.c sxpn.c
-HFiles = associa.h bittable.h bstree.h def.h fileb.h \
-		 lgtable.h rbtree.h sxpn.h synhax.h syscx.h table.h ospc.h
-
-CxDeps = bstree fileb rbtree sxpn syscx
-CxObjs = $(addsuffix .o,$(CxDeps))
-
-BldPath = ../cx-bld
-
 all: $(CExes)
 
-$(TestExe): $(addprefix $(BldPath)/,test.o ospc.o $(CxObjs))
+$(TestExe): $(BldPath)/test.o $(CxObjs)
 	$(CC) $(CFLAGS) $^ -o $@ $(LFLAGS)
-
-$(CxExe): $(addprefix $(BldPath)/,cx.o $(CxObjs))
-	$(CC) $(CFLAGS) $^ -o $@ $(LFLAGS)
-
-$(CxPpExe): $(patsubst %.c,%.o,$(shell find $(CxPpPath) -type f -regex '.*\.c'))
-	$(CC) $(CFLAGS) $^ -o $@ $(LFLAGS)
-
-$(CxPpPath)/%.o: $(CxPpPath)/%.c
-	$(CC) -c $(CFLAGS) -I$(CxPpPath) $< -o $@
-
-$(BldPath)/%.c: %.c $(CxPpExe)
-	$(ExecCxPp) -x $< -o $@
-
-$(BldPath)/test.c: test.c $(CxExe)
-	$(ExecCx) -x $< -o $@
-
-$(BldPath)/%.o: $(BldPath)/%.c
-	$(CC) -c $(CFLAGS) -I. $< -o $@
 
 .PHONY: pp
 pp: $(CxExe)
 	$(foreach f,$(addsuffix .c,cx $(CxDeps)), \
 		$(ExecCx) -x $(f) -o $(CxPpPath)/$(f) ;)
-	cp *.h $(CxPpPath)
-
-$(addprefix $(BldPath)/,$(CFiles)): | $(BldPath)
-
-$(BldPath):
-	mkdir -p $(BldPath)
+	cp $(CxHFiles) $(CxPpPath)
 
 .PHONY: exectest
 exectest: $(TestExe)
@@ -115,7 +62,7 @@ killcmake:
 
 .PHONY: clean
 clean:
-	rm -fr $(BldPath)
+	rm -fr $(PfxBldPath)
 	rm -f $(CxPpPath)/*.o $(CExes)
 ifneq (,$(filter winegcc,$(CONFIG)))
 	rm -f $(CxExe).so $(TestExe).so
