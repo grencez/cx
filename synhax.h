@@ -43,7 +43,6 @@
 #define CeilQuot( a, b ) \
     (((a) + (b) - 1) / (b))
 
-#define DomMax( a )  (~((a) * (byte) 0))
 #define InitDomMax( a )  do { a = 0; a = ~(a); } while (0)
 
 #define BSfx( a, op, b, sfx )  (a)sfx op (b)sfx

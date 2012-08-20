@@ -44,7 +44,7 @@ struct Cons
 {
     Cons* cdr;
     ConsAtom car;
-    unsigned short nrefs;
+    uint nrefs;
 };
 
 struct Sxpn
@@ -73,7 +73,7 @@ qual_inline
     void
 inc_Cons (Cons* a)
 {
-    if (a && a->nrefs < DomMax( a->nrefs ))
+    if (a && ~a->nrefs != 0)
         ++ a->nrefs;
 }
 
@@ -82,7 +82,7 @@ qual_inline
     void
 dec_Cons (Cons* a)
 {
-    if (a && a->nrefs > 0 && a->nrefs < DomMax( a->nrefs ))
+    if (a && a->nrefs > 0 && ~a->nrefs != 0)
         -- a->nrefs;
 }
 

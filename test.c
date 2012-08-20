@@ -371,6 +371,7 @@ testfn_Cons ()
     giv_Sxpn (sx, a);
     giv_Sxpn (sx, c);
 
+    Claim2( sx->cells.sz ,==, 0 );
     lose_Sxpn (sx);
 }
 

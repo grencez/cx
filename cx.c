@@ -991,6 +991,7 @@ xfrm_stmts_AST (Cons** ast_p, ASTree* t)
                 d_braces->cons->car.as.cons->cdr = d_stmt->cons;
                 d_stmt->cons->cdr = d_for->cons;
                 d_for->cons->cdr = 0;
+                ast = d_braces;
             }
         }
         p = &ast->cons->cdr;
