@@ -1,28 +1,26 @@
-
-$(CxBldPath)/alphatab.h: $(CxBldPath)/table.h
-$(CxBldPath)/associa.h: $(CxBldPath)/lgtable.h
-$(CxBldPath)/associa.h: $(CxBldPath)/rbtree.h
-$(CxBldPath)/bittable.h: $(CxBldPath)/table.h
-$(CxBldPath)/bstree.c: $(CxBldPath)/bstree.h
-$(CxBldPath)/bstree.h: $(CxBldPath)/def.h
-$(CxBldPath)/cx.c: $(CxBldPath)/syscx.h
-$(CxBldPath)/cx.c: $(CxBldPath)/associa.h
-$(CxBldPath)/cx.c: $(CxBldPath)/fileb.h
-$(CxBldPath)/cx.c: $(CxBldPath)/sxpn.h
-$(CxBldPath)/cx.c: $(CxBldPath)/table.h
-$(CxBldPath)/def.h: $(CxBldPath)/synhax.h
-$(CxBldPath)/fileb.c: $(CxBldPath)/fileb.h
-$(CxBldPath)/fileb.h: $(CxBldPath)/alphatab.h
-$(CxBldPath)/lgtable.h: $(CxBldPath)/bittable.h
-$(CxBldPath)/ospc.c: $(CxBldPath)/ospc.h
-$(CxBldPath)/ospc.h: $(CxBldPath)/syscx.h
-$(CxBldPath)/ospc.h: $(CxBldPath)/fileb.h
-$(CxBldPath)/rbtree.c: $(CxBldPath)/rbtree.h
-$(CxBldPath)/rbtree.h: $(CxBldPath)/bstree.h
-$(CxBldPath)/sxpn.c: $(CxBldPath)/sxpn.h
-$(CxBldPath)/sxpn.h: $(CxBldPath)/lgtable.h
-$(CxBldPath)/sxpn.h: $(CxBldPath)/fileb.h
-$(CxBldPath)/syscx.c: $(CxBldPath)/syscx.h
-$(CxBldPath)/syscx.c: $(CxBldPath)/fileb.h
-$(CxBldPath)/table.h: $(CxBldPath)/def.h
-
+alphatab.h:table.h
+associa.h:lgtable.h
+associa.h:rbtree.h
+bittable.h:table.h
+bstree.c:bstree.h
+bstree.h:def.h
+cx.c:syscx.h
+cx.c:associa.h
+cx.c:fileb.h
+cx.c:sxpn.h
+cx.c:table.h
+def.h:synhax.h
+fileb.c:fileb.h
+fileb.h:alphatab.h
+lgtable.h:bittable.h
+ospc.c:ospc.h
+ospc.h:syscx.h
+ospc.h:fileb.h
+rbtree.c:rbtree.h
+rbtree.h:bstree.h
+sxpn.c:sxpn.h
+sxpn.h:lgtable.h
+sxpn.h:fileb.h
+syscx.c:syscx.h
+syscx.c:fileb.h
+table.h:def.h

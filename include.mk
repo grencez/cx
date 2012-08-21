@@ -112,7 +112,10 @@ $(CxBldPath)/%.h: $(CxPath)/%.h $(CxExe)
 	$(ExecCx) -x $< -o $@
 endif
 
-include $(CxPath)/deps.mk
+$(eval $(shell \
+	sed \
+	-e 's/\(.*\): *\(.*\)/$$(eval $$(CxBldPath)\/\1: $$(CxBldPath)\/\2)/' \
+	$(CxPath)/deps.mk))
 
 $(BldPath)/%.c: %.c $(CxExe) $(addprefix $(CxBldPath)/,$(CxHFiles))
 	$(ExecCx) -x $< -o $@
