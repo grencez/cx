@@ -14,8 +14,7 @@ CONFIG += debug
 CxPath = ../cx
 CxPpPath = ../cx-pp
 BinPath = ../bin
-PfxBldPath = ../cx-bld
-BldPath = $(PfxBldPath)/cx-new
+BldPath = cx-new
 
 ExeList = cx test
 Deps := $(ExeList)
@@ -42,6 +41,9 @@ all: $(CExes)
 
 $(TestExe): $(BldPath)/test.o $(CxObjs)
 	$(CC) $(CFLAGS) $^ -o $@ $(LFLAGS)
+
+.PHONY: cx
+cx: $(CxExe)
 
 .PHONY: pp
 pp: $(CxExe)

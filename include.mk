@@ -13,6 +13,9 @@
 #  CxExe
 #  CxBldPath
 
+PfxBldPath ?= bld
+BldPath := $(PfxBldPath)/$(BldPath)
+
 CxExe ?= $(BinPath)/cx
 
 CxBldPath ?= $(PfxBldPath)/cx
