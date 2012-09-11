@@ -96,7 +96,7 @@ parse_args_sysCx (int* pargc, char*** pargv)
         if (eql_cstr (arg, "-closefd"))
         {
             fd_t fd = parse_fd_arg_sysCx (argv[argi++]);
-            if (fd >= 0)  close_sysCx (fd);
+            if (fd >= 0)  closefd_sysCx (fd);
             else
             {
                 DBog1( "Bad -closefd argument: %s", argv[argi-1] );
@@ -106,7 +106,6 @@ parse_args_sysCx (int* pargc, char*** pargv)
         else if (eql_cstr (arg, "-exe"))
         {
             argv[0] = argv[argi++];
-            ExeName = argv[0];
         }
         else if (eql_cstr (arg, "-exec"))
         {
@@ -306,34 +305,50 @@ stderr_OFileB ()
     return &fb->xo;
 }
 
-    int
+    bool
 pipe_sysCx (fd_t* fds)
 {
+    int ret = -1;
 #ifdef POSIX_SOURCE
-    return pipe (fds);
+    ret = pipe (fds);
 #else
-    return _pipe (fds, BUFSIZ, 0);
+    ret = _pipe (fds, BUFSIZ, 0);
 #endif
+    return (ret == 0);
 }
 
-    int
+    bool
 dup2_sysCx (fd_t oldfd, fd_t newfd)
 {
+    int ret = -1;
 #ifdef POSIX_SOURCE
-    return dup2 (oldfd, newfd);
+    ret = dup2 (oldfd, newfd);
 #else
-    return _dup2 (oldfd, newfd);
+    ret = _dup2 (oldfd, newfd);
+#endif
+    return (ret == 0);
+}
+
+    jint
+read_sysCx (fd_t fd, void* buf, jint sz)
+{
+#ifdef POSIX_SOURCE
+    return read (fd, buf, sz);
+#else
+    return _read (fd, buf, sz);
 #endif
 }
 
-    int
-close_sysCx (fd_t fd)
+    bool
+closefd_sysCx (fd_t fd)
 {
+    int ret = -1;
 #ifdef POSIX_SOURCE
-    return close (fd);
+    ret = close (fd);
 #else
-    return _close (fd);
+    ret = _close (fd);
 #endif
+    return (ret == 0);
 }
 
     FILE*
@@ -346,19 +361,38 @@ fdopen_sysCx (fd_t fd, const char* mode)
 #endif
 }
 
+static void
+dump_execvp_args (const char* fn, char* const* argv)
+{
+    OFileB* of = stderr_OFileB ();
+    dump_cstr_OFileB (of, fn);
+    dump_char_OFileB (of, ':');
+    for (uint i = 0; argv[i]; ++i)
+    {
+        dump_char_OFileB (of, ' ');
+        dump_cstr_OFileB (of, argv[i]);
+    }
+    dump_char_OFileB (of, '\n');
+    flush_OFileB (of);
+}
+
     pid_t
 spawnvp_sysCx (char* const* argv)
 {
+    pid_t pid;
 #ifdef POSIX_SOURCE
-    pid_t pid = fork ();
-    if (pid > 0)  return pid;
-    if (pid < 0)  return -1;
-    execvp (argv[0], argv);
-    failout_sysCx ("execvp() failed");
-    return -1;
+    pid = fork ();
+    if (pid == 0)
+        execvp_sysCx (argv);
 #else
-    return _spawnvp (_P_NOWAIT, argv[0], argv);
+    pid = _spawnvp (_P_NOWAIT, argv[0], argv);
 #endif
+    if (pid < 0)
+    {
+        DBog0( "spawn() failed!" );
+        dump_execvp_args ("spawnvp_sysCx()", argv);
+    }
+    return pid;
 }
 
     void
@@ -367,18 +401,191 @@ execvp_sysCx (char* const* argv)
 #ifdef POSIX_SOURCE
     execvp (argv[0], argv);
 #else
-    _execvp (argv[0], argv);
+    pid_t pid = -1;
+    pid = spawnvp_sysCx (argv);
+    if (pid >= 0)
+    {
+        int status = 1;
+        if (!waitpid_sysCx (pid, &status))
+            failout_sysCx ("Failed to wait for process.");
+        exit (status);
+    }
 #endif
-    failout_sysCx ("execvp()");
+    DBog0( "execvp() failed!" );
+    //DBog1( "PATH=%s", getenv ("PATH") );
+    dump_execvp_args ("execvp_sysCx()", argv);
+    failout_sysCx ("execvp() failed!");
 }
 
-    int
+    bool
 waitpid_sysCx (pid_t pid, int* status)
 {
+    int ret = -1;
 #ifdef POSIX_SOURCE
-    return waitpid (pid, status, 0);
+    ret = waitpid (pid, status, 0);
+    if (status)
+        *status = WEXITSTATUS( *status );
 #else
-    return _cwait (status, pid, 0);
+    ret = _cwait (status, pid, 0);
 #endif
+    return (ret >= 0);
+}
+
+/**
+ * \param path  Return value. Can come in as a hint for the path name.
+ **/
+    void
+mktmppath_sysCx (AlphaTab* path)
+{
+    const char* v = 0;
+#ifdef POSIX_SOURCE
+    pid_t pid = getpid ();
+#else
+    pid_t pid = _getpid ();
+#endif
+    DecloStack1( OFileB, of, dflt_OFileB () );
+
+#ifdef POSIX_SOURCE
+    v = getenv ("TMPDIR");
+    if (!v)  v = "/tmp";
+#else
+    v = getenv ("TEMP");
+#endif
+
+    if (!v)
+    {
+        path->sz = 0;
+        return;
+    }
+    dump_cstr_OFileB (of, v);
+    dump_char_OFileB (of, '/');
+    dump_AlphaTab (of, path);
+    dump_char_OFileB (of, '-');
+    dump_ujint_OFileB (of, pid);
+    dump_char_OFileB (of, '-');
+
+    path->sz = 0;
+    for (ujint i = 0; i < Max_ujint; ++i)
+    {
+        ujint off = of->off;
+        dump_ujint_OFileB (of, i);
+
+        if (mkdir_sysCx (cstr1_OFileB (of, 0)))
+        {
+            copy_AlphaTab_OFileB (path, of);
+            break;
+        }
+        
+        of->off = off;
+    }
+    lose_OFileB (of);
+}
+
+    void
+setenv_sysCx (const char* key, const char* val)
+{
+#ifdef POSIX_SOURCE
+    setenv (key, val, 1);
+#else
+    SetEnvironmentVariable (key, val);
+    //DBog2( "key:%s val:%s", key, val );
+#endif
+}
+
+    void
+tacenv_sysCx (const char* key, const char* val)
+{
+#ifdef POSIX_SOURCE
+    const char* sep = ":";
+#else
+    const char* sep = ";";
+#endif
+    char* v;
+    DecloStack1( AlphaTab, dec, cons1_AlphaTab (val) );
+
+    v = getenv (key);
+    if (v)
+    {
+        cat_cstr_AlphaTab (dec, sep);
+        cat_cstr_AlphaTab (dec, v);
+    }
+
+    setenv_sysCx (key, cstr_AlphaTab (dec));
+    lose_AlphaTab (dec);
+}
+
+    void
+cloexec_sysCx (fd_t fd, bool b)
+{
+#ifdef POSIX_SOURCE
+    int flags = fcntl (fd, F_GETFD);
+
+    if (flags == -1)
+    {
+        DBog0( "fcntl() GET failed." );
+        return;
+    }
+
+    if (b == (0 != (flags & FD_CLOEXEC)))  return;
+
+    if (b)  flags |= FD_CLOEXEC;
+    else    flags ^= FD_CLOEXEC;
+
+    if (fcntl (fd, F_SETFD, flags) == -1)
+        DBog0( "fcntl() SET failed." );
+#else
+    SetHandleInformation ((HANDLE) _get_osfhandle (fd),
+                          HANDLE_FLAG_INHERIT,
+                          b ?  HANDLE_FLAG_INHERIT : 0);
+#endif
+}
+
+    bool
+chmodu_sysCx (const char* pathname, bool r, bool w, bool x)
+{
+    int ret = -1;
+#ifdef POSIX_SOURCE
+    chmod (pathname, (r ? S_IRUSR : 0) | (w ? S_IWUSR : 0) | (x ? S_IXUSR : 0));
+#else
+    (void) x;
+    _chmod (pathname, (r ? _S_IREAD : 0) | (w ? _S_IWRITE : 0));
+#endif
+    return (ret == 0);
+}
+
+    bool
+mkdir_sysCx (const char* pathname)
+{
+    int ret = -1;
+#ifdef POSIX_SOURCE
+    ret = mkdir (pathname, 0700);
+#else
+    ret = _mkdir (pathname);
+#endif
+    return (ret == 0);
+}
+
+    bool
+rmdir_sysCx (const char* pathname)
+{
+    int ret = -1;
+#ifdef POSIX_SOURCE
+    ret = rmdir (pathname);
+#else
+    ret = _rmdir (pathname);
+#endif
+    return (ret == 0);
+}
+
+    bool
+chdir_sysCx (const char* pathname)
+{
+    int ret = -1;
+#ifdef POSIX_SOURCE
+    ret = chdir (pathname);
+#else
+    ret = _chdir (pathname);
+#endif
+    return (ret == 0);
 }
 

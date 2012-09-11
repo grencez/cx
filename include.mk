@@ -50,6 +50,7 @@ ifneq (,$(filter noassert,$(CONFIG)))
 endif
 ifneq (,$(filter ansi,$(CONFIG)))
 	CFLAGS += -ansi -pedantic
+	CFLAGS += -Werror
 endif
 
 CFLAGS += -Wall -Wextra -Wstrict-aliasing
@@ -64,28 +65,50 @@ endif
 ifneq (,$(filter wine,$(CONFIG)))
 	CC = wine "$(HOME)/.wine/drive_c/Program Files (x86)/CodeBlocks/MinGW/bin/mingw32-gcc-4.4.1.exe"
 	#CC = wine "$(HOME)/.wine/drive_c/Program Files/CodeBlocks/MinGW/bin/mingw32-gcc-4.4.1.exe"
-	CFLAGS := $(filter-out -ansi,$(CFLAGS))
-	ifdef CxPpPath
-		CxPpExe := $(CxPpExe).exe
-		ExecCxPp = wine $(CxPpExe)
-	endif
-	CxExe := $(CxExe).exe
-	ExecCx = wine $(CxExe)
-	TestExe := $(TestExe).exe
-	ExecTest = wine $(TestExe)
+	CFLAGS := $(filter-out -ansi -Werror,$(CFLAGS))
+define exename
+$(addsuffix .exe,$(1))
+endef
+define execname
+$(addprefix wine ,$(call exename,$(1)))
+endef
 endif
+
 ifneq (,$(filter winegcc,$(CONFIG)))
 	CC = winegcc -mno-cygwin
-	CFLAGS := $(filter-out -ansi,$(CFLAGS))
-	ifdef CxPpPath
-		CxPpExe := $(CxPpExe).exe
-		ExecCxPp = wine $(CxPpExe)
-	endif
-	CxExe := $(CxExe).exe
-	ExecCx = $(CxExe)
-	TestExe := $(TestExe).exe
-	ExecTest := $(ExecTest)
+	CFLAGS := $(filter-out -ansi -Werror,$(CFLAGS))
+define exename
+$(addsuffix .exe,$(1))
+endef
+define execname
+$(addprefix ./,$(addsuffix .exe,$(1)))
+endef
 endif
+
+ifndef exename
+define exename
+$(1)
+endef
+endif
+
+ifndef execname
+define execname
+$(addprefix ./,$(1))
+endef
+endif
+
+define binexe
+$(addprefix $(BinPath)/,$(call exename,$(1)))
+endef
+
+
+ifdef CxPpPath
+	ExecCxPp := $(call execname,$(CxPpExe))
+	CxPpExe := $(call exename,$(CxPpExe))
+endif
+ExecCx := $(call execname,$(CxExe))
+CxExe := $(call exename,$(CxExe))
+ExeList := $(call exename,$(ExeList))
 
 ifdef CxPpPath
 

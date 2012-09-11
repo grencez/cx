@@ -185,6 +185,15 @@ open_FileB (FileB* f, const char* pathname, const char* filename)
     return !!f->f;
 }
 
+    bool
+openfd_FileB (FileB* fb, fd_t fd)
+{
+    Claim( !fb->f );
+    fb->fd = fd;
+    fb->f = fdopen_sysCx (fd, (fb->sink ? "wb" : "rb"));
+    return !!fb->f;
+}
+
     void
 set_FILE_FileB (FileB* f, FILE* file)
 {

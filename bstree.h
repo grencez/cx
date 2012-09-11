@@ -148,8 +148,5 @@ next_BSTNode (BSTNode* x)
     return 0;
 }
 
-#ifdef IncludeC
-#include "bstree.c"
-#endif
 #endif
 

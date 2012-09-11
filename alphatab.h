@@ -101,10 +101,16 @@ qual_inline
     void
 cat_cstr_AlphaTab (AlphaTab* t, const char* s)
 {
-    DeclTable( char, b );
-    b.s = (char*) s;
-    b.sz = strlen (s) + 1;
-    cat_AlphaTab (t, &b);
+    DecloStack1( AlphaTab, b, dflt1_AlphaTab (s) );
+    cat_AlphaTab (t, b);
+}
+
+qual_inline
+    void
+tac_cstr_AlphaTab (AlphaTab* a, const char* s)
+{
+    DecloStack1( AlphaTab, b, dflt1_AlphaTab (s) );
+    tac_AlphaTab (a, b);
 }
 
 qual_inline

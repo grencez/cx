@@ -23,17 +23,8 @@ Objs = $(addprefix $(BldPath)/,$(addsuffix .o,$(Deps)))
 
 include $(CxPath)/include.mk
 
-TestExe = test
-ExecTest = ./$(TestExe)
-
-ifneq (,$(filter wine,$(CONFIG)))
-	TestExe := $(TestExe).exe
-	ExecTest = wine $(TestExe)
-endif
-ifneq (,$(filter winegcc,$(CONFIG)))
-	TestExe := $(TestExe).exe
-	ExecTest := $(ExecTest)
-endif
+ExecTest = $(call execname,test)
+TestExe = $(call exename,test)
 
 CExes = $(CxExe) $(TestExe)
 

@@ -6,6 +6,16 @@
 
 typedef struct OSPc OSPc;
 
+/**
+ *               _
+ *              | |
+ *  this-proc o x |
+ *            |   |
+ *     ospc   x o |
+ *              |_|
+ *
+ * The /xf/ and /of/ in OSPc are the 'o' and 'x' of /this-proc/ respectively.
+ **/
 struct OSPc
 {
     AlphaTab cmd;
@@ -15,6 +25,7 @@ struct OSPc
     pid_t pid;
     FileB ofb;
     FileB xfb;
+    int status;
 };
 
 qual_inline
@@ -30,10 +41,11 @@ dflt_OSPc ()
     init_FileB( &p.ofb );
     seto_FileB (&p.ofb, true);
     init_FileB( &p.xfb );
+    p.status = 0;
     return p;
 }
 
-int
+bool
 close_OSPc (OSPc* ospc);
 void
 lose_OSPc (OSPc* ospc);

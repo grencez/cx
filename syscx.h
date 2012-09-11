@@ -1,4 +1,6 @@
-
+/**
+ * \file syscx.h
+ **/
 #ifndef sysCx_H_
 #define sysCx_H_
 
@@ -29,37 +31,65 @@ lose_sysCx ();
 #ifndef _POSIX_SOURCE
 #define _POSIX_SOURCE
 #endif
+#ifndef _POSIX_C_SOURCE
+/* Needed by setenv().*/
+#define _POSIX_C_SOURCE 200112L
+#endif
 #endif
 
 #ifdef POSIX_SOURCE
+#include <fcntl.h>
 #include <unistd.h>
 #include <sys/wait.h>
-#include <sys/types.h>
 #else
+#include <windows.h>
+#include <direct.h>
 #include <io.h>
 #include <process.h>
+#ifdef _MSC_VER
 typedef intptr_t pid_t;
 #endif
-typedef int fd_t;
+#endif
+#include <sys/stat.h>
+#include <sys/types.h>
 #include <stdio.h>
 
-int
+typedef int fd_t;
+
+#include "def.h"
+
+bool
 pipe_sysCx (fd_t* fds);
-int
+bool
 dup2_sysCx (fd_t oldfd, fd_t newfd);
-int
-close_sysCx (fd_t fd);
+jint
+read_sysCx (fd_t fd, void* buf, jint sz);
+bool
+closefd_sysCx (fd_t fd);
 FILE*
 fdopen_sysCx (fd_t fd, const char* mode);
 pid_t
 spawnvp_sysCx (char* const* argv);
 void
 execvp_sysCx (char* const* argv);
-int
+bool
 waitpid_sysCx (pid_t pid, int* status);
 
-#ifdef IncludeC
-#include "syscx.c"
-#endif
+void
+setenv_sysCx (const char* key, const char* val);
+void
+tacenv_sysCx (const char* key, const char* val);
+void
+cloexec_sysCx (fd_t fd, bool b);
+
+bool
+chmodu_sysCx (const char* pathname, bool r, bool w, bool x);
+bool
+mkdir_sysCx (const char* pathname);
+bool
+rmdir_sysCx (const char* pathname);
+bool
+chdir_sysCx (const char* pathname);
+
 #endif
 

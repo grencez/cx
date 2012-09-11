@@ -4,18 +4,17 @@
  **/
 #include "ospc.h"
 
-    int
+    bool
 close_OSPc (OSPc* ospc)
 {
-    int ret = 0;
-    int status = 0;
+    bool good = false;
     if (ospc->pid < 0)  return 0;
     close_FileB (&ospc->xfb);
     close_FileB (&ospc->ofb);
     /* if (ospc->pid > 0)  kill (ospc->pid, SIGKILL); */
-    ret = waitpid_sysCx (ospc->pid, &status);
+    good = waitpid_sysCx (ospc->pid, &ospc->status);
     ospc->pid = -1;
-    return ret;
+    return good;
 }
 
     void
@@ -54,34 +53,36 @@ spawn_OSPc (OSPc* ospc)
 {
     fd_t xfd[2] = { -1, -1 };
     fd_t ofd[2] = { -1, -1 };
-    int ret = 0;
     bool good = true;
     DeclTable( cstr, argv );
     uint nfrees = 0;
 
     BInit();
 
-    if (ospc->of)  ret = pipe_sysCx (xfd);
-    BCasc( ret == 0, good, "pipe(xfd)" );
-    if (ospc->xf)  ret = pipe_sysCx (ofd);
-    BCasc( ret == 0, good, "pipe(ofd)" );
+    if (ospc->of)  good = pipe_sysCx (xfd);
+    BCasc( good, good, "pipe(xfd)" );
+    if (ospc->xf)  good = pipe_sysCx (ofd);
+    BCasc( good, good, "pipe(ofd)" );
 
     PushTable( argv, dup_cstr (exename_of_sysCx ()) );
     PushTable( argv, dup_cstr (MagicArgv1_sysCx) );
     PushTable( argv, dup_cstr ("-exec") );
     PushTable( argv, dup_cstr ("-exe") );
     PushTable( argv, dup_cstr (cstr_AlphaTab (&ospc->cmd)) );
+
     if (ospc->of)
     {
+        cloexec_sysCx (xfd[1], true);
         PushTable( argv, dup_cstr ("-stdxfd") );
         PushTable( argv, itoa_dup_cstr (xfd[0]) );
-        PushTable( argv, dup_cstr ("-closefd") );
-        PushTable( argv, itoa_dup_cstr (xfd[1]) );
+        //PushTable( argv, dup_cstr ("-closefd") );
+        //PushTable( argv, itoa_dup_cstr (xfd[1]) );
     }
     if (ospc->xf)
     {
-        PushTable( argv, dup_cstr ("-closefd") );
-        PushTable( argv, itoa_dup_cstr (ofd[0]) );
+        cloexec_sysCx (ofd[0], true);
+        //PushTable( argv, dup_cstr ("-closefd") );
+        //PushTable( argv, itoa_dup_cstr (ofd[0]) );
         PushTable( argv, dup_cstr ("-stdofd") );
         PushTable( argv, itoa_dup_cstr (ofd[1]) );
     }
@@ -100,13 +101,13 @@ spawn_OSPc (OSPc* ospc)
     /* The old switcharoo. Your input is my output and vice-versa.*/
     if (ospc->of)
     {
-        close_sysCx (xfd[0]);
+        closefd_sysCx (xfd[0]);
         ospc->ofb.fd = xfd[1];
         set_FILE_FileB (&ospc->ofb, fdopen_sysCx (ospc->ofb.fd, "wb"));
     }
     if (ospc->xf)
     {
-        close_sysCx (ofd[1]);
+        closefd_sysCx (ofd[1]);
         ospc->xfb.fd = ofd[0];
         set_FILE_FileB (&ospc->xfb, fdopen_sysCx (ospc->xfb.fd, "rb"));
     }

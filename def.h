@@ -33,6 +33,7 @@ typedef unsigned char byte;
 typedef unsigned int uint;
 #define Max_uint UINT_MAX
 
+typedef long int jint;
 typedef unsigned long int ujint;
 #define Max_ujint (~(ujint)0)
 typedef byte ujintlg;

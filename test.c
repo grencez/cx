@@ -18,6 +18,21 @@
 #include <stdio.h>
 #include <string.h>
 
+static
+    void
+dump_testsep (const char* name)
+{
+    OFileB* of = stderr_OFileB ();
+    dump_cstr_OFileB (of, "-------");
+    if (name)
+    {
+        dump_char_OFileB (of, ' ');
+        dump_cstr_OFileB (of, name);
+        dump_char_OFileB (of, ' ');
+    }
+    dump_cstr_OFileB (of, "-------\n");
+}
+
 typedef struct TNode TNode;
 struct TNode
 {
@@ -353,6 +368,7 @@ testfn_Cons ()
     Cons* b = req2_Sxpn (sx, dflt_Cons_ConsAtom (c), 0);
     Cons* a = req1_Sxpn (sx, b);
     OFileB* of = stderr_OFileB ();
+    dump_testsep (0);
 
     c->car.kind = Cons_AlphaTab;
     c->car.as.alphatab = dflt1_AlphaTab ("c");
@@ -365,7 +381,7 @@ testfn_Cons ()
     dump_char_OFileB (of, '\n');
     dump_Cons (of, c);
     dump_char_OFileB (of, '\n');
-    dump_cstr_OFileB (of, "------------\n");
+    dump_testsep (0);
 
     giv_Sxpn (sx, b);
     giv_Sxpn (sx, a);
@@ -500,6 +516,8 @@ testfn_OSPc ()
     s = cstr_XFileB (ospc->xf);
     /* DBog1( "got: %s", s ); */
     Claim( eql_cstr (s, "hello world\n") );
+    good = close_OSPc (ospc);
+    Claim( good );
     lose_OSPc (ospc);
 }
 
@@ -675,6 +693,30 @@ testfn_Table ()
     LoseTable( t );
 }
 
+static
+    void
+testfn_exec ()
+{
+    pid_t pid = -1;
+    int status = 1;
+    const char* argv[4];
+    bool good = false;
+    argv[0] = exename_of_sysCx ();
+    argv[1] = "wait0";
+    argv[2] = "5"; // Special exit code.
+    argv[3] = 0;
+
+    fputs ("V spawn() called V\n", stderr);
+    fflush (stderr);
+    pid = spawnvp_sysCx ((char**) argv);
+
+    good = waitpid_sysCx (pid, &status);
+    fputs ("^ wait() returned ^\n", stderr);
+    fflush (stderr);
+    Claim( good );
+    Claim2( status ,==, atoi (argv[2]) );
+}
+
 int main (int argc, char** argv)
 {
     int argi =
@@ -693,6 +735,21 @@ int main (int argc, char** argv)
         lose_sysCx ();
         return 0;
     }
+    if (eql_cstr (argv[argi], "wait0"))
+    {
+        argv[argi] = dup_cstr ("wait1");
+        fputs (" V exec() called V\n", stderr);
+        execvp_sysCx (argv);
+        fputs (" ^ exec() failed? ^\n", stderr);
+        return 1;
+    }
+    if (eql_cstr (argv[argi], "wait1"))
+    {
+        /* _sleep (1); */
+        /* sleep (1); */
+        fputs ("  V exec()'d process exits V\n", stderr);
+        return atoi (argv[argi+1]);
+    }
 
     testfn_Table ();
     testfn_BitTable ();
@@ -703,7 +760,9 @@ int main (int argc, char** argv)
     testfn_RBTree ();
     testfn_Associa ();
     testfn_OSPc ();
+    testfn_exec ();
 
+    dump_testsep (0);
     lose_sysCx ();
     return 0;
 }

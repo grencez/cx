@@ -3,6 +3,7 @@
 #define FileB_H_
 
 #include "alphatab.h"
+#include "syscx.h"
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -84,7 +85,7 @@ struct FileB
 {
     XOFileB xo;
     FILE* f;
-    int fd;
+    fd_t fd;
     bool good;
     bool sink;
     bool byline;
@@ -116,6 +117,8 @@ void
 setfmt_FileB (FileB* f, FileB_Format fmt);
 bool
 open_FileB (FileB* f, const char* pathname, const char* filename);
+bool
+openfd_FileB (FileB* fb, fd_t fd);
 void
 set_FILE_FileB (FileB* f, FILE* file);
 char*
@@ -306,9 +309,8 @@ FileB* stderr_FileB ();
 XFileB* stdin_XFileB ();
 OFileB* stdout_OFileB ();
 OFileB* stderr_OFileB ();
+void
+mktmppath_sysCx (AlphaTab* path);
 
-#ifdef IncludeC
-#include "fileb.c"
-#endif
 #endif
 

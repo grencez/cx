@@ -40,8 +40,5 @@ plac_RBTNode (RBTNode* a, RBTNode* b)
     plac_BSTNode (&a->bst, &b->bst);
 }
 
-#ifdef IncludeC
-#include "rbtree.c"
-#endif
 #endif
 

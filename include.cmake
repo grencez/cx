@@ -30,7 +30,7 @@ if (UNIX)
         set (CMAKE_BUILD_TYPE DEBUG)
     else ()
     endif ()
-    set (CMAKE_C_FLAGS "-Wall -Wextra -ansi -pedantic")
+    set (CMAKE_C_FLAGS "-Wall -Wextra -Werror -ansi -pedantic")
 else ()
     set (CMAKE_C_FLAGS "/W4 /MP")
     # Disable warning: 'fopen' unsafe, use fopen_s instead
@@ -45,6 +45,7 @@ endif ()
 foreach (f ${CxCFiles})
     list (APPEND CxFullCFiles ${CxBldPath}/${f})
 endforeach ()
+
 
 if (DEFINED CxPpPath)
     add_executable (cx ${CxBldPath}/cx.c ${CxFullCFiles})
@@ -125,4 +126,13 @@ include_directories (${PfxBldPath})
 file (MAKE_DIRECTORY ${PfxBldPath})
 file (MAKE_DIRECTORY ${CxBldPath})
 file (MAKE_DIRECTORY ${BldPath})
+
+
+add_library (CxLib STATIC ${CxFullCFiles})
+set_target_properties (CxLib PROPERTIES OUTPUT_NAME "cx")
+
+function (addbinexe f)
+    add_executable (${f} ${BldPath}/${f}.c)
+    target_link_libraries (${f} CxLib)
+endfunction ()
 
