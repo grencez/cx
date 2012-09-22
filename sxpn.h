@@ -127,33 +127,33 @@ dflt_Sxpn ()
 
 qual_inline
     Cons*
-req_Sxpn (Sxpn* sx)
+take_Sxpn (Sxpn* sx)
 {
-    Cons* c = (Cons*) req_LgTable (&sx->cells);
+    Cons* c = (Cons*) take_LgTable (&sx->cells);
     *c = dflt_Cons ();
     return c;
 }
 
 qual_inline
     Cons*
-req1_Sxpn (Sxpn* sx, Cons* b)
+take1_Sxpn (Sxpn* sx, Cons* b)
 {
-    Cons* c = (Cons*) req_LgTable (&sx->cells);
+    Cons* c = (Cons*) take_LgTable (&sx->cells);
     *c = dflt1_Cons (b);
     return c;
 }
 
 qual_inline
     Cons*
-req2_Sxpn (Sxpn* sx, ConsAtom a, Cons* b)
+take2_Sxpn (Sxpn* sx, ConsAtom a, Cons* b)
 {
-    Cons* c = (Cons*) req_LgTable (&sx->cells);
+    Cons* c = (Cons*) take_LgTable (&sx->cells);
     *c = dflt2_Cons (a, b);
     return c;
 }
 
 
-static void giv_Sxpn (Sxpn* sx, Cons* a);
+static void give_Sxpn (Sxpn* sx, Cons* a);
 
 qual_inline
     void
@@ -162,7 +162,7 @@ lose_ConsAtom (ConsAtom* ca, Sxpn* sx)
     switch (ca->kind)
     {
     case Cons_Cons:
-        giv_Sxpn (sx, ca->as.cons);
+        give_Sxpn (sx, ca->as.cons);
         break;
     case Cons_AlphaTab:
         lose_AlphaTab (&ca->as.alphatab);
@@ -176,7 +176,7 @@ lose_ConsAtom (ConsAtom* ca, Sxpn* sx)
 }
 
     void
-giv_Sxpn (Sxpn* sx, Cons* a)
+give_Sxpn (Sxpn* sx, Cons* a)
 {
     while (a)
     {
@@ -188,7 +188,7 @@ giv_Sxpn (Sxpn* sx, Cons* a)
 
         b = a;
         a = a->cdr;
-        giv_LgTable (&sx->cells, b);
+        give_LgTable (&sx->cells, b);
     }
 }
 
@@ -197,7 +197,7 @@ qual_inline
 pop_Sxpn (Sxpn* sx, Cons* a)
 {
     Cons* tmp = a->cdr;
-    giv_Sxpn (sx, a);
+    give_Sxpn (sx, a);
     return tmp;
 }
 

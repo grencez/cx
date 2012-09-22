@@ -134,7 +134,7 @@ static
 insert_TNode (RBTree* t, LgTable* lgt,
               const char* key, uint val, uint* n_expect)
 {
-    TNode* a = (TNode*) req_LgTable (lgt);
+    TNode* a = (TNode*) take_LgTable (lgt);
     a->key = key;
     a->val = val;
     insert_RBTree (t, &a->rbt);
@@ -200,7 +200,7 @@ remove_TNode (RBTree* t, LgTable* lgt,
     Claim( a );
     remove_RBTree (t, &a->rbt);
     lose_TNode (&a->rbt.bst);
-    giv_LgTable (lgt, a);
+    give_LgTable (lgt, a);
     *n_expect -= 1;
     claim_BSTree (&t->bst, *n_expect);
 }
@@ -364,9 +364,9 @@ testfn_cache_BitTable ()
 testfn_Cons ()
 {
     DecloStack1( Sxpn, sx, dflt_Sxpn () );
-    Cons* c = req_Sxpn (sx);
-    Cons* b = req2_Sxpn (sx, dflt_Cons_ConsAtom (c), 0);
-    Cons* a = req1_Sxpn (sx, b);
+    Cons* c = take_Sxpn (sx);
+    Cons* b = take2_Sxpn (sx, dflt_Cons_ConsAtom (c), 0);
+    Cons* a = take1_Sxpn (sx, b);
     OFileB* of = stderr_OFileB ();
     dump_testsep (0);
 
@@ -383,9 +383,9 @@ testfn_Cons ()
     dump_char_OFileB (of, '\n');
     dump_testsep (0);
 
-    giv_Sxpn (sx, b);
-    giv_Sxpn (sx, a);
-    giv_Sxpn (sx, c);
+    give_Sxpn (sx, b);
+    give_Sxpn (sx, a);
+    give_Sxpn (sx, c);
 
     Claim2( sx->cells.sz ,==, 0 );
     lose_Sxpn (sx);
@@ -465,33 +465,33 @@ testfn_LgTable ()
 
     for (uint i = 0; i < n; ++i)
     {
-        int* el = (int*) req_LgTable (lgt);
+        int* el = (int*) take_LgTable (lgt);
         *el = - (int) i;
         idx = idxelt_LgTable (lgt, el);
         Claim2( idx ,==, i );
     }
 
-    gividx_LgTable (lgt, 1);
-    idx = reqidx_LgTable (lgt);
+    giveidx_LgTable (lgt, 1);
+    idx = takeidx_LgTable (lgt);
     Claim2( idx ,==, 1 );
 
-    gividx_LgTable (lgt, 0);
-    idx = reqidx_LgTable (lgt);
+    giveidx_LgTable (lgt, 0);
+    idx = takeidx_LgTable (lgt);
     Claim2( idx ,==, 0 );
 
-    gividx_LgTable (lgt, 5);
-    idx = reqidx_LgTable (lgt);
+    giveidx_LgTable (lgt, 5);
+    idx = takeidx_LgTable (lgt);
     Claim2( idx ,==, 5 );
 
-    gividx_LgTable (lgt, 7);
-    idx = reqidx_LgTable (lgt);
+    giveidx_LgTable (lgt, 7);
+    idx = takeidx_LgTable (lgt);
     Claim2( idx ,==, 7 );
 
     for (uint i = 0; i < n; ++i)
     {
         ujint sz = n-i;
         Claim2( lgt->allocs.sz ,<=, (ujint) lg_ujint (sz) + 2 );
-        gividx_LgTable (lgt, sz-1);
+        giveidx_LgTable (lgt, sz-1);
     }
 
     lose_LgTable (lgt);

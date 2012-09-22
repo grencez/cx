@@ -81,7 +81,7 @@ cons7_Associa (SwappedFn swapped,
     map.val_offset   =  val_offset;
 
     {
-        void* node = req_LgTable (&map.nodes);
+        void* node = take_LgTable (&map.nodes);
         Assoc* assoc = (Assoc*) ((size_t) node + map.assoc_offset);
         map.rbt = dflt2_RBTree (&assoc->rbt, swapped_Assoc);
     }
@@ -170,9 +170,9 @@ swapped_Assoc (const BSTNode* lhs_bst, const BSTNode* rhs_bst)
  **/
 qual_inline
     Assoc*
-req_Associa (Associa* map)
+take_Associa (Associa* map)
 {
-    void* node = req_LgTable (&map->nodes);
+    void* node = take_LgTable (&map->nodes);
     Assoc* a = (Assoc*) ((size_t) node + map->assoc_offset);
     a->rbt.bst.joint = 0;
     a->map = map;
@@ -189,22 +189,22 @@ req_Associa (Associa* map)
  **/
 qual_inline
     void
-giv_Associa (Associa* map, Assoc* assoc)
+give_Associa (Associa* map, Assoc* assoc)
 {
     if (assoc->rbt.bst.joint)
         remove_RBTree (&map->rbt, &assoc->rbt);
-    giv_LgTable (&map->nodes, (void*) ((size_t) assoc - map->assoc_offset));
+    give_LgTable (&map->nodes, (void*) ((size_t) assoc - map->assoc_offset));
 }
 
 /** Lose an association.
- * \sa giv_Associa()
+ * \sa give_Associa()
  **/
 qual_inline
     void
 lose_Assoc (Assoc* assoc)
 {
     Associa* map = map_of_Assoc (assoc);
-    giv_Associa (map, assoc);
+    give_Associa (map, assoc);
 }
 
 /** Associate a key with a value in the map.
@@ -215,7 +215,7 @@ qual_inline
     Assoc*
 insert_Associa (Associa* map, const void* key, const void* val)
 {
-    Assoc* a = req_Associa (map);
+    Assoc* a = take_Associa (map);
     key_fo_Assoc (a, key);
     val_fo_Assoc (a, val);
     insert_RBTree (&map->rbt, &a->rbt);
@@ -229,12 +229,12 @@ qual_inline
     Assoc*
 lookup_Associa (Associa* map, const void* key)
 {
-    Assoc* a = req_Associa (map);
+    Assoc* a = take_Associa (map);
     BSTNode* bst;
 
     key_fo_Assoc (a, key);
     bst = find_BSTree (&map->rbt.bst, &a->rbt.bst);
-    giv_Associa (map, a);
+    give_Associa (map, a);
 
     if (!bst)  return 0;
     return CastUp( Assoc, rbt, CastUp( RBTNode, bst, bst ) );
@@ -248,7 +248,7 @@ qual_inline
     Assoc*
 ensure1_Associa (Associa* map, const void* key, bool* added)
 {
-    Assoc* b = req_Associa (map);
+    Assoc* b = take_Associa (map);
     Assoc* a = 0;
     key_fo_Assoc (b, key);
 
@@ -261,7 +261,7 @@ ensure1_Associa (Associa* map, const void* key, bool* added)
      */
     *added = (a == b);
     if (!*added)
-        giv_Associa (map, b);
+        give_Associa (map, b);
     return a;
 }
 
@@ -278,14 +278,14 @@ ensure_Associa (Associa* map, const void* key)
 }
 
 /** Remove an association with the given key.
- * \sa giv_Associa()
+ * \sa give_Associa()
  **/
 qual_inline
     void
 remove_Associa (Associa* map, const void* key)
 {
     Assoc* a = lookup_Associa (map, key);
-    giv_Associa (map, a);
+    give_Associa (map, a);
 }
 
 

@@ -155,11 +155,11 @@ dflt_AST ()
 }
 
     AST*
-req_ASTree (ASTree* t)
+take_ASTree (ASTree* t)
 {
-    AST* ast = (AST*) req_LgTable (&t->lgt);
+    AST* ast = (AST*) take_LgTable (&t->lgt);
     *ast = dflt_AST ();
-    ast->cons = req_Sxpn (&t->sx);
+    ast->cons = take_Sxpn (&t->sx);
     /* InitDomMax( ast->cons->nrefs ); */
     ast->cons->car.kind = Cons_MemLoc;
     ast->cons->car.as.memloc = ast;
@@ -167,23 +167,23 @@ req_ASTree (ASTree* t)
 }
 
     AST*
-req1_ASTree (ASTree* t, SyntaxKind kind)
+take1_ASTree (ASTree* t, SyntaxKind kind)
 {
-    AST* ast = req_ASTree (t);
+    AST* ast = take_ASTree (t);
     ast->kind = kind;
     return ast;
 }
 
     void
-giv_ASTree (ASTree* t, AST* ast)
+give_ASTree (ASTree* t, AST* ast)
 {
     LoseTable( ast->txt );
-    giv_LgTable (&t->lgt, ast);
+    give_LgTable (&t->lgt, ast);
     /* ast->cons->nrefs = 0; */
     if (ast->cons->car.kind == Cons_Cons)
         ast->cons->car.as.cons = 0;
     ast->cons->cdr = 0;
-    giv_Sxpn (&t->sx, ast->cons);
+    give_Sxpn (&t->sx, ast->cons);
 }
 
     ASTree
@@ -449,7 +449,7 @@ dump_ASTree (OFileB* of, ASTree* t)
     void
 bevel_AST (AST* ast, ASTree* t)
 {
-    Cons* c = req_Sxpn (&t->sx);
+    Cons* c = take_Sxpn (&t->sx);
 
     c->car.kind = Cons_MemLoc;
     c->car.as.memloc = ast;
@@ -519,7 +519,7 @@ lex_AST (XFileB* xf, ASTree* t)
     Cons** p = &t->head;
 
 #define InitLeaf(ast) \
-    (ast) = req_ASTree (t); \
+    (ast) = take_ASTree (t); \
     (ast)->line = line; \
     *p = (ast)->cons; \
     p = &(ast)->cons->cdr;
@@ -600,21 +600,21 @@ lex_AST (XFileB* xf, ASTree* t)
             InitLeaf( ast );
             ast->kind = Syntax_Parens;
             bevel_AST (ast, t);
-            up = req2_Sxpn (&t->sx, dflt_Cons_ConsAtom (ast->cons), up);
+            up = take2_Sxpn (&t->sx, dflt_Cons_ConsAtom (ast->cons), up);
             p = &ast->cons->car.as.cons->cdr;
             break;
         case '{':
             InitLeaf( ast );
             ast->kind = Syntax_Braces;
             bevel_AST (ast, t);
-            up = req2_Sxpn (&t->sx, dflt_Cons_ConsAtom (ast->cons), up);
+            up = take2_Sxpn (&t->sx, dflt_Cons_ConsAtom (ast->cons), up);
             p = &ast->cons->car.as.cons->cdr;
             break;
         case '[':
             InitLeaf( ast );
             ast->kind = Syntax_Brackets;
             bevel_AST (ast, t);
-            up = req2_Sxpn (&t->sx, dflt_Cons_ConsAtom (ast->cons), up);
+            up = take2_Sxpn (&t->sx, dflt_Cons_ConsAtom (ast->cons), up);
             p = &ast->cons->car.as.cons->cdr;
             break;
         case ')':
@@ -978,8 +978,8 @@ xfrm_stmts_AST (Cons** ast_p, ASTree* t)
 
             if (d_stmt)
             {
-                AST* d_braces = req1_ASTree (t, Syntax_Braces);
-                AST* d_stmt1 = req1_ASTree (t, Syntax_Stmt);
+                AST* d_braces = take1_ASTree (t, Syntax_Braces);
+                AST* d_stmt1 = take1_ASTree (t, Syntax_Stmt);
 
                 bevel_AST (d_stmt1, t);
                 d_parens->cons->car.as.cons->cdr = d_stmt1->cons;

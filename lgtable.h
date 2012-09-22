@@ -162,9 +162,13 @@ del_LgTableIntl (TableT(LgTableIntl)* intls)
 }
 
 
+/** Take control of an element of the table.
+ * Table makes any necessary allocations.
+ * \sa take_LgTable()
+ **/
 qual_inline
     ujint
-reqidx_LgTable (LgTable* t)
+takeidx_LgTable (LgTable* t)
 {
     ujint idx;
     if (t->lgavails == 0)
@@ -224,17 +228,24 @@ reqidx_LgTable (LgTable* t)
 }
 
 
+/** Take control of an element of the table.
+ * Table makes any necessary allocations.
+ * \sa takeidx_LgTable()
+ **/
 qual_inline
     void*
-req_LgTable (LgTable* t)
+take_LgTable (LgTable* t)
 {
-    return elt_LgTable (t, reqidx_LgTable (t));
+    return elt_LgTable (t, takeidx_LgTable (t));
 }
 
 
+/** Give control of an element back to the table.
+ * \sa give_LgTable()
+ **/
 qual_inline
     void
-gividx_LgTable (LgTable* t, ujint idx)
+giveidx_LgTable (LgTable* t, ujint idx)
 {
     const ujintlg lgidx = lg_ujint (idx);
     LgTableAlloc* a = &t->allocs.s[lgidx];
@@ -273,11 +284,14 @@ gividx_LgTable (LgTable* t, ujint idx)
     }
 }
 
+/** Give control of an element back to the table.
+ * \sa giveidx_LgTable()
+ **/
 qual_inline
     void
-giv_LgTable (LgTable* t, void* el)
+give_LgTable (LgTable* t, void* el)
 {
-    gividx_LgTable (t, idxelt_LgTable (t, el));
+    giveidx_LgTable (t, idxelt_LgTable (t, el));
 }
 
 qual_inline
