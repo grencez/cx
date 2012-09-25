@@ -26,6 +26,9 @@ dump_ConsAtom (OFileB* of, const ConsAtom* ca)
     case Cons_ujint:
         dump_ujint_OFileB (of, ca->as.uji);
         break;
+    case Cons_real:
+        dump_real_OFileB (of, ca->as.re);
+        break;
     default:
         break;
     }

@@ -202,6 +202,15 @@ test_BitTable (const BitTable bt, ujint i)
     return (0 != (bt.s[p] & (1 << q)));
 }
 
+/** Check if a bit is set (to one).**/
+qual_inline
+    Bit
+chk_BitTable (const BitTable bt, ujint i)
+{
+    DeclBitTableIdcs( p, q, i );
+    return (0 != (bt.s[p] & (1 << q)));
+}
+
 /** Set a bit to one.**/
 qual_inline
     Bit
@@ -344,6 +353,17 @@ beg_BitTable (const BitTable bt)
     return next_BitTable (bt, 0);
 }
 
+qual_inline
+    ujint
+count_BitTable (const BitTable bt)
+{
+    ujint n = 0;
+    for (ujint i = beg_BitTable (bt);
+         i != Max_ujint;
+         i = next_BitTable (bt, i))
+        ++n;
+    return n;
+}
 
 #endif
 

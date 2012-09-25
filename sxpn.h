@@ -18,6 +18,7 @@ enum ConsKind {
     Cons_int,
     Cons_uint,
     Cons_ujint,
+    Cons_real,
     Cons_NKinds
 };
 typedef enum ConsKind ConsKind;
@@ -37,6 +38,7 @@ struct ConsAtom
         int i;
         uint ui;
         ujint uji;
+        real re;
     } as;
 };
 

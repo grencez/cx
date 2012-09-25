@@ -1,0 +1,42 @@
+
+%preamble
+
+\documentclass[english]{article}
+\usepackage{fullpage}
+\usepackage[T1]{fontenc}
+\usepackage[latin9]{inputenc}
+\setlength{\parskip}{\medskipamount}
+\setlength{\parindent}{0pt}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{amsfonts}
+\usepackage{graphicx}
+\usepackage[all,arc,curve,frame]{xy}
+\usepackage{mathtools}
+\usepackage{hyperref}
+
+\DeclarePairedDelimiter{\abs}{\lvert}{\rvert}
+\DeclarePairedDelimiter{\ceil}{\lceil}{\rceil}
+\DeclarePairedDelimiter{\floor}{\lfloor}{\rfloor}
+
+\newcommand{\Nat}{\mathbb{N}}
+\newcommand{\defeq}{:=}
+\newcommand{\transpose}{^ \top }
+%\newcommand{\transpose}{^ \intercal }
+\newcommand{\pipe}{\ |\ }
+\newcommand{\vbl}[1]{\mathit{#1}}
+%\newcommand{\vect}[1]{\boldsymbol{\vbl{#1}}}
+\newcommand{\vect}[1]{\overrightarrow{\vbl{#1}}}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{example}[theorem]{Example}
+
+\renewcommand{\labelenumii}{\arabic{enumi}.\arabic{enumii}.}
+\renewcommand{\labelenumiii}{\arabic{enumi}.\arabic{enumii}.\arabic{enumiii}.}
+\renewcommand{\labelenumiv}{\arabic{enumi}.\arabic{enumii}.\arabic{enumiii}.\arabic{enumiv}.}
+
