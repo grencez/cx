@@ -22,8 +22,8 @@ enum FileB_Format {
 typedef enum FileB_Format FileB_Format;
 
 enum FileB_Op {
-    FileB_LoadChunk,
-    FileB_DumpChunk,
+    FileB_XGetChunk,
+    FileB_OPutChunk,
     FileB_FlushO,
     FileB_Close,
     FileB_NOps
@@ -122,7 +122,7 @@ openfd_FileB (FileB* fb, fd_t fd);
 void
 set_FILE_FileB (FileB* f, FILE* file);
 char*
-load_FileB (FileB* f);
+xget_FileB (FileB* f);
 
 void
 close_XFileB (XFileB* xf);
@@ -157,47 +157,47 @@ flush_OFileB (OFileB* f);
 void
 mayflush_OFileB (OFileB* of);
 void
-dump_int_OFileB (OFileB* f, int x);
+oput_int_OFileB (OFileB* f, int x);
 void
-dump_uint_OFileB (OFileB* f, uint x);
+oput_uint_OFileB (OFileB* f, uint x);
 void
-dump_ujint_OFileB (OFileB* f, ujint x);
+oput_ujint_OFileB (OFileB* f, ujint x);
 void
-dump_real_OFileB (OFileB* f, real x);
+oput_real_OFileB (OFileB* f, real x);
 void
-dump_char_OFileB (OFileB* f, char c);
+oput_char_OFileB (OFileB* f, char c);
 void
-dump_AlphaTab (OFileB* f, const AlphaTab* t);
+oput_AlphaTab (OFileB* f, const AlphaTab* t);
 void
 vprintf_OFileB (OFileB* f, const char* fmt, va_list args);
 void
 printf_OFileB (OFileB* f, const char* fmt, ...);
 
 void
-dumpn_byte_FileB (FileB* f, const byte* a, ujint n);
+oputn_byte_FileB (FileB* f, const byte* a, ujint n);
 void
-dumpn_char_OFileB (OFileB* of, const char* a, ujint n);
+oputn_char_OFileB (OFileB* of, const char* a, ujint n);
 
 void
-load_XFileB (XFileB* xf);
+xget_XFileB (XFileB* xf);
 char*
-load_uint_cstr (uint* ret, const char* in);
+xget_uint_cstr (uint* ret, const char* in);
 char*
-load_int_cstr (int* ret, const char* in);
+xget_int_cstr (int* ret, const char* in);
 char*
-load_real_cstr (real* ret, const char* in);
+xget_real_cstr (real* ret, const char* in);
 
 bool
-load_uint_FileB (FileB* f, uint* x);
+xget_uint_FileB (FileB* f, uint* x);
 bool
-load_char_XFileB (XFileB* xf, char* c);
+xget_char_XFileB (XFileB* xf, char* c);
 bool
-load_int_XFileB (XFileB* xf, int* x);
+xget_int_XFileB (XFileB* xf, int* x);
 bool
-load_real_XFileB (XFileB* xf, real* x);
+xget_real_XFileB (XFileB* xf, real* x);
 
 bool
-loadn_byte_FileB (FileB* f, byte* a, ujint n);
+xgetn_byte_FileB (FileB* f, byte* a, ujint n);
 
 Trit
 swapped_AlphaTab (const AlphaTab* a, const AlphaTab* b);
@@ -284,10 +284,10 @@ char* cstr_FileB (FileB* f)
 
 qual_inline
     void
-dump_cstr_OFileB (OFileB* of, const char* s)
+oput_cstr_OFileB (OFileB* of, const char* s)
 {
     const AlphaTab t = dflt1_AlphaTab (s);
-    dump_AlphaTab (of, &t);
+    oput_AlphaTab (of, &t);
 }
 
 qual_inline
@@ -296,7 +296,7 @@ itoa_dup_cstr (int x)
 {
     OFileB of = dflt_OFileB ();
     char* s = 0;
-    dump_int_OFileB (&of, x);
+    oput_int_OFileB (&of, x);
     s = dup_cstr (cstr1_OFileB (&of, 0));
     lose_OFileB (&of);
     return s;

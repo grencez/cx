@@ -13,6 +13,39 @@ typedef struct AST AST;
 typedef struct ASTree ASTree;
 typedef struct CxCtx CxCtx;
 
+/* TODO:
+ * Allow the following styles for writing loops and conditionals.
+ * This allows a convenient bracing scheme.
+ */
+#if 0
+{for (int i = 0; i < n; ++i);
+    printf("%d\n", i);
+    printf("%d\n", i);
+}
+
+{while (x == 9);
+    y = 3;
+}
+
+{do;
+    y = 5;
+    z = 3;
+} while (x == 9);
+
+{if (x == 3);
+    y = 4;
+    z = 5;
+}
+{else if (x == 4);
+    y = 7;
+    z = 9;
+}
+{else;
+    y = 11;
+    z = 10;
+}
+#endif
+
 typedef
 enum SyntaxKind
 {   Syntax_WS
@@ -348,71 +381,71 @@ init_lexwords (Associa* map)
 }
 
 void
-dump_AST (OFileB* of, AST* ast, const ASTree* t);
+oput_AST (OFileB* of, AST* ast, const ASTree* t);
 
     void
-dump1_AST (OFileB* of, AST* ast, const ASTree* t)
+oput1_AST (OFileB* of, AST* ast, const ASTree* t)
 {
     if (!ast)  return;
 
     switch (ast->kind)
     {
     case Syntax_WS:
-        dump_AlphaTab (of, &ast->txt);
+        oput_AlphaTab (of, &ast->txt);
         break;
     case Syntax_Iden:
         Claim2( ast->txt.sz ,>, 0 );
-        dump_AlphaTab (of, &ast->txt);
+        oput_AlphaTab (of, &ast->txt);
         break;
     case Syntax_CharLit:
-        dump_char_OFileB (of, '\'');
+        oput_char_OFileB (of, '\'');
         Claim2( ast->txt.sz ,>, 0 );
-        dump_AlphaTab (of, &ast->txt);
-        dump_char_OFileB (of, '\'');
+        oput_AlphaTab (of, &ast->txt);
+        oput_char_OFileB (of, '\'');
         break;
     case Syntax_StringLit:
-        dump_char_OFileB (of, '"');
+        oput_char_OFileB (of, '"');
         Claim2( ast->txt.sz ,>, 0 );
-        dump_AlphaTab (of, &ast->txt);
-        dump_char_OFileB (of, '"');
+        oput_AlphaTab (of, &ast->txt);
+        oput_char_OFileB (of, '"');
         break;
     case Syntax_Parens:
-        dump_char_OFileB (of, '(');
-        dump_AST (of, cdar_of_AST (ast, t), t);
-        dump_char_OFileB (of, ')');
+        oput_char_OFileB (of, '(');
+        oput_AST (of, cdar_of_AST (ast, t), t);
+        oput_char_OFileB (of, ')');
         break;
     case Syntax_Braces:
-        dump_char_OFileB (of, '{');
-        dump_AST (of, cdar_of_AST (ast, t), t);
-        dump_char_OFileB (of, '}');
+        oput_char_OFileB (of, '{');
+        oput_AST (of, cdar_of_AST (ast, t), t);
+        oput_char_OFileB (of, '}');
         break;
     case Syntax_Brackets:
-        dump_char_OFileB (of, '[');
-        dump_AST (of, cdar_of_AST (ast, t), t);
-        dump_char_OFileB (of, ']');
+        oput_char_OFileB (of, '[');
+        oput_AST (of, cdar_of_AST (ast, t), t);
+        oput_char_OFileB (of, ']');
         break;
     case Syntax_Stmt:
-        dump_AST (of, cdar_of_AST (ast, t), t);
-        dump_char_OFileB (of, ';');
+        oput_AST (of, cdar_of_AST (ast, t), t);
+        oput_char_OFileB (of, ';');
         break;
     case Syntax_ForLoop:
-        dump_cstr_OFileB (of, "for");
-        dump_AST (of, cdar_of_AST (ast, t), t);
+        oput_cstr_OFileB (of, "for");
+        oput_AST (of, cdar_of_AST (ast, t), t);
         break;
     case Syntax_LineComment:
-        dump_cstr_OFileB (of, "//");
-        dump_AlphaTab (of, &ast->txt);
-        dump_char_OFileB (of, '\n');
+        oput_cstr_OFileB (of, "//");
+        oput_AlphaTab (of, &ast->txt);
+        oput_char_OFileB (of, '\n');
         break;
     case Syntax_BlockComment:
-        dump_cstr_OFileB (of, "/*");
-        dump_AlphaTab (of, &ast->txt);
-        dump_cstr_OFileB (of, "*/");
+        oput_cstr_OFileB (of, "/*");
+        oput_AlphaTab (of, &ast->txt);
+        oput_cstr_OFileB (of, "*/");
         break;
     case Syntax_Directive:
-        dump_char_OFileB (of, '#');
-        dump_AlphaTab (of, &ast->txt);
-        dump_char_OFileB (of, '\n');
+        oput_char_OFileB (of, '#');
+        oput_AlphaTab (of, &ast->txt);
+        oput_char_OFileB (of, '\n');
         break;
     default:
         if ((ast->kind >= Beg_Syntax_LexWords &&
@@ -420,7 +453,7 @@ dump1_AST (OFileB* of, AST* ast, const ASTree* t)
             (ast->kind >= Beg_Syntax_LexOps &&
              ast->kind < End_Syntax_LexOps))
         {
-            dump_cstr_OFileB (of, cstr_SyntaxKind (ast->kind));
+            oput_cstr_OFileB (of, cstr_SyntaxKind (ast->kind));
         }
         else
         {
@@ -431,19 +464,19 @@ dump1_AST (OFileB* of, AST* ast, const ASTree* t)
 }
 
     void
-dump_AST (OFileB* of, AST* ast, const ASTree* t)
+oput_AST (OFileB* of, AST* ast, const ASTree* t)
 {
     while (ast)
     {
-        dump1_AST (of, ast, t);
+        oput1_AST (of, ast, t);
         ast = cdr_of_AST (ast, t);
     }
 }
 
     void
-dump_ASTree (OFileB* of, ASTree* t)
+oput_ASTree (OFileB* of, ASTree* t)
 {
-    dump_AST (of, AST_of_Cons (t->head), t);
+    oput_AST (of, AST_of_Cons (t->head), t);
 }
 
     void
@@ -1000,7 +1033,7 @@ xfrm_stmts_AST (Cons** ast_p, ASTree* t)
 }
 
     void
-load_ASTree (XFileB* xf, ASTree* t)
+xget_ASTree (XFileB* xf, ASTree* t)
 {
     DeclAssocia( AlphaTab, uint, type_lookup,
                  (SwappedFn) swapped_AlphaTab );
@@ -1050,8 +1083,8 @@ int main (int argc, char** argv)
             bool good = (0 == strcmp (argv[argi], "-h"));
             OFileB* of = (good ? stdout_OFileB () : stderr_OFileB ());
             printf_OFileB (of, "Usage: %s [-x IN] [-o OUT]\n", argv[0]);
-            dump_cstr_OFileB (of, "  If -x is not specified, stdin is used.\n");
-            dump_cstr_OFileB (of, "  If -o is not specified, stdout is used.\n");
+            oput_cstr_OFileB (of, "  If -x is not specified, stdin is used.\n");
+            oput_cstr_OFileB (of, "  If -o is not specified, stdout is used.\n");
             if (!good)  failout_sysCx ("Exiting in failure...");
             lose_sysCx ();
             return 0;
@@ -1061,11 +1094,11 @@ int main (int argc, char** argv)
     if (!xf)  xf = stdin_XFileB ();
     if (!of)  of = stdout_OFileB ();
 
-    load_ASTree (xf, t);
+    xget_ASTree (xf, t);
     close_XFileB (xf);
     lose_FileB (&xfb);
 
-    dump_ASTree (of, t);
+    oput_ASTree (of, t);
     close_OFileB (of);
     lose_FileB (&ofb);
 

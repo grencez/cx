@@ -11,15 +11,15 @@
 #include <string.h>
 
 static bool
-load_chunk_FileB (FileB* f);
+xget_chunk_FileB (FileB* f);
 static bool
-load_chunk_XFileB (XFileB* xf);
+xget_chunk_XFileB (XFileB* xf);
 static inline bool
-dump_chunk_FileB (FileB* f);
+oput_chunk_FileB (FileB* f);
 static void
 op_FileB (XOFileB* xo, FileB_Op op, FileBOpArg* arg);
 static void
-dumpn_raw_byte_FileB (FileB* f, const byte* a, ujint n);
+oputn_raw_byte_FileB (FileB* f, const byte* a, ujint n);
 
     void
 lose_XOFileB (XOFileB* xo)
@@ -98,7 +98,7 @@ ensure_FileB (FileB* f, ujint n)
     ujint sz;
     if (f->sink)
     {
-        dump_chunk_FileB (f);
+        oput_chunk_FileB (f);
         EnsizeTable( xof->buf, xof->off+n );
         return &xof->buf.s[xof->off];
     }
@@ -202,7 +202,7 @@ set_FILE_FileB (FileB* f, FILE* file)
 }
 
     char*
-load_FileB (FileB* f)
+xget_FileB (FileB* f)
 {
     XFileB* const xf = &f->xo;
     bool good = true;
@@ -218,7 +218,7 @@ load_FileB (FileB* f)
     if (good && ret != 0)
     {
         errno = 0; /* Not an error.*/
-        load_XFileB (xf);
+        xget_XFileB (xf);
     }
     else
     {
@@ -257,7 +257,7 @@ load_FileB (FileB* f)
 }
 
     bool
-load_chunk_FileB (FileB* f)
+xget_chunk_FileB (FileB* f)
 {
     const ujint chunksz = chunksz_FileB (f);
     TableT(byte)* buf = &f->xo.buf;
@@ -290,11 +290,11 @@ load_chunk_FileB (FileB* f)
 }
 
     bool
-load_chunk_XFileB (XFileB* xf)
+xget_chunk_XFileB (XFileB* xf)
 {
     uint sz = xf->buf.sz;
     if (xf->op)
-        xf->op (xf, FileB_LoadChunk, 0);
+        xf->op (xf, FileB_XGetChunk, 0);
     return (sz < xf->buf.sz);
 }
 
@@ -367,7 +367,7 @@ getline_XFileB (XFileB* in)
     while (!s)
     {
         in->off = in->buf.sz - 1;
-        if (!load_chunk_XFileB (in))  break;
+        if (!xget_chunk_XFileB (in))  break;
         s = strchr (cstr_XFileB (in), '\n');
     }
 
@@ -408,7 +408,7 @@ getlined_XFileB (XFileB* xf, const char* delim)
         if (xf->off + delim_sz < xf->buf.sz)
             xf->off = xf->buf.sz - delim_sz;
 
-        if (!load_chunk_XFileB (xf))  break;
+        if (!xget_chunk_XFileB (xf))  break;
 
         s = strstr (cstr_XFileB (xf), delim);
     }
@@ -439,7 +439,7 @@ skipds_XFileB (XFileB* xf, const char* delims)
 
     while (!s[0])
     {
-        if (!load_chunk_XFileB (xf))  break;
+        if (!xget_chunk_XFileB (xf))  break;
         mayflush_XFileB (xf, May);
         s = (char*) &xf->buf.s[xf->off];
         s = &s[strspn (s, delims)];
@@ -463,7 +463,7 @@ nextds_XFileB (XFileB* in, char* ret_match, const char* delims)
     while (!s[0])
     {
         uint off = in->buf.sz - 1;
-        if (!load_chunk_XFileB (in))  break;
+        if (!xget_chunk_XFileB (in))  break;
         s = (char*) &in->buf.s[off];
         s = &s[strcspn (s, delims)];
     }
@@ -520,7 +520,7 @@ inject_XFileB (XFileB* in, XFileB* src, const char* delim)
     uint delim_sz = strlen (delim);
     const ujint sz = in->buf.sz - in->off;
 
-    load_XFileB (src);
+    xget_XFileB (src);
     Claim2( src->buf.sz ,>, 0 );
 
     GrowTable( in->buf, src->buf.sz-1 + delim_sz );
@@ -548,7 +548,7 @@ skipto_XFileB (XFileB* xf, const char* pos)
 
 static
     bool
-fdump_FileB (FileB* f, const byte* a, uint n)
+foput_FileB (FileB* f, const byte* a, uint n)
 {
     size_t nout;
     nout = fwrite (a, 1, n, f->f);
@@ -579,14 +579,14 @@ flusho1_FileB (FileB* fb, const byte* a, uint n)
     {
         if (f->off > 0)
         {
-            good = fdump_FileB (fb, f->buf.s, f->off);
+            good = foput_FileB (fb, f->buf.s, f->off);
             if (!good)  return false;
             f->buf.sz = 1;
             f->off = 0;
         }
         if (n > 0)
         {
-            good = fdump_FileB (fb, a, n);
+            good = foput_FileB (fb, a, n);
             if (!good)  return false;
         }
     }
@@ -607,7 +607,7 @@ flusho_FileB (FileB* f)
 }
 
     bool
-dump_chunk_FileB (FileB* f)
+oput_chunk_FileB (FileB* f)
 {
     if (f->xo.off < f->xo.flushsz)  return true;
         /* In the future, we may not want to flush all the time!*/
@@ -651,11 +651,11 @@ op_FileB (XOFileB* xo, FileB_Op op, FileBOpArg* arg)
     (void) arg;
     switch (op)
     {
-        case FileB_LoadChunk:
-            load_chunk_FileB (fb);
+        case FileB_XGetChunk:
+            xget_chunk_FileB (fb);
             break;
-        case FileB_DumpChunk:
-            dump_chunk_FileB (fb);
+        case FileB_OPutChunk:
+            oput_chunk_FileB (fb);
             break;
         case FileB_FlushO:
             flusho_FileB (fb);
@@ -670,7 +670,7 @@ op_FileB (XOFileB* xo, FileB_Op op, FileBOpArg* arg)
 }
 
     void
-dump_int_OFileB (OFileB* f, int x)
+oput_int_OFileB (OFileB* f, int x)
 {
     EnsizeTable( f->buf, f->off + 50 );
     f->off += sprintf (cstr_OFileB (f), "%i", x);
@@ -678,7 +678,7 @@ dump_int_OFileB (OFileB* f, int x)
 }
 
     void
-dump_uint_OFileB (OFileB* f, uint x)
+oput_uint_OFileB (OFileB* f, uint x)
 {
     EnsizeTable( f->buf, f->off + 50 );
     f->off += sprintf (cstr_OFileB (f), "%u", x);
@@ -686,7 +686,7 @@ dump_uint_OFileB (OFileB* f, uint x)
 }
 
     void
-dump_ujint_OFileB (OFileB* f, ujint x)
+oput_ujint_OFileB (OFileB* f, ujint x)
 {
     EnsizeTable( f->buf, f->off + 50 );
     f->off += sprintf (cstr_OFileB (f), "%lu", x);
@@ -694,7 +694,7 @@ dump_ujint_OFileB (OFileB* f, ujint x)
 }
 
     void
-dump_real_OFileB (OFileB* f, real x)
+oput_real_OFileB (OFileB* f, real x)
 {
     EnsizeTable( f->buf, f->off + 50 );
     f->off += sprintf (cstr_OFileB (f), "%.16e", x);
@@ -702,7 +702,7 @@ dump_real_OFileB (OFileB* f, real x)
 }
 
     void
-dump_char_OFileB (OFileB* f, char c)
+oput_char_OFileB (OFileB* f, char c)
 {
     EnsizeTable( f->buf, f->off + 2 );
     f->buf.s[f->off] = c;
@@ -711,7 +711,7 @@ dump_char_OFileB (OFileB* f, char c)
 }
 
     void
-dump_AlphaTab (OFileB* of, const AlphaTab* t)
+oput_AlphaTab (OFileB* of, const AlphaTab* t)
 {
     ujint n = t->sz;
     if (n == 0)  return;
@@ -747,7 +747,7 @@ printf_OFileB (OFileB* f, const char* fmt, ...)
 }
 
     void
-dumpn_raw_byte_FileB (FileB* f, const byte* a, ujint n)
+oputn_raw_byte_FileB (FileB* f, const byte* a, ujint n)
 {
     OFileB* const of = &f->xo;
     const ujint ntotal = of->off + n;
@@ -772,22 +772,22 @@ dumpn_raw_byte_FileB (FileB* f, const byte* a, ujint n)
 }
 
     void
-dumpn_byte_FileB (FileB* f, const byte* a, ujint n)
+oputn_byte_FileB (FileB* f, const byte* a, ujint n)
 {
     if (f->fmt == FileB_Raw)
     {
-        dumpn_raw_byte_FileB (f, a, n);
+        oputn_raw_byte_FileB (f, a, n);
         return;
     }
     { BLoop( i, n )
-        dump_uint_OFileB (&f->xo, a[i]);
+        oput_uint_OFileB (&f->xo, a[i]);
         if (i+1 < n)
-            dump_char_OFileB (&f->xo, ' ');
+            oput_char_OFileB (&f->xo, ' ');
     } BLose()
 }
 
     void
-dumpn_char_OFileB (OFileB* of, const char* a, ujint n)
+oputn_char_OFileB (OFileB* of, const char* a, ujint n)
 {
     GrowTable( of->buf, n );
     memcpy (&of->buf.s[of->off], a, (n+1)*sizeof(char));
@@ -796,15 +796,15 @@ dumpn_char_OFileB (OFileB* of, const char* a, ujint n)
 }
 
     void
-load_XFileB (XFileB* xf)
+xget_XFileB (XFileB* xf)
 {
     bool more = true;
     while (more)
-        more = load_chunk_XFileB (xf);
+        more = xget_chunk_XFileB (xf);
 }
 
     char*
-load_uint_cstr (uint* ret, const char* in)
+xget_uint_cstr (uint* ret, const char* in)
 {
     unsigned long v;
     char* out = 0;
@@ -823,7 +823,7 @@ load_uint_cstr (uint* ret, const char* in)
 }
 
     char*
-load_int_cstr (int* ret, const char* in)
+xget_int_cstr (int* ret, const char* in)
 {
     long v;
     char* out = 0;
@@ -842,7 +842,7 @@ load_int_cstr (int* ret, const char* in)
 }
 
     char*
-load_real_cstr (real* ret, const char* in)
+xget_real_cstr (real* ret, const char* in)
 {
     double v;
     char* out = 0;
@@ -857,7 +857,7 @@ load_real_cstr (real* ret, const char* in)
 }
 
     bool
-load_uint_FileB (FileB* f, uint* x)
+xget_uint_FileB (FileB* f, uint* x)
 {
     XFileB* const xf = &f->xo;
     const char* s;
@@ -866,8 +866,8 @@ load_uint_FileB (FileB* f, uint* x)
     {
         skipds_XFileB (xf, 0);
         if (xf->buf.sz - xf->off < 50)
-            load_chunk_FileB (f);
-        s = load_uint_cstr (x, cstr_XFileB (xf));
+            xget_chunk_FileB (f);
+        s = xget_uint_cstr (x, cstr_XFileB (xf));
         f->good = !!s;
         if (!f->good)  return false;
         xf->off = IdxElt( xf->buf.s, s );
@@ -878,7 +878,7 @@ load_uint_FileB (FileB* f, uint* x)
             uint x;
             byte b[sizeof(uint)];
         } y;
-        f->good = loadn_byte_FileB (f, y.b, sizeof(uint));
+        f->good = xgetn_byte_FileB (f, y.b, sizeof(uint));
         if (!f->good)  return false;
         *x = y.x;
     }
@@ -886,11 +886,11 @@ load_uint_FileB (FileB* f, uint* x)
 }
 
     bool
-load_char_XFileB (XFileB* xf, char* c)
+xget_char_XFileB (XFileB* xf, char* c)
 {
     if (xf->off + 1 == xf->buf.sz)
     {
-        if (!load_chunk_XFileB (xf))
+        if (!xget_chunk_XFileB (xf))
             return false;
     }
     *c = *cstr_XFileB (xf);
@@ -899,24 +899,24 @@ load_char_XFileB (XFileB* xf, char* c)
 }
 
     bool
-load_int_XFileB (XFileB* xf, int* x)
+xget_int_XFileB (XFileB* xf, int* x)
 {
     const char* s;
     skipds_XFileB (xf, WhiteSpaceChars);
     tods_XFileB (xf, WhiteSpaceChars);
-    s = load_int_cstr (x, (char*)&xf->buf.s[xf->off]);
+    s = xget_int_cstr (x, (char*)&xf->buf.s[xf->off]);
     if (!s)  return false;
     xf->off = IdxElt( xf->buf.s, s );
     return true;
 }
 
     bool
-load_real_XFileB (XFileB* xf, real* x)
+xget_real_XFileB (XFileB* xf, real* x)
 {
     const char* s;
     skipds_XFileB (xf, WhiteSpaceChars);
     tods_XFileB (xf, WhiteSpaceChars);
-    s = load_real_cstr (x, (char*)&xf->buf.s[xf->off]);
+    s = xget_real_cstr (x, (char*)&xf->buf.s[xf->off]);
     if (!s)  return false;
     xf->off = IdxElt( xf->buf.s, s );
     return true;
@@ -924,7 +924,7 @@ load_real_XFileB (XFileB* xf, real* x)
 
 static
     bool
-loadn_raw_byte_FileB (FileB* f, byte* a, ujint n)
+xgetn_raw_byte_FileB (FileB* f, byte* a, ujint n)
 {
     XFileB* const xf = &f->xo;
     Claim2( f->fmt ,==, FileB_Raw );
@@ -933,7 +933,7 @@ loadn_raw_byte_FileB (FileB* f, byte* a, ujint n)
     {
         ujint m;
         if (xf->buf.sz == 0)
-            f->good = load_chunk_FileB (f);
+            f->good = xget_chunk_FileB (f);
         if (!f->good)  return false;
         m = (n < xf->buf.sz ? n : xf->buf.sz);
         memcpy (a, xf->buf.s, m);
@@ -946,15 +946,15 @@ loadn_raw_byte_FileB (FileB* f, byte* a, ujint n)
 }
 
     bool
-loadn_byte_FileB (FileB* f, byte* a, ujint n)
+xgetn_byte_FileB (FileB* f, byte* a, ujint n)
 {
     if (f->fmt == FileB_Raw)
-        return loadn_raw_byte_FileB (f, a, n);
+        return xgetn_raw_byte_FileB (f, a, n);
 
     while (n > 0)
     {
         uint y;
-        f->good = load_uint_FileB (f, &y);
+        f->good = xget_uint_FileB (f, &y);
         if (!f->good)  return false;
         a[0] = (byte) y;
         a = &a[1];

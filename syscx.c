@@ -40,7 +40,7 @@ parse_fd_uri_sysCx (const char* s)
     if (0 != memcmp (s, fd_pfx, strlen (fd_pfx)))  return -1;
 
     s += strlen (fd_pfx);
-    s = load_int_cstr (&fd, s);
+    s = xget_int_cstr (&fd, s);
     if (!s)  return -1;
     return fd;
 }
@@ -52,7 +52,7 @@ parse_fd_arg_sysCx (const char* s)
 {
     int fd = -1;
     if (!s)  return -1;
-    s = load_int_cstr (&fd, s);
+    s = xget_int_cstr (&fd, s);
     if (!s)  return -1;
     return fd;
 }
@@ -212,7 +212,7 @@ dbglog_printf3 (const char* file,
     vprintf_OFileB (f, fmt, args);
     va_end(args);
 
-    dump_char_OFileB (f, '\n');
+    oput_char_OFileB (f, '\n');
 
     if (err != 0)
     {
@@ -229,7 +229,7 @@ dbglog_printf3 (const char* file,
         strerror_r (err, s, n);
 
         f->off += strlen (s) * sizeof(char);
-        dump_char_FileB (f, '\n');
+        oput_char_FileB (f, '\n');
 #else
         printf_OFileB (f, "^^^ errno:%d %s\n", err, strerror (err));
 #endif
@@ -362,17 +362,17 @@ fdopen_sysCx (fd_t fd, const char* mode)
 }
 
 static void
-dump_execvp_args (const char* fn, char* const* argv)
+oput_execvp_args (const char* fn, char* const* argv)
 {
     OFileB* of = stderr_OFileB ();
-    dump_cstr_OFileB (of, fn);
-    dump_char_OFileB (of, ':');
+    oput_cstr_OFileB (of, fn);
+    oput_char_OFileB (of, ':');
     for (uint i = 0; argv[i]; ++i)
     {
-        dump_char_OFileB (of, ' ');
-        dump_cstr_OFileB (of, argv[i]);
+        oput_char_OFileB (of, ' ');
+        oput_cstr_OFileB (of, argv[i]);
     }
-    dump_char_OFileB (of, '\n');
+    oput_char_OFileB (of, '\n');
     flush_OFileB (of);
 }
 
@@ -390,7 +390,7 @@ spawnvp_sysCx (char* const* argv)
     if (pid < 0)
     {
         DBog0( "spawn() failed!" );
-        dump_execvp_args ("spawnvp_sysCx()", argv);
+        oput_execvp_args ("spawnvp_sysCx()", argv);
     }
     return pid;
 }
@@ -413,7 +413,7 @@ execvp_sysCx (char* const* argv)
 #endif
     DBog0( "execvp() failed!" );
     //DBog1( "PATH=%s", getenv ("PATH") );
-    dump_execvp_args ("execvp_sysCx()", argv);
+    oput_execvp_args ("execvp_sysCx()", argv);
     failout_sysCx ("execvp() failed!");
 }
 
@@ -457,18 +457,18 @@ mktmppath_sysCx (AlphaTab* path)
         path->sz = 0;
         return;
     }
-    dump_cstr_OFileB (of, v);
-    dump_char_OFileB (of, '/');
-    dump_AlphaTab (of, path);
-    dump_char_OFileB (of, '-');
-    dump_ujint_OFileB (of, pid);
-    dump_char_OFileB (of, '-');
+    oput_cstr_OFileB (of, v);
+    oput_char_OFileB (of, '/');
+    oput_AlphaTab (of, path);
+    oput_char_OFileB (of, '-');
+    oput_ujint_OFileB (of, pid);
+    oput_char_OFileB (of, '-');
 
     path->sz = 0;
     for (ujint i = 0; i < Max_ujint; ++i)
     {
         ujint off = of->off;
-        dump_ujint_OFileB (of, i);
+        oput_ujint_OFileB (of, i);
 
         if (mkdir_sysCx (cstr1_OFileB (of, 0)))
         {

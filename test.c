@@ -20,17 +20,17 @@
 
 static
     void
-dump_testsep (const char* name)
+oput_testsep (const char* name)
 {
     OFileB* of = stderr_OFileB ();
-    dump_cstr_OFileB (of, "-------");
+    oput_cstr_OFileB (of, "-------");
     if (name)
     {
-        dump_char_OFileB (of, ' ');
-        dump_cstr_OFileB (of, name);
-        dump_char_OFileB (of, ' ');
+        oput_char_OFileB (of, ' ');
+        oput_cstr_OFileB (of, name);
+        oput_char_OFileB (of, ' ');
     }
-    dump_cstr_OFileB (of, "-------\n");
+    oput_cstr_OFileB (of, "-------\n");
 }
 
 typedef struct TNode TNode;
@@ -172,10 +172,10 @@ output_dot (BSTree* t)
     seto_FileB (&ofb, true);
     open_FileB (&ofb, "", "out.dot");
 
-    dump_cstr_OFileB (of, "digraph tree {\n");
+    oput_cstr_OFileB (of, "digraph tree {\n");
     output_dot_fn (t->sentinel, args);
     walk_BSTree (t, Yes, output_dot_fn, args);
-    dump_cstr_OFileB (of, "}\n");
+    oput_cstr_OFileB (of, "}\n");
     lose_OFileB (of);
 }
 
@@ -368,20 +368,20 @@ testfn_Cons ()
     Cons* b = take2_Sxpn (sx, dflt_Cons_ConsAtom (c), 0);
     Cons* a = take1_Sxpn (sx, b);
     OFileB* of = stderr_OFileB ();
-    dump_testsep (0);
+    oput_testsep (0);
 
     c->car.kind = Cons_AlphaTab;
     c->car.as.alphatab = dflt1_AlphaTab ("c");
     a->car.kind = Cons_AlphaTab;
     a->car.as.alphatab = dflt1_AlphaTab ("a");
 
-    dump_Cons (of, a);
-    dump_char_OFileB (of, '\n');
-    dump_Cons (of, b);
-    dump_char_OFileB (of, '\n');
-    dump_Cons (of, c);
-    dump_char_OFileB (of, '\n');
-    dump_testsep (0);
+    oput_Cons (of, a);
+    oput_char_OFileB (of, '\n');
+    oput_Cons (of, b);
+    oput_char_OFileB (of, '\n');
+    oput_Cons (of, c);
+    oput_char_OFileB (of, '\n');
+    oput_testsep (0);
 
     give_Sxpn (sx, b);
     give_Sxpn (sx, a);
@@ -429,13 +429,13 @@ testfn_skipws_FileB ()
             cmp_ret = strcmp(expect_text[idx], s);
             Claim2( 0 ,==, cmp_ret );
             ++ idx;
-            dump_cstr_OFileB (of, s);
-            dump_char_OFileB (of, '\n');
+            oput_cstr_OFileB (of, s);
+            oput_char_OFileB (of, '\n');
         }
     }
 
     lose_XFileB (xf);
-    dump_cstr_OFileB (of, "------------\n");
+    oput_cstr_OFileB (of, "------------\n");
     flush_OFileB (of);
 }
 
@@ -512,7 +512,7 @@ testfn_OSPc ()
     good = spawn_OSPc (ospc);
     Claim( good );
     /* close_OFileB (ospc->of); */
-    load_XFileB (ospc->xf);
+    xget_XFileB (ospc->xf);
     s = cstr_XFileB (ospc->xf);
     /* DBog1( "got: %s", s ); */
     Claim( eql_cstr (s, "hello world\n") );
@@ -729,8 +729,8 @@ int main (int argc, char** argv)
         OFileB* of = stdout_OFileB ();
         for (argi += 1; argi < argc; ++argi)
         {
-            dump_cstr_OFileB (of, argv[argi]);
-            dump_char_OFileB (of, (argi + 1 < argc) ? ' ' : '\n');
+            oput_cstr_OFileB (of, argv[argi]);
+            oput_char_OFileB (of, (argi + 1 < argc) ? ' ' : '\n');
         }
         lose_sysCx ();
         return 0;
@@ -762,7 +762,7 @@ int main (int argc, char** argv)
     testfn_OSPc ();
     testfn_exec ();
 
-    dump_testsep (0);
+    oput_testsep (0);
     lose_sysCx ();
     return 0;
 }

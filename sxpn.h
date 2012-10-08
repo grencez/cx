@@ -55,9 +55,9 @@ struct Sxpn
 };
 
 void
-dump_ConsAtom (OFileB* of, const ConsAtom* ca);
+oput_ConsAtom (OFileB* of, const ConsAtom* ca);
 void
-dump_Cons (OFileB* of, const Cons* a);
+oput_Cons (OFileB* of, const Cons* a);
 
 
 qual_inline
