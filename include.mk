@@ -50,6 +50,8 @@ ifneq (,$(filter noassert,$(CONFIG)))
 endif
 ifneq (,$(filter ansi,$(CONFIG)))
 	CFLAGS += -ansi -pedantic
+endif
+ifneq (,$(filter errwarn,$(CONFIG)))
 	CFLAGS += -Werror
 endif
 

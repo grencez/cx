@@ -13,39 +13,6 @@ typedef struct AST AST;
 typedef struct ASTree ASTree;
 typedef struct CxCtx CxCtx;
 
-/* TODO:
- * Allow the following styles for writing loops and conditionals.
- * This allows a convenient bracing scheme.
- */
-#if 0
-{for (int i = 0; i < n; ++i);
-    printf("%d\n", i);
-    printf("%d\n", i);
-}
-
-{while (x == 9);
-    y = 3;
-}
-
-{do;
-    y = 5;
-    z = 3;
-} while (x == 9);
-
-{if (x == 3);
-    y = 4;
-    z = 5;
-}
-{else if (x == 4);
-    y = 7;
-    z = 9;
-}
-{else;
-    y = 11;
-    z = 10;
-}
-#endif
-
 typedef
 enum SyntaxKind
 {   Syntax_WS
@@ -61,6 +28,10 @@ enum SyntaxKind
     ,Syntax_Stmt
 
     ,Syntax_ForLoop
+    ,Syntax_WhileLoop
+    ,Syntax_If
+    ,Syntax_Else
+
     /* TODO */
     ,Syntax_Struct
     ,Syntax_Typedef
@@ -256,11 +227,23 @@ AST_of_Cons (Cons* c)
     return (AST*) c->car.as.memloc;
 }
 
+/** Get (car ast) as an AST, which is mostly useless,
+ * as it holds a pointer to the AST.
+ **/
     AST*
-cdar_of_AST (AST* ast, const ASTree* t)
+car_of_AST (AST* ast)
 {
     Cons* c = ast->cons;
-    (void) t;
+    Claim2( Cons_Cons ,==, c->car.kind );
+    c = c->car.as.cons;
+    if (!c)  return 0;
+    return AST_of_Cons (c);
+}
+
+    AST*
+cdar_of_AST (AST* ast)
+{
+    Cons* c = ast->cons;
 
     Claim2( Cons_Cons ,==, c->car.kind );
     c = c->car.as.cons;
@@ -271,10 +254,9 @@ cdar_of_AST (AST* ast, const ASTree* t)
 }
 
     AST*
-cdr_of_AST (AST* ast, const ASTree* t)
+cdr_of_AST (AST* ast)
 {
     Cons* c = ast->cons->cdr;
-    (void) t;
 
     if (!c)  return 0;
     return AST_of_Cons (c);
@@ -411,26 +393,38 @@ oput1_AST (OFileB* of, AST* ast, const ASTree* t)
         break;
     case Syntax_Parens:
         oput_char_OFileB (of, '(');
-        oput_AST (of, cdar_of_AST (ast, t), t);
+        oput_AST (of, cdar_of_AST (ast), t);
         oput_char_OFileB (of, ')');
         break;
     case Syntax_Braces:
         oput_char_OFileB (of, '{');
-        oput_AST (of, cdar_of_AST (ast, t), t);
+        oput_AST (of, cdar_of_AST (ast), t);
         oput_char_OFileB (of, '}');
         break;
     case Syntax_Brackets:
         oput_char_OFileB (of, '[');
-        oput_AST (of, cdar_of_AST (ast, t), t);
+        oput_AST (of, cdar_of_AST (ast), t);
         oput_char_OFileB (of, ']');
         break;
     case Syntax_Stmt:
-        oput_AST (of, cdar_of_AST (ast, t), t);
+        oput_AST (of, cdar_of_AST (ast), t);
         oput_char_OFileB (of, ';');
         break;
     case Syntax_ForLoop:
         oput_cstr_OFileB (of, "for");
-        oput_AST (of, cdar_of_AST (ast, t), t);
+        oput_AST (of, cdar_of_AST (ast), t);
+        break;
+    case Syntax_WhileLoop:
+        oput_cstr_OFileB (of, "while");
+        oput_AST (of, cdar_of_AST (ast), t);
+        break;
+    case Syntax_If:
+        oput_cstr_OFileB (of, "if");
+        oput_AST (of, cdar_of_AST (ast), t);
+        break;
+    case Syntax_Else:
+        oput_cstr_OFileB (of, "else");
+        oput_AST (of, cdar_of_AST (ast), t);
         break;
     case Syntax_LineComment:
         oput_cstr_OFileB (of, "//");
@@ -469,7 +463,7 @@ oput_AST (OFileB* of, AST* ast, const ASTree* t)
     while (ast)
     {
         oput1_AST (of, ast, t);
-        ast = cdr_of_AST (ast, t);
+        ast = cdr_of_AST (ast);
     }
 }
 
@@ -477,6 +471,33 @@ oput_AST (OFileB* of, AST* ast, const ASTree* t)
 oput_ASTree (OFileB* of, ASTree* t)
 {
     oput_AST (of, AST_of_Cons (t->head), t);
+}
+
+    void
+oput_sxpn_AST (OFileB* of, AST* ast)
+{
+    bool first = true;
+    while (ast)
+    {
+        if (first)  first = false;
+        else        oput_char_OFileB (of, ' ');
+        oput_uint_OFileB (of, (uint) ast->kind);
+        if (ast->cons->car.kind == Cons_Cons)
+        {
+            oput_char_OFileB (of, ':');
+            oput_char_OFileB (of, '(');
+            oput_sxpn_AST (of, cdar_of_AST (ast));
+            oput_char_OFileB (of, ')');
+        }
+        ast = cdr_of_AST (ast);
+    }
+}
+
+    void
+oput_sxpn_ASTree (OFileB* of, ASTree* t)
+{
+    oput_sxpn_AST (of, AST_of_Cons (t->head));
+    oput_char_OFileB (of, '\n');
 }
 
     void
@@ -823,9 +844,9 @@ lex_AST (XFileB* xf, ASTree* t)
     AST*
 next_semicolon_or_braces_AST (AST* ast)
 {
-    for (ast = cdr_of_AST (ast, 0);
+    for (ast = cdr_of_AST (ast);
          ast;
-         ast = cdr_of_AST (ast, 0))
+         ast = cdr_of_AST (ast))
     {
         if (ast->kind == Lexical_Semicolon)  return ast;
         if (ast->kind == Syntax_Braces)  return ast;
@@ -836,9 +857,9 @@ next_semicolon_or_braces_AST (AST* ast)
     AST*
 next_parens (AST* ast)
 {
-    for (ast = cdr_of_AST (ast, 0);
+    for (ast = cdr_of_AST (ast);
          ast;
-         ast = cdr_of_AST (ast, 0))
+         ast = cdr_of_AST (ast))
     {
         if (ast->kind == Syntax_Parens)  return ast;
     }
@@ -848,45 +869,295 @@ next_parens (AST* ast)
 void
 build_stmts_AST (Cons** ast_p, ASTree* t);
 
+    AST*
+ins1_cadr_AST (AST* a, ASTree* t, SyntaxKind kind)
+{
+    Cons* c;
+    AST* b = take1_ASTree (t, kind);
+    b->line = a->line;
+
+    Claim2( a->cons->car.kind ,==, Cons_Cons );
+    c = a->cons->car.as.cons->cdr;
+    a->cons->car.as.cons->cdr = b->cons;
+    b->cons->cdr = c;
+    return b;
+}
+
+    AST*
+ins1_cdr_AST (AST* a, ASTree* t, SyntaxKind kind)
+{
+    Cons* c;
+    AST* b = take1_ASTree (t, kind);
+    b->line = a->line;
+
+    c = a->cons->cdr;
+    a->cons->cdr = b->cons;
+    b->cons->cdr = c;
+    return b;
+}
+
+    bool
+ws_ck_SyntaxKind (SyntaxKind kind)
+{
+    switch (kind)
+    {
+    case Syntax_WS:
+    case Syntax_LineComment:
+    case Syntax_BlockComment:
+    case Syntax_Directive:
+        return true;
+    default:
+        return false;
+    }
+}
+
     void
-build_ForLoop_AST (AST* ast, ASTree* t)
+quickforloop_AST (Cons** ast_p, ASTree* t)
+{
+    AST* a = AST_of_Cons (*ast_p);
+    AST* b;
+    AST* c;
+    AST* d;
+    AST* iden = 0;
+
+    if (!a || a->kind != Syntax_Stmt)  return;
+
+    b = cdr_of_AST (a);
+    if (!b || b->kind == Syntax_Stmt)  return;
+
+    c = cdar_of_AST (a);
+    while (c)
+    {
+        if (c->kind == Syntax_Iden)
+        {
+            if (iden)
+            {
+                DBog1( "Loop already has an identifier: %s",
+                       cstr_AlphaTab (&iden->txt) );
+                return;
+            }
+            iden = c;
+        }
+        else if (!ws_ck_SyntaxKind (c->kind))
+        {
+            DBog0( "Just name an identifier for the loop!" );
+            return;
+        }
+        if (!c->cons->cdr)  break;
+        c = cdr_of_AST (c);
+    }
+
+    /* (parens (; i) ...)
+     * -->
+     * (parens (; unsigned int i = 0) ...)
+     */
+    d = ins1_cadr_AST (a, t, Lexical_Unsigned);
+    d = ins1_cdr_AST (d, t, Syntax_WS);
+    copy_cstr_AlphaTab (&d->txt, " ");
+
+    d = ins1_cdr_AST (d, t, Lexical_Int);
+    d = ins1_cdr_AST (d, t, Syntax_WS);
+    copy_cstr_AlphaTab (&d->txt, " ");
+
+    d = ins1_cdr_AST (c, t, Lexical_Assign);
+    d = ins1_cdr_AST (d, t, Syntax_Iden);
+    copy_cstr_AlphaTab (&d->txt, "0");
+
+    /* (parens (; unsigned int i = 0) n)
+     * -->
+     * (parens (; unsigned int i = 0) (; i < n) ++ i)
+     */
+    c = ins1_cdr_AST (a, t, Syntax_Stmt);
+    bevel_AST (c, t);
+    c->cons->cdr = 0;
+
+    d = ins1_cadr_AST (c, t, Syntax_Parens);
+    bevel_AST (d, t);
+    d->cons->car.as.cons->cdr = b->cons;
+
+    d = ins1_cadr_AST (c, t, Syntax_Iden);
+    copy_AlphaTab (&d->txt, &iden->txt);
+
+    d = ins1_cdr_AST (d, t, Lexical_LT);
+
+    d = ins1_cdr_AST (c, t, Lexical_Inc);
+    d = ins1_cdr_AST (d, t, Syntax_Iden);
+    copy_AlphaTab (&d->txt, &iden->txt);
+}
+
+    void
+build_ctrl_AST (AST* ast, ASTree* t)
 {
     /* (... for (parens ...) ... ; ...)
      *  -->
      * (... (for (parens ..) (; ...)) ...)
      */
-    AST* d_for;
+    AST* d_ctrl;
     AST* d_parens;
     AST* d_semic;
+    const char* ctrl_name = "unknown";
 
-    d_for = ast;
-    Claim2( d_for->kind ,==, Lexical_For );
-    d_for->kind = Syntax_ForLoop;
-
-    d_parens = next_parens (d_for);
-    if (!d_parens)
+    d_ctrl = ast;
+    if (d_ctrl->kind == Lexical_For)
     {
-        DBog1( "No parens for for-loop. Line: %u", (uint) ast->line);
-        failout_sysCx ("");
+        d_ctrl->kind = Syntax_ForLoop;
+        ctrl_name = "for-loop";
+    }
+    else if (d_ctrl->kind == Lexical_While)
+    {
+        d_ctrl->kind = Syntax_WhileLoop;
+        ctrl_name = "while-loop";
+    }
+    else if (d_ctrl->kind == Lexical_If)
+    {
+        d_ctrl->kind = Syntax_If;
+        ctrl_name = "if-statement";
+    }
+    else if (d_ctrl->kind == Lexical_Else)
+    {
+        d_ctrl->kind = Syntax_Else;
+        ctrl_name = "else-statement";
+    }
+    else
+    {
+        Claim( false );
+    }
+
+    d_parens = d_ctrl;
+    if (d_ctrl->kind != Syntax_Else)
+    {
+        d_parens = next_parens (d_ctrl);
+        if (!d_parens)
+        {
+            DBog2( "No parens for %s. Line: %u", ctrl_name, (uint) ast->line);
+            failout_sysCx ("");
+        }
     }
 
     d_semic = next_semicolon_or_braces_AST (d_parens);
     if (!d_semic)
     {
-        DBog1( "No end of for for-loop. Line: %u", (uint) ast->line);
+        DBog2( "No end of for %s. Line: %u", ctrl_name, (uint) ast->line);
         failout_sysCx ("");
     }
 
-    bevel_AST (d_for, t);
-    d_for->cons->car.as.cons->cdr = d_for->cons->cdr;
-    d_for->cons->cdr = d_semic->cons->cdr;
+    bevel_AST (d_ctrl, t);
+    d_ctrl->cons->car.as.cons->cdr = d_ctrl->cons->cdr;
+    d_ctrl->cons->cdr = d_semic->cons->cdr;
     d_semic->cons->cdr = 0;
 
-    /* Only gets first two statements in for loop.*/
-    build_stmts_AST (&d_parens->cons->car.as.cons->cdr, t);
+    if (d_ctrl->kind == Syntax_Else)
+    {
+        build_stmts_AST (&d_ctrl->cons->car.as.cons->cdr, t);
+    }
+    else
+    {
+        /* Only gets first two statements in for loop.*/
+        build_stmts_AST (&d_parens->cons->car.as.cons->cdr, t);
+        if (d_ctrl->kind == Syntax_ForLoop)
+            quickforloop_AST (&d_parens->cons->car.as.cons->cdr, t);
 
-    build_stmts_AST (&d_parens->cons->cdr, t);
+        build_stmts_AST (&d_parens->cons->cdr, t);
+    }
 }
+
+    void
+prebrace_AST (Cons** ast_p, ASTree* t)
+{
+    AST* ast = AST_of_Cons (*ast_p);
+    AST* d_colon;
+    Cons** p_colon;
+    AST* d_ctrl;
+    Cons** p_ctrl;
+    AST* d_body;
+    Cons** p_body;
+
+    p_colon = &ast->cons->car.as.cons->cdr;
+    d_colon = cdar_of_AST (ast);
+    while (d_colon && ws_ck_SyntaxKind (d_colon->kind))
+    {
+        p_colon = &d_colon->cons->cdr;
+        d_colon = cdr_of_AST (d_colon);
+    }
+    if (!d_colon || d_colon->kind != Lexical_Colon)  return;
+
+    p_ctrl = &d_colon->cons->cdr;
+    d_ctrl = cdr_of_AST (d_colon);
+    while (d_ctrl && ws_ck_SyntaxKind (d_ctrl->kind))
+    {
+        p_ctrl = &d_ctrl->cons->cdr;
+        d_ctrl = cdr_of_AST (d_ctrl);
+    }
+    if (!d_ctrl)  return;
+
+    p_body = &d_ctrl->cons->cdr;
+    d_body = cdr_of_AST (d_ctrl);
+
+    if (d_ctrl->kind == Lexical_Else)
+    {
+        while (d_body && ws_ck_SyntaxKind (d_body->kind))
+        {
+            p_body = &d_body->cons->cdr;
+            d_body = cdr_of_AST (d_body);
+        }
+    }
+
+    if (d_ctrl->kind == Lexical_For ||
+        d_ctrl->kind == Lexical_While ||
+        d_ctrl->kind == Lexical_Switch ||
+        d_ctrl->kind == Lexical_If ||
+        (d_ctrl->kind == Lexical_Else &&
+         d_body &&
+         d_body->kind == Lexical_If))
+    {
+        while (d_body && d_body->kind != Syntax_Parens)
+        {
+            p_body = &d_body->cons->cdr;
+            d_body = cdr_of_AST (d_body);
+        }
+    }
+    else if (d_ctrl->kind == Lexical_Else ||
+             d_ctrl->kind == Lexical_Do)
+    {
+        p_body = p_ctrl;
+        d_body = d_ctrl;
+    }
+    else
+    {
+        while (d_body && d_body->kind != Lexical_Semicolon)
+        {
+            p_body = &d_body->cons->cdr;
+            d_body = cdr_of_AST (d_body);
+        }
+    }
+    if (!d_body)  return;
+
+    // Add control statement on top.
+    *ast_p = d_ctrl->cons;
+
+    // Snip control statement from braces.
+    *p_ctrl = d_body->cons->cdr;
+
+    // Snip colon from existence.
+    *p_colon = d_colon->cons->cdr;
+    // Free the colon;
+    d_colon->cons->cdr = 0;
+    give_ASTree (t, d_colon);
+
+    if (d_body->kind == Lexical_Semicolon)
+    {
+        // Make braces start at body.
+        *p_body = ast->cons;
+        // Free the semicolon.
+        d_body->cons->cdr = 0;
+        give_ASTree (t, d_body);
+    }
+    else
+    {
+        d_body->cons->cdr = ast->cons;
+    }
+}
+
 
     void
 build_stmts_AST (Cons** ast_p, ASTree* t)
@@ -897,8 +1168,14 @@ build_stmts_AST (Cons** ast_p, ASTree* t)
     AST* ast = AST_of_Cons (*ast_p);
     Cons** p = ast_p;
 
-    for (; ast; ast = cdr_of_AST (ast, t))
+    for (; ast; ast = cdr_of_AST (ast))
     {
+        if (ast->kind == Syntax_Braces)
+        {
+            prebrace_AST (p, t);
+            ast = AST_of_Cons (*p);
+        }
+
         if (pending)
         {
             if (pending_kind == NSyntaxKinds)
@@ -919,7 +1196,11 @@ build_stmts_AST (Cons** ast_p, ASTree* t)
         case Syntax_BlockComment:
             break;
         case Lexical_For:
-            build_ForLoop_AST (ast, t);
+        case Lexical_While:
+        case Lexical_If:
+        case Lexical_Else:
+            build_ctrl_AST (ast, t);
+            pending = 0;
             break;
         case Syntax_Parens:
             if (!pending)
@@ -950,7 +1231,6 @@ build_stmts_AST (Cons** ast_p, ASTree* t)
             pending = 0;
             break;
         case Lexical_Semicolon:
-
             ast->kind = Syntax_Stmt;
             bevel_AST (ast, t);
             /* Empty statement.*/
@@ -1002,12 +1282,12 @@ xfrm_stmts_AST (Cons** ast_p, ASTree* t)
             AST* d_parens;
             AST* d_stmt;
 
-            d_parens = cdar_of_AST (d_for, 0);
+            d_parens = cdar_of_AST (d_for);
             while (d_parens && d_parens->kind != Syntax_Parens)
-                d_parens = cdr_of_AST (d_parens, 0);
+                d_parens = cdr_of_AST (d_parens);
 
             Claim( d_parens );
-            d_stmt = cdar_of_AST (d_parens, 0);
+            d_stmt = cdar_of_AST (d_parens);
 
             if (d_stmt)
             {
@@ -1028,7 +1308,7 @@ xfrm_stmts_AST (Cons** ast_p, ASTree* t)
             }
         }
         p = &ast->cons->cdr;
-        ast = cdr_of_AST (ast, 0);
+        ast = cdr_of_AST (ast);
     }
 }
 
@@ -1040,6 +1320,7 @@ xget_ASTree (XFileB* xf, ASTree* t)
 
     lex_AST (xf, t);
     build_stmts_AST (&t->head, t);
+    //oput_sxpn_ASTree (stderr_OFileB (), t);
     xfrm_stmts_AST (&t->head, t);
 
     lose_Associa (type_lookup);

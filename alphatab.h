@@ -121,6 +121,14 @@ copy_AlphaTab (AlphaTab* a, const AlphaTab* b)
 }
 
 qual_inline
+    void
+copy_cstr_AlphaTab (AlphaTab* a, const char* s)
+{
+    AlphaTab b = dflt1_AlphaTab (s);
+    CopyTable( *a, b );
+}
+
+qual_inline
     bool
 endc_ck_AlphaTab (AlphaTab* a, char c)
 {

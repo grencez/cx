@@ -24,8 +24,7 @@ oput_testsep (const char* name)
 {
     OFileB* of = stderr_OFileB ();
     oput_cstr_OFileB (of, "-------");
-    if (name)
-    {
+    {:if (name)
         oput_char_OFileB (of, ' ');
         oput_cstr_OFileB (of, name);
         oput_char_OFileB (of, ' ');
@@ -66,8 +65,7 @@ countup_black_RBTNode (const RBTNode* x)
 {
     uint n = 0;
     Claim( x->bst.joint );
-    do
-    {
+    {:do
         n += (x->red ? 0 : 1);
         x = CastUp( RBTNode, bst, x->bst.joint );
     } while (x->bst.joint);
@@ -93,13 +91,11 @@ claim_TNode (BSTNode* x, void* args)
     if (x->split[1])
         Claim2( x ,==, x->split[1]->joint );
 
-    if (b->red)
-    {
+    {:if (b->red)
         b = CastUp( RBTNode, bst, x->joint );
         Claim( !b->red );
     }
-    if (!x->split[0] || !x->split[1])
-    {
+    {:if (!x->split[0] || !x->split[1])
         uint c = countup_black_RBTNode (b);
         if (*nblack == Max_uint)
             *nblack = c;
@@ -153,8 +149,7 @@ output_dot_fn (BSTNode* x, void* args)
                    a->key,
                    (a->rbt.red) ? "red" : "black");
 
-    if (x->joint)
-    {
+    {:if (x->joint)
         TNode* b = CastUp( TNode, rbt, CastUp( RBTNode, bst, x->joint ) );
         printf_OFileB (of, "q%u -> q%u;\n", b->val, a->val);
     }
@@ -229,17 +224,15 @@ testfn_Associa ()
     uint n_expect = 1; /* Sentinel node.*/
 
     Claim2( map->nodes.sz ,==, n_expect );
-    { BLoop( mi, nmuls )
-        { BLoop( mj, nmuls )
-            { BLoop( i, nkeys )
+    {:for (mi ; nmuls)
+        {:for (mj ; nmuls)
+            {:for (i ; nkeys)
                 const uint idx = (muls[mi] * i) % nkeys;
                 const AlphaTab key = dflt1_AlphaTab (keys[idx]);
-                if (mj % 2 == 0)
-                {
+                {:if (mj % 2 == 0)
                     insert_Associa (map, &key, &idx);
                 }
-                else
-                {
+                {:else
                     bool added = false;
                     Assoc* assoc = ensure1_Associa (map, &key, &added);
                     Claim( added );
@@ -247,19 +240,17 @@ testfn_Associa ()
                 }
                 ++ n_expect;
                 Claim2( map->nodes.sz ,==, n_expect );
-            } BLose()
+            }
 
 
-            { BLoop( i, nkeys )
+            {:for (i ; nkeys)
                 const uint idx = (muls[mj] * i) % nkeys;
                 const AlphaTab key = dflt1_AlphaTab (keys[idx]);
                 Assoc* a;
-                if (mj % 2 == 0)
-                {
+                {:if (mj % 2 == 0)
                     a = lookup_Associa (map, &key);
                 }
-                else
-                {
+                {:else
                     bool added = true;
                     a = ensure1_Associa (map, &key, &added);
                     Claim( !added );
@@ -272,9 +263,9 @@ testfn_Associa ()
                 lose_Assoc (a);
                 -- n_expect;
                 Claim2( map->nodes.sz ,==, n_expect );
-            } BLose()
-        } BLose()
-    } BLose()
+            }
+        }
+    }
 
     /* Claim the sentinel still exists.*/
     Claim2( map->nodes.sz ,==, 1 );
@@ -294,20 +285,20 @@ testfn_BitTable ()
     uint ni = CeilQuot( n, 3 );
     BitTable bt = cons2_BitTable (n, 0);
 
-    { BLoop( i, ni )
+    {:for (i ; ni)
         Bit x;
         x = set1_BitTable (bt, 3 * i);
         Claim2( x ,==, 0 );
-    } BLose()
+    }
 
-    { BLoop( i, n )
+    {:for (i ; n)
         Bit x, y;
         x = test_BitTable (bt, i);
         y = (0 == (i % 3));
         Claim2( x ,==, y );
         x = set1_BitTable (bt, i);
         Claim2( x ,==, y );
-    } BLose()
+    }
 
     lose_BitTable (&bt);
 }
@@ -463,8 +454,7 @@ testfn_LgTable ()
     Claim2( 2 ,==, lg_ujint (4) );
     Claim2( 2 ,==, lg_ujint (4) );
 
-    for (uint i = 0; i < n; ++i)
-    {
+    {:for (i ; n)
         int* el = (int*) take_LgTable (lgt);
         *el = - (int) i;
         idx = idxelt_LgTable (lgt, el);
@@ -487,8 +477,7 @@ testfn_LgTable ()
     idx = takeidx_LgTable (lgt);
     Claim2( idx ,==, 7 );
 
-    for (uint i = 0; i < n; ++i)
-    {
+    {:for (i ; n)
         ujint sz = n-i;
         Claim2( lgt->allocs.sz ,<=, (ujint) lg_ujint (sz) + 2 );
         giveidx_LgTable (lgt, sz-1);
@@ -553,21 +542,21 @@ testfn_RBTree ()
     sentinel.key = "sentinel";
     sentinel.val = nkeys;
 
-    { BLoop( mi, nmuls )
-        { BLoop( mj, nmuls )
-            { BLoop( i, nkeys )
+    {:for (mi ; nmuls)
+        {:for (mj ; nmuls)
+            {:for (i ; nkeys)
                 const uint idx = (muls[mi] * i) % nkeys;
                 insert_TNode (t, lgt, keys[idx], idx, &n_expect);
-            } BLose()
+            }
 #if 0
             output_dot (&t->bst);
 #endif
-            { BLoop( i, nkeys )
+            {:for (i ; nkeys)
                 const uint idx = (muls[mj] * i) % nkeys;
                 remove_TNode (t, lgt, keys[idx], &n_expect);
-            } BLose()
-        } BLose()
-    } BLose()
+            }
+        }
+    }
 
     lose_BSTree (&t->bst, lose_TNode);
     lose_LgTable (lgt);
@@ -583,24 +572,21 @@ claim_allocsz_Table (Table* t)
     Claim2( sz ,<=, allocsz );
     Claim2( sz ,>=, allocsz / 4 );
 
-    if (sz <= allocsz / 2)
-    {
+    {:if (sz <= allocsz / 2)
         grow_Table (t, allocsz / 2);
         Claim2( allocsz ,==, allocsz_Table (t) );
         mpop_Table (t, allocsz / 2);
         Claim2( allocsz ,==, allocsz_Table (t) );
     }
 
-    if (sz >= allocsz / 2)
-    {
+    {:if (sz >= allocsz / 2)
         mpop_Table (t, allocsz / 4);
         Claim2( allocsz ,==, allocsz_Table (t) );
         grow_Table (t, allocsz / 4);
         Claim2( allocsz ,==, allocsz_Table (t) );
     }
 
-    if (sz < allocsz / 2 && sz > 0)
-    {
+    {:if (sz < allocsz / 2 && sz > 0)
         mpop_Table (t, CeilQuot( sz, 2 ));
         Claim2( allocsz / 2 ,==, allocsz_Table (t) );
         grow_Table (t, CeilQuot( sz, 2 ));
@@ -612,8 +598,7 @@ claim_allocsz_Table (Table* t)
         mpop_Table (t, allocsz / 2);
         Claim2( allocsz ,==, allocsz_Table (t) );
     }
-    else if (sz > allocsz / 2)
-    {
+    {:else if (sz > allocsz / 2)
         grow_Table (t, sz);
         Claim2( allocsz * 2 ,==, allocsz_Table (t) );
         mpop_Table (t, sz);
@@ -649,8 +634,7 @@ testfn_Table ()
     claim_allocsz_Table (&tmp_table);
     XferCastTable( t, tmp_table );
 
-    for (uint i = 0; i < n; ++i)
-    {
+    {:for (uint i = 0; i < n; ++i)
         DeclGrow1Table( V, x, t );
         *x = (int) i;
 
@@ -662,8 +646,7 @@ testfn_Table ()
     PackTable( t );
     Claim2( t.sz - 1 ,==, AllocszTable( t ));
 
-    for (uint i = 0; i < n; ++i)
-    {
+    {:for (uint i = 0; i < n; ++i)
         t.s[t.sz-1] = val;
         MPopTable( t, 1 );
 
@@ -724,27 +707,23 @@ int main (int argc, char** argv)
          1);
 
     // Special test as child process.
-    if (eql_cstr (argv[argi], "echo"))
-    {
+    {:if (eql_cstr (argv[argi], "echo"))
         OFileB* of = stdout_OFileB ();
-        for (argi += 1; argi < argc; ++argi)
-        {
+        {:for (argi += 1; argi < argc; ++argi)
             oput_cstr_OFileB (of, argv[argi]);
             oput_char_OFileB (of, (argi + 1 < argc) ? ' ' : '\n');
         }
         lose_sysCx ();
         return 0;
     }
-    if (eql_cstr (argv[argi], "wait0"))
-    {
+    {:if (eql_cstr (argv[argi], "wait0"))
         argv[argi] = dup_cstr ("wait1");
         fputs (" V exec() called V\n", stderr);
         execvp_sysCx (argv);
         fputs (" ^ exec() failed? ^\n", stderr);
         return 1;
     }
-    if (eql_cstr (argv[argi], "wait1"))
-    {
+    {:if (eql_cstr (argv[argi], "wait1"))
         /* _sleep (1); */
         /* sleep (1); */
         fputs ("  V exec()'d process exits V\n", stderr);

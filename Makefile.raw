@@ -6,6 +6,7 @@ CC = gcc
 #CONFIG += wine
 #CONFIG += winegcc
 CONFIG += ansi
+CONFIG += errwarn
 CONFIG += debug
 #CONFIG += ultradebug
 #CONFIG += fast
