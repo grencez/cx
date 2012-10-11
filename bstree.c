@@ -1,4 +1,7 @@
-
+/**
+ * \file bstree.c
+ * Binary search tree.
+ **/
 #include "bstree.h"
 #include <assert.h>
 
@@ -32,14 +35,14 @@ lose_BSTree (BSTree* t, void (* lose) (BSTNode*))
         BSTNode* x = y;
         Bit side = 0;
 
-            /* Descend to the lo side.*/
+        /* Descend to the lo side.*/
         do
         {
             y = x;
             x = x->split[0];
         } while (x);
 
-            /* Ascend until we can descend to the hi side.*/
+        /* Ascend until we can descend to the hi side.*/
         if (!y->split[1])  do
         {
             x = y;
@@ -52,10 +55,10 @@ lose_BSTree (BSTree* t, void (* lose) (BSTNode*))
     }
 }
 
-    /**
-     * Preorder, postorder, and inorder traversals are supported by
-     * values of Nil, Yes, and May for /postorder/ respectively.
-     **/
+/**
+ * Preorder, postorder, and inorder traversals are supported by
+ * values of Nil, Yes, and May for /postorder/ respectively.
+ **/
     void
 walk_BSTree (BSTree* t, Trit postorder,
              void (* f) (BSTNode*, void*), void* dat)
@@ -67,7 +70,7 @@ walk_BSTree (BSTree* t, Trit postorder,
         BSTNode* x = y;
         Bit side = 0;
 
-            /* Descend to the lo side.*/
+        /* Descend to the lo side.*/
         do
         {
             if (postorder == Nil)  f (x, dat);
@@ -75,7 +78,7 @@ walk_BSTree (BSTree* t, Trit postorder,
             x = x->split[0];
         } while (x);
 
-            /* Ascend until we can descend to the hi side.*/
+        /* Ascend until we can descend to the hi side.*/
         if (!y->split[1])  do
         {
             if (postorder == May && side == 0)  f (y, dat);
@@ -127,9 +130,9 @@ insert_BSTree (BSTree* t, BSTNode* x)
     x->split[1] = 0;
 }
 
-    /** If a node matching /x/ exists, return that node.
-     * Otherwise, add /x/ to the tree and return it.
-     **/
+/** If a node matching /x/ exists, return that node.
+ * Otherwise, add /x/ to the tree and return it.
+ **/
     BSTNode*
 ensure_BSTree (BSTree* t, BSTNode* x)
 {
@@ -156,12 +159,12 @@ ensure_BSTree (BSTree* t, BSTNode* x)
     return x;
 }
 
-    /**
-     * Ensure /x/ exists in the tree.
-     * It replaces a matching node if one exists.
-     * The matching node (which was replaced) is returned.
-     * If no matching node was replaced, 0 is returned.
-     **/
+/**
+ * Ensure /x/ exists in the tree.
+ * It replaces a matching node if one exists.
+ * The matching node (which was replaced) is returned.
+ * If no matching node was replaced, 0 is returned.
+ **/
     BSTNode*
 setf_BSTree (BSTree* t, BSTNode* x)
 {
@@ -174,20 +177,20 @@ setf_BSTree (BSTree* t, BSTNode* x)
     return y;
 }
 
-    /** Remove a given node from the tree.
-     *
-     * /a/ will hold information about what had to be moved,
-     * which is used by the red-black tree removal.
-     *
-     * Let /y/ be the node which will simply slide into place to replace /a/
-     * or has a split member which will replace /a/.
-     *
-     * /a->joint/ will hold /y/ unless /y/ simply replaced /a/
-     * without changing its split, in which case /a-joint/ is not changed.
-     *
-     * /a->split/ will hold the split of the resulting /a->joint/
-     * which changed depth.
-     **/
+/** Remove a given node from the tree.
+ *
+ * /a/ will hold information about what had to be moved,
+ * which is used by the red-black tree removal.
+ *
+ * Let /y/ be the node which will simply slide into place to replace /a/
+ * or has a split member which will replace /a/.
+ *
+ * /a->joint/ will hold /y/ unless /y/ simply replaced /a/
+ * without changing its split, in which case /a-joint/ is not changed.
+ *
+ * /a->split/ will hold the split of the resulting /a->joint/
+ * which changed depth.
+ **/
     void
 remove_BSTNode (BSTNode* a)
 {
@@ -196,15 +199,15 @@ remove_BSTNode (BSTNode* a)
     BSTNode* x;
     BSTNode* y;
 
-        /*  a          y 
-         *   \        / \
-         *    y   => *   *
-         *   / \
-         *  *   *
-         *
-         * /y/ can be Nil when /i == 0/.
-         */
-    { BLoop( i, 2 )
+    /*  a          y 
+     *   \        / \
+     *    y   => *   *
+     *   / \
+     *  *   *
+     *
+     * /y/ can be Nil when /i == 0/.
+     */
+    {:for (i ; 2)
         oside = (Bit) i;
         if (!a->split[oside])
         {
@@ -216,15 +219,15 @@ remove_BSTNode (BSTNode* a)
             a->split[!side_a] = 0;
             return;
         }
-    } BLose()
+    }
 
-        /*   a          y
-         *  / \        / \
-         *     y   =>     *
-         *      \
-         *       *
-         */
-    { BLoop( i, 2 )
+    /*   a          y
+     *  / \        / \
+     *     y   =>     *
+     *      \
+     *       *
+     */
+    {:for (i ; 2)
         side = (Bit) i;
         oside = !side;
         y = a->split[side];
@@ -238,19 +241,19 @@ remove_BSTNode (BSTNode* a)
             a->split[oside] = 0;
             return;
         }
-    } BLose()
+    }
 
-        /* Roughly this...
-         * /x/ descends as far as it can in one direction.
-         * /y/ follows one step behind.
-         *     a            x
-         *    / \          / \
-         *  1*   y    => 1*   y
-         *      / \          / \
-         *     x   *3      2*   *3
-         *      \
-         *       *2
-         */
+    /* Roughly this...
+     * /x/ descends as far as it can in one direction.
+     * /y/ follows one step behind.
+     *     a            x
+     *    / \          / \
+     *  1*   y    => 1*   y
+     *      / \          / \
+     *     x   *3      2*   *3
+     *      \
+     *       *2
+     */
     side = 1;  /* Arbitrary side.*/
     oside = !side;
     y = a->split[side];
@@ -276,17 +279,17 @@ remove_BSTNode (BSTNode* a)
     a->split[oside] = y->split[oside];
 }
 
-    /** Do a tree rotation,
-     *
-     *       b          a
-     *      / \        / \
-     *     a   *z => x*   b
-     *    / \            / \
-     *  x*   *y        y*   *z
-     *
-     * When /side/ is 1, opposite direction when 0.
-     * (/b/ always starts as /a/'s joint)
-     **/
+/** Do a tree rotation,
+ *
+ *       b          a
+ *      / \        / \
+ *     a   *z => x*   b
+ *    / \            / \
+ *  x*   *y        y*   *z
+ *
+ * When /side/ is 1, opposite direction when 0.
+ * (/b/ always starts as /a/'s joint)
+ **/
     void
 rotate_BSTNode (BSTNode* b, Bit side)
 {

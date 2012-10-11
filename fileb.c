@@ -779,11 +779,11 @@ oputn_byte_FileB (FileB* f, const byte* a, ujint n)
         oputn_raw_byte_FileB (f, a, n);
         return;
     }
-    { BLoop( i, n )
+    {:for (i ; n)
         oput_uint_OFileB (&f->xo, a[i]);
         if (i+1 < n)
             oput_char_OFileB (&f->xo, ' ');
-    } BLose()
+    }
 }
 
     void

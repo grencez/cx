@@ -1,4 +1,7 @@
-
+/**
+ * \file rbtree.h
+ * Red-black tree.
+ **/
 #ifndef RBTree_H_
 #define RBTree_H_
 #include "bstree.h"

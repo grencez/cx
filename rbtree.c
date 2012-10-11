@@ -1,4 +1,7 @@
-
+/**
+ * \file rbtree.c
+ * Red-black tree.
+ **/
 #include "rbtree.h"
 #include <stdlib.h>
 
@@ -53,7 +56,7 @@ fixup_insert (RBTNode* x, RBTree* t)
         RBTNode* a;
         Bit xside;
 
-            /* /x/ is root, just set to black!*/
+        /* /x/ is root, just set to black!*/
         if (root (t, x))
         {
             x->red = Nil;
@@ -61,38 +64,38 @@ fixup_insert (RBTNode* x, RBTree* t)
         }
         b = joint (x);
 
-            /* /b/ is black, /x/ is safe to be red!*/
+        /* /b/ is black, /x/ is safe to be red!*/
         if (!b->red)  break;
 
         a = joint (b);
         xside = side_of_BSTNode (&x->bst);
 
-            /* Case 1.         (continue)
-             *
-             *    a#              b'+
-             *    / \              / \
-             *  1*   +b          a#   #x
-             *      / \          /|   |\
-             *    2#   +'x     w* #2 3# #4
-             *        / \
-             *      3#   #4
-             */
+        /* Case 1.         (continue)
+         *
+         *    a#              b'+
+         *    / \              / \
+         *  1*   +b          a#   #x
+         *      / \          /|   |\
+         *    2#   +'x     w* #2 3# #4
+         *        / \
+         *      3#   #4
+         */
         if (xside == side_of_BSTNode (&b->bst))
         {
             rotate (a, !xside);
             x->red = Nil;
             x = b;
         }
-            /* Case 2.                       (continue)
-             *
-             *       a#             a#          b'+
-             *       / \            / \          / \
-             *     b+   *4   =>   x+   *4  =>  x#   #a
-             *     / \            / \          /|   |\
-             *   1#   +'x       b#   #3      1# #2 3# *4
-             *       / \        / \
-             *     2#   #3    1#   #2
-             */
+        /* Case 2.                       (continue)
+         *
+         *       a#             a#          b'+
+         *       / \            / \          / \
+         *     b+   *4   =>   x+   *4  =>  x#   #a
+         *     / \            / \          /|   |\
+         *   1#   +'x       b#   #3      1# #2 3# *4
+         *       / \        / \
+         *     2#   #3    1#   #2
+         */
         else
         {
             rotate (b, !xside);
@@ -110,9 +113,9 @@ insert_RBTree (RBTree* t, RBTNode* x)
     fixup_insert (x, t);
 }
 
-    /** If a node matching /x/ exists, return that node.
-     * Otherwise, add /x/ to the tree and return it.
-     **/
+/** If a node matching /x/ exists, return that node.
+ * Otherwise, add /x/ to the tree and return it.
+ **/
     RBTNode*
 ensure_RBTree (RBTree* t, RBTNode* x)
 {
@@ -129,12 +132,12 @@ ensure_RBTree (RBTree* t, RBTNode* x)
     return x;
 }
 
-    /**
-     * Ensure /x/ exists in the tree.
-     * It replaces a matching node if one exists.
-     * The matching node (which was replaced) is returned.
-     * If no matching node was replaced, 0 is returned.
-     **/
+/**
+ * Ensure /x/ exists in the tree.
+ * It replaces a matching node if one exists.
+ * The matching node (which was replaced) is returned.
+ * If no matching node was replaced, 0 is returned.
+ **/
     RBTNode*
 setf_RBTree (RBTree* t, RBTNode* x)
 {
@@ -167,16 +170,16 @@ fixup_remove (RBTNode* y, RBTree* t, Bit side)
             x = split (a, side);
         }
 
-            /* Case 1.                        (done)
-             *
-             *      b*             b*           x*
-             *      / \            / \          / \
-             *    a#   #'y  =>   x+   #y  =>  a#   #b
-             *    / \            / \          /|   |\
-             *  w*   +x        a#   #2      w* #1 2# #y
-             *       / \       / \
-             *     1#   #2   w*   #1
-             */
+        /* Case 1.                        (done)
+         *
+         *      b*             b*           x*
+         *      / \            / \          / \
+         *    a#   #'y  =>   x+   #y  =>  a#   #b
+         *    / \            / \          /|   |\
+         *  w*   +x        a#   #2      w* #1 2# #y
+         *       / \       / \
+         *     1#   #2   w*   #1
+         */
         if (x && x->red)
         {
             rotate (a, !side);
@@ -186,28 +189,28 @@ fixup_remove (RBTNode* y, RBTree* t, Bit side)
             break;
         }
 
-            /* Case 2.          (done)
-             *
-             *      b+            a#
-             *      / \           / \
-             *    a#   #'y  =>  w*   +b
-             *    / \               / \
-             *  w*   #x           x#   #y
-             */
+        /* Case 2.          (done)
+         *
+         *      b+            a#
+         *      / \           / \
+         *    a#   #'y  =>  w*   +b
+         *    / \               / \
+         *  w*   #x           x#   #y
+         */
         if (b->red)
         {
             rotate (b, side);
             break;
         }
 
-            /* Case 3.        (continue, match case 1 or 2)
-             *
-             *      b#            a#
-             *      / \           / \
-             *    a+   #'y  =>  w#   +b
-             *    / \               / \
-             *  w#   #x           x#   #'y
-             */
+        /* Case 3.        (continue, match case 1 or 2)
+         *
+         *      b#            a#
+         *      / \           / \
+         *    a+   #'y  =>  w#   +b
+         *    / \               / \
+         *  w#   #x           x#   #'y
+         */
         if (a && a->red)
         {
             rotate (b, side);
@@ -216,14 +219,14 @@ fixup_remove (RBTNode* y, RBTree* t, Bit side)
             continue;  /* Match case 1 or 2.*/
         }
 
-            /* Case 4.          (done)
-             *
-             *      b#            a#
-             *      / \           / \
-             *    a#   #'y  =>  w#   #b
-             *    / \               / \
-             *  w+   *x           x*   #y
-             */
+        /* Case 4.          (done)
+         *
+         *      b#            a#
+         *      / \           / \
+         *    a#   #'y  =>  w#   #b
+         *    / \               / \
+         *  w+   *x           x*   #y
+         */
         if (w && w->red)
         {
             rotate (b, side);
@@ -231,14 +234,14 @@ fixup_remove (RBTNode* y, RBTree* t, Bit side)
             break;
         }
 
-            /* Case 5.       (continue)
-             *
-             *      b#          b'#
-             *      / \          / \
-             *    a#   #'y =>  a+   #y
-             *    / \          / \
-             *  w#   #x      w#   #x
-             */
+        /* Case 5.       (continue)
+         *
+         *      b#          b'#
+         *      / \          / \
+         *    a#   #'y =>  a+   #y
+         *    / \          / \
+         *  w#   #x      w#   #x
+         */
         a->red = 1;
         y = b;
         side = side_of_BSTNode (&y->bst);
@@ -274,7 +277,7 @@ remove_RBTree (RBTree* t, RBTNode* y)
     }
     else
     {
-            /* Put /y/ as a leaf in the tree to simplify fixup.*/
+        /* Put /y/ as a leaf in the tree to simplify fixup.*/
         y->red = 0;
         fixup_remove (y, t, !y->bst.joint->split[1]);
     }

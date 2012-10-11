@@ -54,7 +54,6 @@
 /** Close a scope block (close curly brace).**/
 #define BLose() }
 #define BLoopT( T, i, bel )  T i; for (i = 0; i < (bel); ++i) BInit()
-#define BLoop( i, bel )  BLoopT( uint, i, bel )
 #define BUjFor( i, bel )  BLoopT( ujint, i, bel )
 
 #define AccepTok( line, tok ) \

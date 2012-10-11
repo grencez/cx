@@ -1,4 +1,7 @@
-
+/**
+ * \file cx.c
+ * C code transformation utility.
+ **/
 #include "syscx.h"
 #include "associa.h"
 #include "fileb.h"
