@@ -1259,6 +1259,19 @@ build_stmts_AST (Cons** ast_p, ASTree* t)
     }
 }
 
+    bool
+declaration_ck (AST* a)
+{
+    uint n = 0;
+    while (a && a->kind != Lexical_Assign)
+    {
+        if (a->kind != Syntax_WS)  ++n;
+        a = cdr_of_AST (a);
+    }
+
+    return (n > 1);
+}
+
     void
 xfrm_stmts_AST (Cons** ast_p, ASTree* t)
 {
@@ -1292,7 +1305,7 @@ xfrm_stmts_AST (Cons** ast_p, ASTree* t)
             Claim( d_parens );
             d_stmt = cdar_of_AST (d_parens);
 
-            if (d_stmt)
+            if (d_stmt && declaration_ck (cdar_of_AST (d_stmt)))
             {
                 AST* d_braces = take1_ASTree (t, Syntax_Braces);
                 AST* d_stmt1 = take1_ASTree (t, Syntax_Stmt);

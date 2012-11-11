@@ -36,18 +36,36 @@ CxHFiles := $(addsuffix .h,$(CxHFiles))
 
 CxObjs = $(addprefix $(CxBldPath)/,$(addsuffix .o,$(CxDeps)))
 
+## Serious debugging is about to happen.
+ifneq (,$(filter ultradebug,$(CONFIG)))
+	CONFIG := $(filter-out snappy fast debug,$(CONFIG))
+	CFLAGS += -g3
+endif
+## Add debugging symbols.
 ifneq (,$(filter debug,$(CONFIG)))
 	CFLAGS += -g
 endif
 ifneq (,$(filter ultradebug,$(CONFIG)))
 	CFLAGS += -g3
 endif
+## Go really fast.
 ifneq (,$(filter fast,$(CONFIG)))
 	CFLAGS += -O3
 endif
+## Go pretty fast.
+ifneq (,$(filter snappy,$(CONFIG)))
+	CFLAGS += -O2
+endif
+## Enable profiling.
+ifneq (,$(filter profile,$(CONFIG)))
+	CFLAGS += -pg
+	LFLAGS += -pg
+endif
+## Disable assertions.
 ifneq (,$(filter noassert,$(CONFIG)))
 	CFLAGS += -DNDEBUG
 endif
+## Stick to the ANSI standard.
 ifneq (,$(filter ansi,$(CONFIG)))
 	CFLAGS += -ansi -pedantic
 endif
@@ -161,6 +179,8 @@ $(patsubst %.o,%.c,$(CxObjs)): | $(CxBldPath)
 $(addprefix $(CxBldPath)/,$(CxHFiles)): | $(CxBldPath)
 $(ExeList): | $(BinPath)
 $(patsubst %.o,%.c,$(Objs)): | $(BldPath)
+$(patsubst %.o,%.h,$(Objs)): | $(BldPath)
+$(HFiles): | $(BldPath)
 
 
 $(CxBldPath):
