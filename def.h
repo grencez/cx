@@ -29,6 +29,7 @@ typedef int bool;
 typedef unsigned char byte;
 #define NBitsInByte 8
 #define NBits_byte 8
+#define Max_byte ((byte)0xFF)
 
 typedef unsigned int uint;
 #define Max_uint UINT_MAX
@@ -38,6 +39,8 @@ typedef unsigned long int ujint;
 #define Max_ujint (~(ujint)0)
 typedef byte ujintlg;
 #define NBits_ujint (NBits_byte*sizeof(ujint))
+#define Max_ujintlg  Max_byte
+#define MaxCk_ujintlg(x)  ((x) == Max_byte)
 
 #if 0
 typedef double real;

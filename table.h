@@ -9,7 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-typedef byte TableLgSz;
+typedef ujintlg TableLgSz;
 typedef unsigned short TableElSz;
 
 #define TableT( S )  TableT_##S
@@ -24,11 +24,27 @@ struct Table
     TableLgSz alloc_lgsz;
 };
 
+typedef struct ConstTable ConstTable;
+struct ConstTable
+{
+    const void* s;
+    ujint sz;
+    TableElSz elsz;
+    TableLgSz alloc_lgsz;
+};
+
 #define DeclTableT( S, T ) \
     typedef struct TableT_##S TableT_##S; \
     typedef T TableElT_##S; \
     struct TableT_##S { \
         TableElT_##S* s; \
+        ujint sz; \
+        TableLgSz alloc_lgsz; \
+    }
+
+#define FixTableT( S, N ) \
+    struct { \
+        TableElT_##S s[N]; \
         ujint sz; \
         TableLgSz alloc_lgsz; \
     }
@@ -74,6 +90,21 @@ dflt1_Table (TableElSz elsz)
 #define MakeCastTable( t ) \
     dflt4_Table ((t).s, (t).sz, sizeof(*(t).s), (t).alloc_lgsz)
 
+qual_inline
+    ConstTable
+dflt4_ConstTable (const void* s, ujint sz,
+                  TableElSz elsz, TableLgSz alloc_lgsz)
+{
+    ConstTable t;
+    t.s = s;
+    t.sz = sz;
+    t.elsz = elsz;
+    t.alloc_lgsz = alloc_lgsz;
+    return t;
+}
+#define MakeCastConstTable( t ) \
+    dflt4_ConstTable ((t).s, (t).sz, sizeof(*(t).s), (t).alloc_lgsz)
+
 #define XferCastTable( t, name )  do \
 { \
     memcpy (&(t).s, &(name).s, sizeof(void*)); \
@@ -95,11 +126,17 @@ init1_Table (Table* t, TableElSz elsz)
     (t).alloc_lgsz = 0; \
 } while (0)
 
+#define InitFixTable( t )  do \
+{ \
+    (t).sz = 0; \
+    (t).alloc_lgsz = Max_ujintlg; \
+} while (0)
+
 qual_inline
     void
 lose_Table (Table* t)
 {
-    if (t->alloc_lgsz > 0)
+    if (t->alloc_lgsz > 0 && !MaxCk_ujintlg( t->alloc_lgsz ))
         free (t->s);
 }
 #define LoseTable( t )  do \
@@ -141,6 +178,11 @@ qual_inline
 grow_Table (Table* t, ujint capac)
 {
     t->sz += capac;
+    if (MaxCk_ujintlg( t->alloc_lgsz ))
+    {
+        // This allocation is fixed.
+        return;
+    }
     if ((t->sz << 1) > ((ujint)1 << t->alloc_lgsz))
     {
         if (t->alloc_lgsz == 0)
@@ -168,6 +210,11 @@ qual_inline
 mpop_Table (Table* t, ujint capac)
 {
     t->sz -= capac;
+    if (MaxCk_ujintlg( t->alloc_lgsz ))
+    {
+        // This allocation is fixed.
+        return;
+    }
     if ((t->alloc_lgsz >= 3) && ((t->sz >> (t->alloc_lgsz - 3)) == 0))
     {
         while ((t->alloc_lgsz >= 4) && ((t->sz >> (t->alloc_lgsz - 4)) == 0))
@@ -294,7 +341,7 @@ qual_inline
     void
 affy_Table (Table* t, ujint capac)
 {
-    t->alloc_lgsz = sizeof(ujint) * NBits_byte - 1;
+    t->alloc_lgsz = NBits_ujint - 1;
     t->s = (byte*) realloc (t->s, t->elsz * capac);
 }
 #define AffyTable( t, capac )  do \
@@ -317,11 +364,25 @@ copy_Table (Table* a, const Table* b)
     ensize_Table (a, b->sz);
     memcpy (a->s, b->s, a->sz * a->elsz);
 }
+
+qual_inline
+    void
+copy_const_Table (Table* a, const ConstTable* b)
+{
+    if (a->elsz != b->elsz)
+    {
+        a->sz = a->sz * a->elsz / b->elsz;
+        a->elsz = b->elsz;
+    }
+
+    ensize_Table (a, b->sz);
+    memcpy (a->s, b->s, a->sz * a->elsz);
+}
 #define CopyTable( a, b )  do \
 { \
     Table CopyTable_a = MakeCastTable( a ); \
-    Table CopyTable_b = MakeCastTable( b ); \
-    copy_Table (&CopyTable_a, &CopyTable_b); \
+    const ConstTable CopyTable_b = MakeCastConstTable( b ); \
+    copy_const_Table (&CopyTable_a, &CopyTable_b); \
     XferCastTable( a, CopyTable_a ); \
 } while (0)
 
