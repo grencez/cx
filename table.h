@@ -65,6 +65,13 @@ DeclTableT( int, int );
 DeclTableT( uint, uint );
 #define DeclTableT_ujint
 DeclTableT( ujint, ujint );
+#define DeclTableT_uint2
+DeclTableT( uint2, uint2 );
+#define DeclTableT_ujint2
+DeclTableT( ujint2, ujint2 );
+
+#define DeclTableT_TableT_uint
+DeclTableT( TableT_uint, TableT(uint) );
 
 qual_inline
     Table

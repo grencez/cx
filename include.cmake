@@ -132,7 +132,12 @@ add_library (CxLib STATIC ${CxFullCFiles})
 set_target_properties (CxLib PROPERTIES OUTPUT_NAME "cx")
 
 function (addbinexe f)
-    add_executable (${f} ${BldPath}/${f}.c)
+    set (src_files ${BldPath}/${f}.c)
+    foreach (src_file ${ARGN})
+        list (APPEND src_files ${BldPath}/${src_file})
+    endforeach ()
+
+    add_executable (${f} ${src_files})
     target_link_libraries (${f} CxLib)
 endfunction ()
 

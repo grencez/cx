@@ -42,6 +42,11 @@ typedef byte ujintlg;
 #define Max_ujintlg  Max_byte
 #define MaxCk_ujintlg(x)  ((x) == Max_byte)
 
+typedef struct uint2 uint2;
+typedef struct ujint2 ujint2;
+struct uint2 { uint s[2]; };
+struct ujint2 { ujint s[2]; };
+
 #if 0
 typedef double real;
 #define Max_real DBL_MAX
