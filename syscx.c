@@ -113,15 +113,11 @@ parse_args_sysCx (int* pargc, char*** pargv)
         }
     }
 
-    argi = argc - argi;
-    while (argi > 0)
-    {
-        argv[argi] = argv[argc];
-        -- argi;
-        -- argc;
+    {:for (int i = 1; i <= argc-argi; ++i)
+        argv[i] = argv[argi+i];
     }
 
-    *pargc = argc;
+    *pargc = argc - argi;
     *pargv = argv;
 
     if (execing)
@@ -383,7 +379,23 @@ spawnvp_sysCx (char* const* argv)
 #ifdef POSIX_SOURCE
     pid = fork ();
     if (pid == 0)
+    {
+        if (eql_cstr (argv[0], exename_of_sysCx ()) &&
+            eql_cstr (argv[1], MagicArgv1_sysCx))
+        {
+            int argc = 0;
+            DeclTable( cstr, t );
+            while (argv[argc])  ++ argc;
+
+            SizeTable( t, argc+1 );
+            {:for (uint i = 0; i < t.sz; ++i)
+                t.s[i] = argv[i];
+            }
+            parse_args_sysCx (&argc, &t.s);
+            execvp_sysCx (t.s);
+        }
         execvp_sysCx (argv);
+    }
 #else
     pid = _spawnvp (_P_NOWAIT, argv[0], argv);
 #endif
@@ -398,6 +410,11 @@ spawnvp_sysCx (char* const* argv)
     void
 execvp_sysCx (char* const* argv)
 {
+    {:if (0)
+        {:for (uint i = 0; argv[i]; ++i)
+            DBog2( "argv[%u] = %s", i, argv[i] );
+        }
+    }
 #ifdef POSIX_SOURCE
     execvp (argv[0], argv);
 #else
