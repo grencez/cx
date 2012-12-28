@@ -36,23 +36,38 @@ struct Associa
  * \param name  Name of variable to create.
  * \param swapped  \ref SwappedFn which acts on keys.
  **/
-#define DeclAssocia( K, V, name, swapped ) \
-    struct Assoc_##name \
-    { \
-        Assoc assoc; \
-        K key; \
-        V val; \
-    }; \
-    typedef struct Assoc_##name Assoc_##name; \
-    Associa stacked_##name = \
-        cons7_Associa (swapped, \
-                       sizeof(Assoc_##name), \
-                       sizeof(K), \
-                       sizeof(V), \
-                       offsetof( Assoc_##name, assoc ), \
-                       offsetof( Assoc_##name, key ), \
-                       offsetof( Assoc_##name, val )); \
-    Associa* const name = &stacked_##name
+#define InitAssocia( K, V, name, swapped )  do \
+{ \
+  struct Assoc_Tmp \
+  { \
+    Assoc assoc; \
+      K key; \
+      V val; \
+  }; \
+  typedef struct Assoc_Tmp Assoc_Tmp; \
+  name = cons7_Associa ((SwappedFn) swapped, \
+                        sizeof(Assoc_Tmp), \
+                        sizeof(K), \
+                        sizeof(V), \
+                        offsetof( Assoc_Tmp, assoc ), \
+                        offsetof( Assoc_Tmp, key ), \
+                        offsetof( Assoc_Tmp, val )); \
+} while (0)
+
+#define InitSet( K, name, swapped )  do \
+{ \
+  struct Assoc_Tmp \
+  { \
+    Assoc assoc; \
+      K key; \
+  }; \
+  typedef struct Assoc_Tmp Assoc_Tmp; \
+  name = cons7_Associa ((SwappedFn) swapped, \
+                        sizeof(Assoc_Tmp), \
+                        sizeof(K), 0, \
+                        offsetof( Assoc_Tmp, assoc ), \
+                        offsetof( Assoc_Tmp, key ), 0);  \
+} while (0)
 
 static
 Trit swapped_Assoc (const BSTNode* lhs_bst, const BSTNode* rhs_bst);

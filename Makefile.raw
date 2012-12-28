@@ -39,9 +39,9 @@ cx: $(CxExe)
 
 .PHONY: pp
 pp: $(CxExe)
-	$(foreach f,$(addsuffix .c,cx $(CxDeps)), \
+	$(foreach f,$(CxCFileDeps), \
 		$(ExecCx) -x $(f) -o $(CxPpPath)/$(f) ;)
-	$(foreach f,$(CxHFiles), \
+	$(foreach f,$(CxHFileDeps), \
 		$(ExecCx) -x $(f) -o $(CxPpPath)/$(f) ;)
 
 .PHONY: exectest

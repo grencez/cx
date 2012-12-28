@@ -22,23 +22,27 @@ typedef TableElT(Bit) BitTableEl;
     ((x) & ~(((x) | ~(x)) << (nbits)))
 
 
+#define Bits4LH( b00, b01, b10, b11 ) \
+  ((b00 << 0) | (b01 << 1) | (b10 << 2) | (b11 << 3))
+
 enum BitOp {
-    /*         a = 0011
-     *         b = 0101
-     */
-    BitOp_NIL,  /* 0000 */
-    BitOp_AND,  /* 0001 */
-    BitOp_NIMP, /* 0010 */
-    BitOp_IDEN, /* 0101 */
-    BitOp_XOR,  /* 0110 */
-    BitOp_OR,   /* 0111 */
-    BitOp_NOR,  /* 1000 */
-    BitOp_EQL,  /* 1001 */
-    BitOp_NOT,  /* 1010 */
-    BitOp_IMP,  /* 1101 */
-    BitOp_NAND, /* 1110 */
-    BitOp_YES,  /* 1111 */
-    NBitOps
+  //           a = 0011
+  //           b = 0101
+  BitOp_NIL   = /* 0000 */ Bits4LH(0,0,0,0),
+  BitOp_NOR   = /* 1000 */ Bits4LH(1,0,0,0),
+  BitOp_NOT1  = /* 1100 */ Bits4LH(1,1,0,0),
+  BitOp_NIMP  = /* 0010 */ Bits4LH(0,0,1,0),
+  BitOp_NOT0  = /* 1010 */ Bits4LH(1,0,1,0),
+  BitOp_XOR   = /* 0110 */ Bits4LH(0,1,1,0),
+  BitOp_NAND  = /* 1110 */ Bits4LH(1,1,1,0),
+  BitOp_AND   = /* 0001 */ Bits4LH(0,0,0,1),
+  BitOp_EQL   = /* 1001 */ Bits4LH(1,0,0,1),
+  BitOp_IDEN1 = /* 0101 */ Bits4LH(0,1,0,1),
+  BitOp_IMP   = /* 1101 */ Bits4LH(1,1,0,1),
+  BitOp_IDEN0 = /* 0011 */ Bits4LH(0,0,1,1),
+  BitOp_OR    = /* 0111 */ Bits4LH(0,1,1,1),
+  BitOp_YES   = /* 1111 */ Bits4LH(1,1,1,1),
+  NBitOps
 };
 typedef enum BitOp BitOp;
 
@@ -164,7 +168,7 @@ lose_BitTable (BitTable* bt)
 
 qual_inline
     void
-size_BitTable (BitTable* bt, ujint n)
+size_fo_BitTable (BitTable* bt, ujint n)
 {
     const ujint sz = bt->sz;
     const ujint new_sz = n;
@@ -176,6 +180,13 @@ size_BitTable (BitTable* bt, ujint n)
         memset (&bt->s[nelems], 0,
                 (new_nelems - nelems) * sizeof (BitTableEl));
     bt->sz = new_sz;
+}
+
+qual_inline
+  void
+size_BitTable (BitTable* bt, ujint n)
+{
+  size_fo_BitTable (bt, n);
 }
 
 qual_inline
@@ -263,55 +274,94 @@ setb_BitTable (BitTable bt, ujint i, Bit b)
 }
 
 qual_inline
-    void
-op_BitTable (BitTable a, const BitTable b, BitOp op)
+  void
+op2_BitTable (BitTable* c, BitOp op, const BitTable a, const BitTable b)
 {
-    ujint i;
-    const ujint n = CeilQuot( a.sz, NBits_BitTableEl );
+  ujint i;
+  const ujint n = CeilQuot( a.sz, NBits_BitTableEl );
 
-    Claim2( a.sz ,==, b.sz );
-    switch (op)
-    {
-        case BitOp_NIL:
-            wipe_BitTable (a, 0);
-            break;
-        case BitOp_AND:
-            UFor( i, n )  a.s[i] = a.s[i] & b.s[i];
-            break;
-        case BitOp_NIMP:
-            UFor( i, n )  a.s[i] = a.s[i] & ~b.s[i];
-            break;
-        case BitOp_IDEN:
-            if (a.s != b.s)  memcpy (a.s, b.s, n * sizeof (BitTableEl));
-            break;
-        case BitOp_XOR:
-            UFor( i, n )  a.s[i] = a.s[i] ^ b.s[i];
-            break;
-        case BitOp_OR:
-            UFor( i, n )  a.s[i] = a.s[i] | b.s[i];
-            break;
-        case BitOp_NOR:
-            UFor( i, n )  a.s[i] = ~(a.s[i] | b.s[i]);
-            break;
-        case BitOp_EQL:
-            UFor( i, n )  a.s[i] = ~(a.s[i] ^ b.s[i]);
-            break;
-        case BitOp_NOT:
-            UFor( i, n )  a.s[i] = ~b.s[i];
-            break;
-        case BitOp_IMP:
-            UFor( i, n )  a.s[i] = ~a.s[i] | b.s[i];
-            break;
-        case BitOp_NAND:
-            UFor( i, n )  a.s[i] = ~(a.s[i] & b.s[i]);
-            break;
-        case BitOp_YES:
-            wipe_BitTable (a, 1);
-            break;
-        case NBitOps:
-            Claim( 0 );
-            break;
-    }
+  Claim2( a.sz ,==, b.sz );
+  size_fo_BitTable (c, a.sz);
+
+  switch (op)
+  {
+  case BitOp_NIL:
+    wipe_BitTable (*c, 0);
+    break;
+  case BitOp_NOR:
+    UFor( i, n )  c->s[i] = ~(a.s[i] | b.s[i]);
+    break;
+  case BitOp_NOT1:
+    UFor( i, n )  c->s[i] = ~b.s[i];
+    break;
+  case BitOp_NIMP:
+    UFor( i, n )  c->s[i] = a.s[i] & ~b.s[i];
+    break;
+  case BitOp_NOT0:
+    UFor( i, n )  c->s[i] = ~a.s[i];
+    break;
+  case BitOp_XOR:
+    UFor( i, n )  c->s[i] = a.s[i] ^ b.s[i];
+  case BitOp_NAND:
+    UFor( i, n )  c->s[i] = ~(a.s[i] & b.s[i]);
+    break;
+  case BitOp_AND:
+    UFor( i, n )  c->s[i] = a.s[i] & b.s[i];
+    break;
+  case BitOp_EQL:
+    UFor( i, n )  c->s[i] = ~(a.s[i] ^ b.s[i]);
+    break;
+  case BitOp_IDEN1:
+    if (c->s != b.s)  memcpy (c->s, b.s, n * sizeof (BitTableEl));
+    break;
+  case BitOp_IMP:
+    UFor( i, n )  c->s[i] = ~a.s[i] | b.s[i];
+    break;
+  case BitOp_IDEN0:
+    break;
+  case BitOp_OR:
+    UFor( i, n )  c->s[i] = a.s[i] | b.s[i];
+    break;
+  case BitOp_YES:
+    wipe_BitTable (a, 1);
+    break;
+  case NBitOps:
+    Claim(0);
+    break;
+  }
+}
+
+qual_inline
+  void
+op_BitTable (BitTable a, BitOp op, const BitTable b)
+{
+  ujint i;
+  const ujint n = CeilQuot( a.sz, NBits_BitTableEl );
+
+  Claim2( a.sz ,==, b.sz );
+  switch (op)
+  {
+  case BitOp_NIL:
+    wipe_BitTable (a, 0);
+    break;
+  case BitOp_NOT1:
+    UFor( i, n )  a.s[i] = ~b.s[i];
+    break;
+  case BitOp_NOT0:
+    UFor( i, n )  a.s[i] = ~a.s[i];
+    break;
+  case BitOp_IDEN1:
+    if (a.s != b.s)  memcpy (a.s, b.s, n * sizeof (BitTableEl));
+    break;
+  case BitOp_IDEN0:
+    break;
+  case BitOp_YES:
+    wipe_BitTable (a, 1);
+    break;
+  default:
+    op2_BitTable (&a, op, a, b);
+    break;
+  }
 }
 
 qual_inline

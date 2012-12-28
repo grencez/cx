@@ -4,7 +4,6 @@
 #  PfxBldPath
 #  BldPath
 #  BinPath
-#  Objs
 #  ExeList
 # Suggested:
 #  CONFIG
@@ -12,8 +11,10 @@
 # Defines:
 #  CxExe
 #  CxBldPath
+#  CxHFiles
 
 PfxBldPath ?= bld
+BldPathCXX := $(PfxBldPath)/$(BldPath)-cxx
 BldPath := $(PfxBldPath)/$(BldPath)
 
 CxExe ?= $(BinPath)/cx
@@ -32,7 +33,10 @@ CxHFiles = \
 	synhax \
 	table
 
-CxHFiles := $(addsuffix .h,$(CxHFiles))
+CxHFileDeps := $(addsuffix .h,$(CxHFiles))
+CxCFileDeps := $(addsuffix .c,$(CxDeps))
+
+CxHFiles := $(addprefix $(CxBldPath)/,$(CxHFileDeps))
 
 CxObjs = $(addprefix $(CxBldPath)/,$(addsuffix .o,$(CxDeps)))
 
@@ -75,6 +79,7 @@ endif
 
 CFLAGS += -Wall -Wextra -Wstrict-aliasing
 CFLAGS += -I$(PfxBldPath)
+CFLAGS += -I$(BldPath)
 ExecCx = $(CxExe)
 
 ifdef CxPpPath
@@ -163,11 +168,17 @@ $(eval $(shell \
 	-e 's/\(.*\): *\(.*\)/$$(eval $$(CxBldPath)\/\1: $$(CxBldPath)\/\2)/' \
 	$(CxPath)/deps.mk))
 
-$(BldPath)/%.c: %.c $(CxExe) $(addprefix $(CxBldPath)/,$(CxHFiles))
+$(BldPath)/%.c: %.c $(CxExe) $(CxHFiles)
 	$(ExecCx) -x $< -o $@
 
-$(BldPath)/%.h: %.h $(CxExe) $(addprefix $(CxBldPath)/,$(CxHFiles))
+$(BldPath)/%.h: %.h $(CxExe) $(CxHFiles)
 	$(ExecCx) -x $< -o $@
+
+$(BldPathCXX)/%.cc: %.cc $(CxExe) $(CxHFiles)
+	cp -f $< $@
+
+$(BldPathCXX)/%.hh: %.hh $(CxExe) $(CxHFiles)
+	cp -f $< $@
 
 $(CxBldPath)/%.o: $(CxBldPath)/%.c
 	$(CC) -c $(CFLAGS) $< -o $@
@@ -175,12 +186,12 @@ $(CxBldPath)/%.o: $(CxBldPath)/%.c
 $(BldPath)/%.o: $(BldPath)/%.c
 	$(CC) -c $(CFLAGS) $< -o $@
 
+$(BldPathCXX)/%.o: $(CXXBldPath)/%.cc
+	$(CXX) -c $(CXXFLAGS) $< -o $@
+
 $(patsubst %.o,%.c,$(CxObjs)): | $(CxBldPath)
-$(addprefix $(CxBldPath)/,$(CxHFiles)): | $(CxBldPath)
+$(CxHFiles): | $(CxBldPath) $(BldPath) $(BldPathCXX)
 $(ExeList): | $(BinPath)
-$(patsubst %.o,%.c,$(Objs)): | $(BldPath)
-$(patsubst %.o,%.h,$(Objs)): | $(BldPath)
-$(HFiles): | $(BldPath)
 
 
 $(CxBldPath):
@@ -188,6 +199,8 @@ $(CxBldPath):
 $(BinPath):
 	mkdir -p $@
 $(BldPath):
+	mkdir -p $@
+$(BldPathCXX):
 	mkdir -p $@
 
 .PHONY: killcmake

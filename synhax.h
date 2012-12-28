@@ -6,6 +6,7 @@
  **/
 #include <assert.h>
 
+#define Stringify(a) #a
 #define Concatify(a,b) a ## b
 #define ConcatifyDef(a,b)  Concatify(a,b)
 
@@ -147,6 +148,13 @@ failout_sysCx (const char* msg);
 } while (0)
 #endif
 #define Claim2( a ,op, b )  Claim((a) op (b))
+
+#define Claim2_uint( a, op, b ) \
+do { \
+  if (!((a) op (b))) { \
+    DBog5( "FAILED: (%s) where (%s == %u) and (%s == %u)", Stringify((a) op (b)), #a, (uint) (a), #b, (uint) (b) ); \
+  } \
+} while (0)
 
 
 /** Cascading if statement.

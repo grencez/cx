@@ -12,6 +12,7 @@ cx.c:table.h
 def.h:synhax.h
 fileb.c:fileb.h
 fileb.h:alphatab.h
+fileb.h:syscx.h
 lgtable.h:bittable.h
 ospc.c:ospc.h
 ospc.h:syscx.h

@@ -352,9 +352,7 @@ cstr_SyntaxKind (SyntaxKind kind)
     void
 init_lexwords (Associa* map)
 {
-    DeclAssocia( AlphaTab, SyntaxKind, tmp_map,
-                 (SwappedFn) swapped_AlphaTab );
-    *map = *tmp_map;
+    InitAssocia( AlphaTab, SyntaxKind, *map, swapped_AlphaTab );
 
     for (SyntaxKind kind = Beg_Syntax_LexWords;
          kind < End_Syntax_LexWords;
@@ -1331,15 +1329,15 @@ xfrm_stmts_AST (Cons** ast_p, ASTree* t)
     void
 xget_ASTree (XFileB* xf, ASTree* t)
 {
-    DeclAssocia( AlphaTab, uint, type_lookup,
-                 (SwappedFn) swapped_AlphaTab );
+    Associa type_lookup;
+    InitAssocia( AlphaTab, uint, type_lookup, swapped_AlphaTab );
 
     lex_AST (xf, t);
     build_stmts_AST (&t->head, t);
     //oput_sxpn_ASTree (stderr_OFileB (), t);
     xfrm_stmts_AST (&t->head, t);
 
-    lose_Associa (type_lookup);
+    lose_Associa (&type_lookup);
 }
 
 int main (int argc, char** argv)

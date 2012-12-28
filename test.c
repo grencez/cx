@@ -220,8 +220,10 @@ testfn_Associa ()
     };
     const uint nkeys = ArraySz( keys );
     const uint nmuls = ArraySz( muls );
-    DeclAssocia( AlphaTab, uint, map, (SwappedFn) swapped_AlphaTab );
+    Associa map[1];
     uint n_expect = 1; /* Sentinel node.*/
+
+    InitAssocia( AlphaTab, uint, *map, swapped_AlphaTab );
 
     Claim2( map->nodes.sz ,==, n_expect );
     {:for (mi ; nmuls)

@@ -89,12 +89,19 @@ cons1_AlphaTab (const char* s)
 }
 
 qual_inline
-    char*
+  char*
+cstr_of_AlphaTab (AlphaTab* ts)
+{
+  if (ts->sz == 0 || ts->s[ts->sz-1] != '\0')
+    PushTable( *ts, '\0' );
+  return ts->s;
+}
+
+qual_inline
+  char*
 cstr_AlphaTab (AlphaTab* ts)
 {
-    if (ts->sz == 0 || ts->s[ts->sz-1] != '\0')
-        PushTable( *ts, '\0' );
-    return ts->s;
+  return cstr_of_AlphaTab (ts);
 }
 
 qual_inline
