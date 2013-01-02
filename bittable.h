@@ -36,7 +36,7 @@ enum BitOp {
   BitOp_XOR   = /* 0110 */ Bits4LH(0,1,1,0),
   BitOp_NAND  = /* 1110 */ Bits4LH(1,1,1,0),
   BitOp_AND   = /* 0001 */ Bits4LH(0,0,0,1),
-  BitOp_EQL   = /* 1001 */ Bits4LH(1,0,0,1),
+  BitOp_XNOR  = /* 1001 */ Bits4LH(1,0,0,1),
   BitOp_IDEN1 = /* 0101 */ Bits4LH(0,1,0,1),
   BitOp_IMP   = /* 1101 */ Bits4LH(1,1,0,1),
   BitOp_IDEN0 = /* 0011 */ Bits4LH(0,0,1,1),
@@ -308,7 +308,7 @@ op2_BitTable (BitTable* c, BitOp op, const BitTable a, const BitTable b)
   case BitOp_AND:
     UFor( i, n )  c->s[i] = a.s[i] & b.s[i];
     break;
-  case BitOp_EQL:
+  case BitOp_XNOR:
     UFor( i, n )  c->s[i] = ~(a.s[i] ^ b.s[i]);
     break;
   case BitOp_IDEN1:
