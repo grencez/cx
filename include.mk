@@ -78,8 +78,9 @@ ifneq (,$(filter errwarn,$(CONFIG)))
 endif
 
 CFLAGS += -Wall -Wextra -Wstrict-aliasing
-CFLAGS += -I$(PfxBldPath)
-CFLAGS += -I$(BldPath)
+IFLAGS += -I$(PfxBldPath)
+IFLAGS += -I$(BldPath)
+CFLAGS += $(IFLAGS)
 ExecCx = $(CxExe)
 
 ifdef CxPpPath

@@ -6,8 +6,8 @@
 \usepackage{amsfonts}
 \usepackage{graphicx}
 \usepackage{mathtools}
-
-%\usepackage[g]{esvect}
+\usepackage{hyperref}
+\usepackage{paralist}
 
 \DeclarePairedDelimiter{\abs}{\lvert}{\rvert}
 \DeclarePairedDelimiter{\ceil}{\lceil}{\rceil}
@@ -15,12 +15,12 @@
 \DeclarePairedDelimiter{\avect}{\langle}{\rangle}
 \DeclarePairedDelimiter{\aset}{\allowbreak\lbrace}{\rbrace}
 
-%\newcommand{\true}{\mathit{true}}
-%\newcommand{\fals}{\mathit{false}}
-\newcommand{\true}{\mbox{T}}
-\newcommand{\fals}{\mbox{F}}
+\newcommand{\true}{\top}
+\newcommand{\fals}{\bot}
+\newcommand{\acteq}{\longrightarrow}
 \newcommand{\Nat}{\mathbb{N}}
 \newcommand{\Int}{\mathbb{Z}}
+\newcommand{\unique}{\exists!}
 \newcommand{\defeq}{:=}
 \newcommand{\transpose}{^ \top }
 \newcommand{\queseq}{\overset{?}{=}}
@@ -36,13 +36,30 @@
 %\newcommand{\vect}[1]{{\vv{#1}}}
 \newcommand{\modop}[1]{\mbox{ mod }#1}
 \newcommand{\mathsc}[1]{\text{\normalfont\scshape#1}}
+\newcommand{\quicksec}[1]{{\bf #1.}\;}
+\newcommand{\fmlang}[1]{\textrm{#1}}
+
+\newcommand{\TODO}[1]{\textcolor{red}{\bf TODO:} #1}
+
+\newenvironment{itemize*}%
+{\begin{compactitem}}%
+{\end{compactitem}}
+
+\newenvironment{enumerate*}%
+{\begin{compactenum}}%
+{\end{compactenum}}
+
 
 \newcounter{exercisecnt}
 \def\theexercisecnt{\arabic{exercisecnt}}
 \newenvironment{exercise}
-{\refstepcounter{exercisecnt}
+{\hrulefill
+ 
+ \refstepcounter{exercisecnt}
  {\bf Exercise \theexercisecnt.}}
-{}
+{
+
+ \hrulefill}
 
 \newcounter{exercisepartcnt}[exercisecnt]
 \def\theexercisepartcnt{\theexercisecnt.\alph{exercisepartcnt}}
@@ -50,10 +67,4 @@
 {\refstepcounter{exercisepartcnt}
  {\bf Exercise \theexercisepartcnt.}}
 {}
-
-\newtheorem{theorem}{Theorem}[section]
-\newtheorem{lemma}[theorem]{Lemma}
-\newtheorem{corollary}[theorem]{Corollary}
-\newtheorem{definition}[theorem]{Definition}
-\newtheorem{example}[theorem]{Example}
 
