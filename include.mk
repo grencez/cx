@@ -33,10 +33,15 @@ CxHFiles = \
 	synhax \
 	table
 
+CxHHFiles = synhax table
+
+
 CxHFileDeps := $(addsuffix .h,$(CxHFiles))
 CxCFileDeps := $(addsuffix .c,$(CxDeps))
+CxHHFileDeps := $(addsuffix .hh,$(CxHHFiles))
 
 CxHFiles := $(addprefix $(CxBldPath)/,$(CxHFileDeps))
+CxHHFiles := $(addprefix $(CxBldPath)/,$(CxHHFileDeps))
 
 CxObjs = $(addprefix $(CxBldPath)/,$(addsuffix .o,$(CxDeps)))
 
@@ -164,6 +169,9 @@ $(CxBldPath)/%.h: $(CxPath)/%.h $(CxExe)
 	$(ExecCx) -x $< -o $@
 endif
 
+$(CxBldPath)/%.hh: $(CxPath)/%.hh
+	cp -f $< $@
+
 $(eval $(shell \
 	sed \
 	-e 's/\(.*\): *\(.*\)/$$(eval $$(CxBldPath)\/\1: $$(CxBldPath)\/\2)/' \
@@ -175,10 +183,10 @@ $(BldPath)/%.c: %.c $(CxExe) $(CxHFiles)
 $(BldPath)/%.h: %.h $(CxExe) $(CxHFiles)
 	$(ExecCx) -x $< -o $@
 
-$(BldPathCXX)/%.cc: %.cc $(CxExe) $(CxHFiles)
+$(BldPathCXX)/%.cc: %.cc $(CxExe) $(CxHFiles) $(CxHHFiles)
 	cp -f $< $@
 
-$(BldPathCXX)/%.hh: %.hh $(CxExe) $(CxHFiles)
+$(BldPathCXX)/%.hh: %.hh $(CxExe) $(CxHFiles) $(CxHHFiles)
 	cp -f $< $@
 
 $(CxBldPath)/%.o: $(CxBldPath)/%.c
