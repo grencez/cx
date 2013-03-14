@@ -7,14 +7,14 @@
 
 #include "synhax.hh"
 extern "C" {
-#include "table.h"
 #include "lgtable.h"
+#include "table.h"
 }
 
 namespace Cx {
 namespace C {
-  using ::Table;
   using ::LgTable;
+  using ::Table;
 }
 
 /** Standard vector.*/
@@ -33,10 +33,14 @@ public:
     lose_Table (&t);
   }
 
-  T& operator[](uint i) {
+  ujint sz() const {
+    return t.sz;
+  }
+
+  T& operator[](ujint i) {
     return *(T*) elt_Table (&t, i);
   }
-  const T& operator[](uint i) const {
+  const T& operator[](ujint i) const {
     return *(const T*) elt_Table ((C::Table*)&t, i);
   }
 
@@ -49,6 +53,8 @@ public:
     return (this->grow1() = x);
   }
   void mpop(const T& x, ujint n) {
+    for (ujint i = this->sz() - n; i < this->szz; ++i)
+      (*this)[i].~T();
     mpop_Table (&t, n);
   }
 
@@ -59,6 +65,13 @@ public:
     return *(T*) top_Table ((C::Table*)&t);
   }
 };
+
+template <class T>
+  void
+sz_of (const Table<T>& t, ujint x)
+{
+  return t.sz();
+}
 
 /** Table that does not reallocate existing elements.
  *
@@ -83,10 +96,10 @@ public:
     lose_LgTable (&t);
   }
 
-  const T& operator[](uint i) const {
+  const T& operator[](ujint i) const {
     return *(const T*) elt_LgTable ((C::LgTable*)&t, i);
   }
-  T& operator[](uint i) {
+  T& operator[](ujint i) {
     return *(T*) elt_LgTable (&t, i);
   }
 
