@@ -302,7 +302,7 @@ itoa_dup_cstr (int x)
     return s;
 }
 
-    /* Implemented in sys-cx.c */
+/* Implemented in syscx.c */
 FileB* stdin_FileB ();
 FileB* stdout_FileB ();
 FileB* stderr_FileB ();

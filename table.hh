@@ -27,6 +27,10 @@ public:
   Table() {
     t = dflt1_Table (sizeof(T));
   }
+  Table(const Table<T>& a) {
+    t = dflt1_Table (sizeof(T));
+    copy_Table (&t, &a.t);
+  }
   ~Table() {
     for (ujint i = 0; i < t.sz; ++i)
       (*this)[i].~T();
@@ -52,8 +56,8 @@ public:
   T& push(const T& x) {
     return (this->grow1() = x);
   }
-  void mpop(const T& x, ujint n) {
-    for (ujint i = this->sz() - n; i < this->szz; ++i)
+  void mpop(ujint n) {
+    for (ujint i = this->sz() - n; i < this->sz(); ++i)
       (*this)[i].~T();
     mpop_Table (&t, n);
   }
@@ -64,11 +68,43 @@ public:
   const T& top() const {
     return *(T*) top_Table ((C::Table*)&t);
   }
+
+  bool operator==(const Table<T>& b) const {
+    const Table<T>& a = *this;
+    const ujint n = a.sz();
+    if (n != b.sz())  return false;
+    for (ujint i = 0; i < n; ++i) {
+      if (a[i] != b[i])  return false;
+    }
+    return true;
+  }
+  bool operator!=(const Table<T>& b) const {
+    return !(*this == b);
+  }
+
+  bool operator<=(const Table<T>& b) const {
+    const Table<T>& a = *this;
+    const ujint n = (a.sz() <= b.sz()) ? a.sz() : b.sz();
+    for (ujint i = 0; i < n; ++i) {
+      if (a[i] < b[i])  return true;
+      if (a[i] > b[i])  return false;
+    }
+    return (a.sz() <= b.sz());
+  }
+  bool operator<(const Table<T>& b) const {
+    return ((*this <= b) && (*this != b));
+  }
+  bool operator>(const Table<T>& b) const {
+    return !(*this <= b);
+  }
+  bool operator>=(const Table<T>& b) const {
+    return !(*this < b);
+  }
 };
 
 template <class T>
   void
-sz_of (const Table<T>& t, ujint x)
+sz_of (const Table<T>& t)
 {
   return t.sz();
 }

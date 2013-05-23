@@ -13,6 +13,9 @@
 #  CxBldPath
 #  CxHFiles
 
+.SUFFIXES:
+SUFFIXES :=
+
 PfxBldPath ?= bld
 BldPathCXX := $(PfxBldPath)/$(BldPath)-cxx
 BldPath := $(PfxBldPath)/$(BldPath)
@@ -33,7 +36,7 @@ CxHFiles = \
 	synhax \
 	table
 
-CxHHFiles = synhax table
+CxHHFiles = synhax set table
 
 
 CxHFileDeps := $(addsuffix .h,$(CxHFiles))
@@ -183,19 +186,19 @@ $(BldPath)/%.c: %.c $(CxExe) $(CxHFiles)
 $(BldPath)/%.h: %.h $(CxExe) $(CxHFiles)
 	$(ExecCx) -x $< -o $@
 
-$(BldPathCXX)/%.cc: %.cc $(CxExe) $(CxHFiles) $(CxHHFiles)
+$(BldPathCXX)/%.cc: %.cc $(CxExe)
 	cp -f $< $@
 
-$(BldPathCXX)/%.hh: %.hh $(CxExe) $(CxHFiles) $(CxHHFiles)
+$(BldPathCXX)/%.hh: %.hh $(CxExe)
 	cp -f $< $@
 
 $(CxBldPath)/%.o: $(CxBldPath)/%.c
 	$(CC) -c $(CFLAGS) $< -o $@
 
-$(BldPath)/%.o: $(BldPath)/%.c
+$(BldPath)/%.o: $(BldPath)/%.c $(CxHFiles)
 	$(CC) -c $(CFLAGS) $< -o $@
 
-$(BldPathCXX)/%.o: $(CXXBldPath)/%.cc
+$(BldPathCXX)/%.o: $(BldPathCXX)/%.cc $(CxHFiles) $(CxHHFiles)
 	$(CXX) -c $(CXXFLAGS) $< -o $@
 
 $(patsubst %.o,%.c,$(CxObjs)): | $(CxBldPath)
