@@ -24,7 +24,7 @@ CxExe ?= $(BinPath)/cx
 
 CxBldPath ?= $(PfxBldPath)/cx
 
-CxDeps = bstree fileb ospc rbtree sxpn syscx
+CxDeps = bstree fileb lsp ospc rbtree sxpn syscx
 
 CxHFiles = \
 	$(CxDeps) \
@@ -172,6 +172,7 @@ $(CxBldPath)/%.h: $(CxPath)/%.h $(CxExe)
 	$(ExecCx) -x $< -o $@
 endif
 
+.PRECIOUS: $(CxBldPath)/%.hh
 $(CxBldPath)/%.hh: $(CxPath)/%.hh
 	cp -f $< $@
 
