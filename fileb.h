@@ -180,12 +180,6 @@ oputn_char_OFileB (OFileB* of, const char* a, ujint n);
 
 void
 xget_XFileB (XFileB* xf);
-char*
-xget_uint_cstr (uint* ret, const char* in);
-char*
-xget_int_cstr (int* ret, const char* in);
-char*
-xget_real_cstr (real* ret, const char* in);
 
 bool
 xget_uint_FileB (FileB* f, uint* x);
@@ -198,9 +192,6 @@ xget_real_XFileB (XFileB* xf, real* x);
 
 bool
 xgetn_byte_FileB (FileB* f, byte* a, ujint n);
-
-Trit
-swapped_AlphaTab (const AlphaTab* a, const AlphaTab* b);
 
 qual_inline
     void
@@ -288,18 +279,6 @@ oput_cstr_OFileB (OFileB* of, const char* s)
 {
     const AlphaTab t = dflt1_AlphaTab (s);
     oput_AlphaTab (of, &t);
-}
-
-qual_inline
-    char*
-itoa_dup_cstr (int x)
-{
-    OFileB of = dflt_OFileB ();
-    char* s = 0;
-    oput_int_OFileB (&of, x);
-    s = dup_cstr (cstr1_OFileB (&of, 0));
-    lose_OFileB (&of);
-    return s;
 }
 
 /* Implemented in syscx.c */

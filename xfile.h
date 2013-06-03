@@ -44,12 +44,12 @@ struct XFileVT
   void (*close_fn) (XFileCtx*, XFile);
 };
 
-bool get_int_XFile (XFile xf, int*);
-bool get_uint_XFile (XFile xf, uint*);
-bool get_ujint_XFile (XFile xf, ujint*);
-bool get_real_XFile (XFile xf, ujint*);
-bool get_char_XFile (XFile xf, char*);
-bool getn_byte_XFile (XFileB* xf, byte*, ujint);
+bool xget_int_XFile (XFile xf, int*);
+bool xget_uint_XFile (XFile xf, uint*);
+bool xget_ujint_XFile (XFile xf, ujint*);
+bool xget_real_XFile (XFile xf, ujint*);
+bool xget_char_XFile (XFile xf, char*);
+bool xgetn_byte_XFile (XFileB* xf, byte*, ujint);
 
 
 /* Implemented in syscx.c */

@@ -24,12 +24,11 @@ CxExe ?= $(BinPath)/cx
 
 CxBldPath ?= $(PfxBldPath)/cx
 
-CxDeps = bstree fileb lsp ospc rbtree sxpn syscx
+CxDeps = alphatab bstree fileb lsp ospc rbtree sxpn syscx
 
 CxHFiles = \
 	$(CxDeps) \
 	associa \
-	alphatab \
 	bittable \
 	def \
 	lgtable \

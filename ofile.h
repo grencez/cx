@@ -42,17 +42,17 @@ struct OFileVT
 };
 
 void
-put_int_OFile (OFile of, int x);
+oput_int_OFile (OFile of, int x);
 void
-put_uint_OFile (OFile of, uint x);
+oput_uint_OFile (OFile of, uint x);
 void
-put_ujint_OFile (OFile of, ujint x);
+oput_ujint_OFile (OFile of, ujint x);
 void
-put_real_OFile (OFile of, ujint x);
+oput_real_OFile (OFile of, ujint x);
 void
-put_char_OFile (OFile of, char c);
+oput_char_OFile (OFile of, char c);
 void
-put_cstr_OFile (OFile of, char* s);
+oput_cstr_OFile (OFile of, char* s);
 
 /* Implemented in syscx.c */
 OFileB stdout_OFile ();

@@ -1,3 +1,4 @@
+alphatab.c:alphatab.h
 alphatab.h:table.h
 associa.h:lgtable.h
 associa.h:rbtree.h

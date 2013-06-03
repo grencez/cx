@@ -29,7 +29,16 @@ public:
   }
   Table(const Table<T>& a) {
     t = dflt1_Table (sizeof(T));
-    copy_Table (&t, &a.t);
+    for (uint i = 0; i < a.sz(); ++i) {
+      this->push(a[i]);
+    }
+  }
+  const Table<T>& operator=(const Table<T>& a) {
+    this->mpop(this->sz());
+    for (uint i = 0; i < a.sz(); ++i) {
+      this->push(a[i]);
+    }
+    return *this;
   }
   ~Table() {
     for (ujint i = 0; i < t.sz; ++i)
@@ -54,7 +63,9 @@ public:
     return *e;
   }
   T& push(const T& x) {
-    return (this->grow1() = x);
+    T* e = (T*) grow1_Table (&t);
+    new (e) T(x);
+    return *e;
   }
   void mpop(ujint n) {
     for (ujint i = this->sz() - n; i < this->sz(); ++i)
@@ -103,7 +114,7 @@ public:
 };
 
 template <class T>
-  void
+  ujint
 sz_of (const Table<T>& t)
 {
   return t.sz();
@@ -132,6 +143,10 @@ public:
     lose_LgTable (&t);
   }
 
+  ujint sz() const {
+    return t.sz;
+  }
+
   const T& operator[](ujint i) const {
     return *(const T*) elt_LgTable ((C::LgTable*)&t, i);
   }
@@ -145,7 +160,9 @@ public:
     return *e;
   }
   T& push(const T& x) {
-    return (this->grow1() = x);
+    T* e = (T*) take_LgTable (&t);
+    new (e) T(x);
+    return *e;
   }
 
   T& top() {
@@ -155,6 +172,13 @@ public:
     return (*this)[t.sz-1];
   }
 };
+
+template <class T>
+  ujint
+sz_of (const LgTable<T>& t)
+{
+  return t.sz();
+}
 }
 
 #endif

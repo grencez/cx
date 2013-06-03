@@ -63,7 +63,7 @@ ensure_kind_LspCtx (LspCtx* ctx, const LspVT* vt)
   return *(LspKind**) val_of_Assoc (assoc);
 }
 
-/*! Easy make function for LspKind.*/
+/** Easy make function for LspKind.*/
   LspKind*
 make_LspKind (const LspVT* vt)
 {
