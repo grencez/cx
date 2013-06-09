@@ -35,7 +35,7 @@ CxHFiles = \
 	synhax \
 	table
 
-CxHHFiles = synhax set table
+CxHHFiles = alphatab synhax set table
 
 
 CxHFileDeps := $(addsuffix .h,$(CxHFiles))

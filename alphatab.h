@@ -154,6 +154,10 @@ char*
 xget_real_cstr (real* ret, const char* in);
 Trit
 swapped_AlphaTab (const AlphaTab* a, const AlphaTab* b);
+void
+cat_uint_AlphaTab (AlphaTab* a, uint x);
+void
+cat_int_AlphaTab (AlphaTab* a, int x);
 
 #endif
 

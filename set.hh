@@ -3,6 +3,7 @@
 #define Set_HH_
 
 #include "synhax.hh"
+#include "table.hh"
 #include <set>
 
 namespace Cx {
@@ -15,8 +16,11 @@ public:
   explicit Set(const vector<T>& a) :
     std::set<T>(a.begin(), a.end())
   {}
+  explicit Set(const Table<T>& a) :
+    std::set<T>(&a[0], &a[sz()])
+  {}
 
-  bool elemCk(const T& e) const
+  bool elem_ck(const T& e) const
   {
     return (this->find(e) != this->end());
   }

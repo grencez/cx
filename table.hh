@@ -49,6 +49,16 @@ public:
   ujint sz() const {
     return t.sz;
   }
+  ujint size() const { return this->sz(); }
+
+  void resize(ujint capac) {
+    ujint old_sz = this->sz();
+    for (ujint i = capac; i < old_sz; ++i)
+      (*this)[i].~T();
+    size_Table (&t, capac);
+    for (ujint i = old_sz; i < capac; ++i)
+      new (&(*this)[i]) T();
+  }
 
   T& operator[](ujint i) {
     return *(T*) elt_Table (&t, i);
@@ -110,6 +120,13 @@ public:
   }
   bool operator>=(const Table<T>& b) const {
     return !(*this < b);
+  }
+
+  const T* begin() const {
+    return *(T*) elt_Table ((C::Table*)&t, 0);
+  }
+  const T* end() const {
+    return *(T*) elt_Table ((C::Table*)&t, t.sz);
   }
 };
 

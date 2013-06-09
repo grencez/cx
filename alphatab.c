@@ -88,3 +88,19 @@ swapped_AlphaTab (const AlphaTab* a, const AlphaTab* b)
   return (ret < 0 ? Nil : (ret > 0 ? Yes : May));
 }
 
+  void
+cat_uint_AlphaTab (AlphaTab* a, uint x)
+{
+  char buf[50];
+  (void) sprintf(buf, "%u", x);
+  cat_cstr_AlphaTab (a, buf);
+}
+
+  void
+cat_int_AlphaTab (AlphaTab* a, int x)
+{
+  char buf[50];
+  (void) sprintf(buf, "%d", x);
+  cat_cstr_AlphaTab (a, buf);
+}
+

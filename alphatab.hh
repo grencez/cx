@@ -24,23 +24,71 @@ public:
     t = dflt_AlphaTab ();
   }
   AlphaTab(const char* s) {
-    t = dflt1_AlphaTab (s);
+    t = cons1_AlphaTab (s);
   }
 
   AlphaTab(const AlphaTab& b) {
     t = dflt_AlphaTab ();
     copy_AlphaTab (&t, &b.t);
   }
-
-  AlphaTab(const AlphaTab& b) {
-    t = dflt_AlphaTab ();
+  const AlphaTab& operator=(const AlphaTab& b) {
     copy_AlphaTab (&t, &b.t);
+    return *this;
   }
-
   ~AlphaTab() {
     lose_AlphaTab (&t);
   }
+
+  const AlphaTab& operator=(uint x) {
+    copy_cstr_AlphaTab (&t, "");
+    cat_uint_AlphaTab (&t, x);
+    return *this;
+  }
+  const AlphaTab& operator=(int x) {
+    copy_cstr_AlphaTab (&t, "");
+    cat_int_AlphaTab (&t, x);
+    return *this;
+  }
+
+  const AlphaTab& operator+=(const AlphaTab& b) {
+    cat_AlphaTab (&t, &b.t);
+    return *this;
+  }
+  AlphaTab operator+(const AlphaTab& b) const {
+    AlphaTab a( *this );
+    a += b;
+    return a;
+  }
+
+  const AlphaTab& operator+=(uint x) {
+    cat_uint_AlphaTab (&t, x);
+    return *this;
+  }
+  AlphaTab operator+(uint x) const {
+    AlphaTab a( *this );
+    a += x;
+    return a;
+  }
+
+  const AlphaTab& operator+=(int x) {
+    cat_int_AlphaTab (&t, x);
+    return *this;
+  }
+  AlphaTab operator+(int x) const {
+    AlphaTab a( *this );
+    a += x;
+    return a;
+  }
+
+  const char* cstr() const {
+    return t.s;
+  }
 };
+
+inline
+std::ostream& operator<<(ostream& out, const AlphaTab& a) {
+  return out << a.cstr();
+}
 
 typedef AlphaTab String;
 }
