@@ -393,6 +393,27 @@ copy_const_Table (Table* a, const ConstTable* b)
     XferCastTable( a, CopyTable_a ); \
 } while (0)
 
+qual_inline
+  void
+state_of_index (uint* state, ujint idx, const uint* doms, uint n)
+{
+  for (uint i = n; i > 0; --i) {
+    state[i-1] = idx % doms[i-1];
+    idx /= doms[i-1];
+  }
+}
+
+qual_inline
+  ujint
+index_of_state (const uint* state, const uint* doms, uint n)
+{
+  ujint idx = 0;
+  for (uint i = 0; i < n; ++i) {
+    idx *= doms[i];
+    idx += state[i];
+  }
+  return idx;
+}
 
 #endif
 
