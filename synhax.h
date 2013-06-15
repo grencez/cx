@@ -50,13 +50,6 @@
 
 #define UFor( i, bel )  for (i = 0; i < (bel); ++i)
 
-/** Open a scope block (open curly brace).**/
-#define BInit() {
-/** Close a scope block (close curly brace).**/
-#define BLose() }
-#define BLoopT( T, i, bel )  T i; for (i = 0; i < (bel); ++i) BInit()
-#define BUjFor( i, bel )  BLoopT( ujint, i, bel )
-
 #define AccepTok( line, tok ) \
     ((0 == strncmp ((line), (tok), strlen(tok))) \
      ? ((line) = &(line)[strlen(tok)]) \
@@ -156,19 +149,16 @@ do { \
   } \
 } while (0)
 
-
-/** Cascading if statement.
- * This must be called in the same scope somewhere after
- * a BInit() and before a BLose().
- **/
-#define BCasc(cond, inv, msg) \
-    if (!(inv) || !(cond)) \
-    { \
-        inv = false; \
-        if (msg) \
-        { \
-            DBog2( "(%s => !(%s))", msg, #cond ); \
-        } \
+/** Wrap this in an if statement.
+ * if (LegitCk( status == 0, invariant, "last_call()"))
+ * { ... }
+ */
+#define LegitCk(cond, inv, msg) \
+  ((inv) && !(cond))) { \
+    inv = false; \
+    if (msg) { \
+      DBog2( "(%s => !(%s))", msg, #cond ); \
     } \
-    BLose() if (inv) BInit()
+  } \
+  else if ((inv)
 

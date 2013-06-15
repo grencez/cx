@@ -222,18 +222,17 @@ xget_FileB (FileB* f)
     }
     else
     {
-        size_t sz = 0;
-        BInit();
+      size_t sz = 0;
 
-        BCasc( ret == 0, good, "fseek()" );
-
+      if (LegitCk( ret == 0, good, "fseek()" ))
         ret = ftell (f->f);
-        BCasc( ret >= 0, good, "ftell()" );
-
+      if (LegitCk( ret >= 0, good, "ftell()" ))
+      {
         sz = ret;
         ret = fseek (f->f, 0, SEEK_SET);
-        BCasc( ret == 0, good, "fseek()" );
-
+      }
+      if (LegitCk(ret == 0, good, "fseek()" ))
+      {
         GrowTable( xf->buf, sz );
 
             /* Note this relation!*/
@@ -242,9 +241,9 @@ xget_FileB (FileB* f)
         ret = fread (&xf->buf.s[xf->off], 1, sz, f->f);
         if (ret >= 0)
             xf->buf.s[xf->off + ret] = '\0';
-
-        BCasc( ret == (long)sz, good, "fread()" );
-        BLose();
+      }
+      if (LegitCk( ret == (long)sz, good, "fread()" ))
+      {}
     }
 
     if (good)

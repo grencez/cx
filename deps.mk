@@ -15,9 +15,9 @@ fileb.c:fileb.h
 fileb.h:alphatab.h
 fileb.h:syscx.h
 lgtable.h:bittable.h
-lsp.c:lsp.h
-lsp.h:alphatab.h
-lsp.h:associa.h
+sesp.c:sesp.h
+sesp.h:alphatab.h
+sesp.h:associa.h
 ospc.c:ospc.h
 ospc.h:syscx.h
 ospc.h:fileb.h

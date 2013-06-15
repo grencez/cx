@@ -3,12 +3,10 @@
 #define SYNHAX_HH_
 
 #include <iostream>
-#include <map>
 #include <string>
 #include <utility>
 #include <vector>
 
-using std::map;
 using std::pair;
 using std::vector;
 using std::string;
@@ -16,31 +14,6 @@ using std::ostream;
 
 extern "C" {
 #include "cx/def.h"
-}
-
-template <class K, class V>
-  const V*
-MapLookup(const map<K,V>& m, const K& key)
-{
-  typename map<K,V>::const_iterator it = m.find(key);
-  if (it == m.end())  return NULL;
-  return &it->second;
-}
-
-template <class K, class V>
-  V*
-MapLookup(map<K,V>& m, const K& key)
-{
-  typename map<K,V>::iterator it = m.find(key);
-  if (it == m.end())  return NULL;
-  return &it->second;
-}
-
-template <class K, class V>
-  ujint
-sz_of(const map<K,V>& m)
-{
-  return m.size();
 }
 
 template <class T>
@@ -72,6 +45,22 @@ Remove1(vector<T>& a, const T& elem)
     }
   }
   return false;
+}
+
+inline
+  uint
+umod_int (int i, uint n)
+{
+  if (i >= 0) {
+    i = i % n;
+  }
+  else {
+    i = n - ((- i) % n);
+    if ((uint) i == n) {
+      i = 0;
+    }
+  }
+  return (uint) i;
 }
 
 #endif

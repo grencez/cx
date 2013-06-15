@@ -24,7 +24,7 @@ CxExe ?= $(BinPath)/cx
 
 CxBldPath ?= $(PfxBldPath)/cx
 
-CxDeps = alphatab bstree fileb lsp ospc rbtree sxpn syscx
+CxDeps = alphatab bstree fileb ospc rbtree sesp sxpn syscx
 
 CxHFiles = \
 	$(CxDeps) \
@@ -35,7 +35,7 @@ CxHFiles = \
 	synhax \
 	table
 
-CxHHFiles = alphatab synhax set table
+CxHHFiles = alphatab map synhax set table
 
 
 CxHFileDeps := $(addsuffix .h,$(CxHFiles))

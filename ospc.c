@@ -51,19 +51,21 @@ stdopipe_OSPc (OSPc* ospc)
     bool
 spawn_OSPc (OSPc* ospc)
 {
-    fd_t xfd[2] = { -1, -1 };
-    fd_t ofd[2] = { -1, -1 };
-    bool good = true;
-    DeclTable( cstr, argv );
-    uint nfrees = 0;
+  fd_t xfd[2] = { -1, -1 };
+  fd_t ofd[2] = { -1, -1 };
+  bool good = true;
+  DeclTable( cstr, argv );
+  uint nfrees = 0;
 
-    BInit();
+  if (ospc->of) {
+    if (LegitCk(pipe_sysCx (xfd), good, "" )) {}
+  }
+  if (ospc->xf) {
+    if (LegitCk(pipe_sysCx (ofd), good, "" )) {}
+  }
 
-    if (ospc->of)  good = pipe_sysCx (xfd);
-    BCasc( good, good, "pipe(xfd)" );
-    if (ospc->xf)  good = pipe_sysCx (ofd);
-    BCasc( good, good, "pipe(ofd)" );
-
+  if (good)
+  {
     PushTable( argv, dup_cstr (exename_of_sysCx ()) );
     PushTable( argv, dup_cstr (MagicArgv1_sysCx) );
     PushTable( argv, dup_cstr ("-exec") );
@@ -96,8 +98,9 @@ spawn_OSPc (OSPc* ospc)
     PushTable( argv, 0 );
 
     ospc->pid = spawnvp_sysCx (argv.s);
-    BCasc( ospc->pid >= 0, good, "spawn_sysCx()" );
-
+  }
+  if (LegitCk(ospc->pid >= 0, good, "spawn_sysCx()" ))
+  {
     /* The old switcharoo. Your input is my output and vice-versa.*/
     if (ospc->of)
     {
@@ -111,14 +114,13 @@ spawn_OSPc (OSPc* ospc)
         ospc->xfb.fd = ofd[0];
         set_FILE_FileB (&ospc->xfb, fdopen_sysCx (ospc->xfb.fd, "rb"));
     }
+  }
 
-    BLose();
+  {:for (i ; nfrees)
+    free (argv.s[i]);
+  }
+  LoseTable( argv );
 
-    {:for (i ; nfrees)
-        free (argv.s[i]);
-    }
-    LoseTable( argv );
-
-    return good;
+  return good;
 }
 
