@@ -31,6 +31,7 @@ CxHFiles = \
 	associa \
 	bittable \
 	def \
+	gmrand \
 	lgtable \
 	synhax \
 	table
@@ -82,6 +83,18 @@ ifneq (,$(filter ansi,$(CONFIG)))
 endif
 ifneq (,$(filter errwarn,$(CONFIG)))
 	CFLAGS += -Werror
+endif
+## Allow parallelism.
+ifneq (,$(filter openmp,$(CONFIG)))
+	ifeq ($(CC),icc)
+		CFLAGS += -openmp
+	else ifneq (,$(filter sunstudio,$(CONFIG)))
+		# Important! Set the OMP_NUM_THREADS
+		# environment variable to see parallelism!
+		CFLAGS += -xopenmp
+	else
+		CFLAGS += -fopenmp
+	endif
 endif
 
 CFLAGS += -Wall -Wextra -Wstrict-aliasing

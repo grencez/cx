@@ -47,6 +47,10 @@ typedef struct ujint2 ujint2;
 struct uint2 { uint s[2]; };
 struct ujint2 { ujint s[2]; };
 
+#ifndef uint32
+#define uint32 uint
+#endif
+
 #if 0
 typedef double real;
 #define Max_real DBL_MAX
