@@ -114,6 +114,15 @@ cons_Sesp (Sesp car, SespCell cdr)
 }
 
   Sesp
+list1_Sesp (Sesp a)
+{
+  SespCtx* ctx = ctx_of_Sesp (a);
+  SespCell cons = &ctx->nil;
+  cons = cons_Sesp (a, cons);
+  return &cons->base;
+}
+
+  Sesp
 list2_Sesp (Sesp a, Sesp b)
 {
   SespCtx* ctx = ctx_of_Sesp (a);
@@ -145,6 +154,20 @@ list4_Sesp (Sesp a, Sesp b, Sesp c, Sesp d)
   return &cons->base;
 }
 
+  bool
+pushlast_Sesp (Sesp list, Sesp a)
+{
+  Sesp b = cdr_of_Sesp (list);
+  if (nil_ck_Sesp (list))  return false;
+  if (!list_ck_Sesp (list))  return false;
+  while (!nil_ck_Sesp (b))
+  {
+    list = b;
+    b = cdr_of_Sesp (list);
+  }
+  return cdr_fo_Sesp (list, list1_Sesp (a));
+}
+
   const SespVT*
 vt_SespCell ()
 {
@@ -152,6 +175,7 @@ vt_SespCell ()
   static SespVT vt;
   if (!vt_initialized) {
     vt_initialized = true;
+    vt.kind_name = "Cell";
     memset (&vt, 0, sizeof (vt));
     vt.base_offset = offsetof( SespCellBase, base );
     vt.size = sizeof(SespCellBase);
@@ -188,6 +212,7 @@ vt_SespCStr ()
   static SespVT vt;
   if (!vt_initialized) {
     vt_initialized = true;
+    vt.kind_name = "CStr";
     memset (&vt, 0, sizeof (vt));
     vt.base_offset = offsetof( SespCStrBase, base );
     vt.size = sizeof(SespCStrBase);
@@ -220,6 +245,7 @@ vt_SespCCStr ()
   static SespVT vt;
   if (!vt_initialized) {
     vt_initialized = true;
+    vt.kind_name = "CCstr";
     memset (&vt, 0, sizeof (vt));
     vt.base_offset = offsetof( SespCCStrBase, base );
     vt.size = sizeof(SespCCStrBase);
@@ -244,6 +270,7 @@ vt_SespNat ()
   static SespVT vt;
   if (!vt_initialized) {
     vt_initialized = true;
+    vt.kind_name = "Nat";
     memset (&vt, 0, sizeof (vt));
     vt.base_offset = offsetof( SespNatBase, base );
     vt.size = sizeof(SespNatBase);
@@ -267,6 +294,7 @@ vt_SespInt ()
   static SespVT vt;
   if (!vt_initialized) {
     vt_initialized = true;
+    vt.kind_name = "Int";
     memset (&vt, 0, sizeof (vt));
     vt.base_offset = offsetof( SespIntBase, base );
     vt.size = sizeof(SespIntBase);

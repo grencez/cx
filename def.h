@@ -10,6 +10,7 @@
 
 typedef int Bit;
 enum Trit { Nil = 0, Yes = 1, May = 2 };
+typedef int Signum;
 typedef enum Trit Trit;
 /** Type of function which compares two objects.
  * Return values should conform to:

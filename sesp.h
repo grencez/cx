@@ -74,6 +74,7 @@ struct SespIntBase
 
 struct SespVT
 {
+  const char* kind_name;
   size_t base_offset;
   size_t size;
 
@@ -106,11 +107,15 @@ free_SespKind (SespKind* kind);
 SespCell
 cons_Sesp (Sesp a, SespCell b);
 Sesp
+list1_Sesp (Sesp a);
+Sesp
 list2_Sesp (Sesp a, Sesp b);
 Sesp
 list3_Sesp (Sesp a, Sesp b, Sesp c);
 Sesp
 list4_Sesp (Sesp a, Sesp b, Sesp c, Sesp d);
+bool
+pushlast_Sesp (Sesp list, Sesp a);
 
 qual_inline
   void
@@ -121,6 +126,41 @@ lose_Sesp (Sesp sp)
       sp->kind->vt->lose_fn (sp);
     }
   }
+}
+
+qual_inline
+  SespCell
+to_SespCell (Sesp sp)
+{
+  return CastUp( SespCellBase, base, sp );
+}
+
+qual_inline
+  SespCStr
+to_SespCStr (Sesp sp)
+{
+  return CastUp( SespCStrBase, base, sp );
+}
+
+qual_inline
+  SespCCStr
+to_SespCCStr (Sesp sp)
+{
+  return CastUp( SespCCStrBase, base, sp );
+}
+
+qual_inline
+  SespNat
+to_SespNat (Sesp sp)
+{
+  return CastUp( SespNatBase, base, sp );
+}
+
+qual_inline
+  SespInt
+to_SespInt (Sesp sp)
+{
+  return CastUp( SespIntBase, base, sp );
 }
 
 qual_inline
@@ -175,7 +215,7 @@ car_of_Sesp (Sesp a)
     return a;
   }
   if (list_ck_Sesp (a)) {
-    SespCell cons = CastUp( SespCellBase, base, a );
+    SespCell cons = to_SespCell (a);
     return cons->car;
   }
   DBog0( "Called on an atom..." );
@@ -190,7 +230,7 @@ cdr_of_Sesp (Sesp a)
     return a;
   }
   if (list_ck_Sesp (a)) {
-    SespCell cons = CastUp( SespCellBase, base, a );
+    SespCell cons = to_SespCell (a);
     cons = cons->cdr;
     return &cons->base;
   }
@@ -219,6 +259,45 @@ caddr_of_Sesp (Sesp a)
   return car_of_Sesp (cddr_of_Sesp (a));
 }
 
+qual_inline
+  bool
+car_fo_Sesp (Sesp a, Sesp b)
+{
+  SespCell a_cell;
+  if (nil_ck_Sesp (a)) {
+    DBog0( "Called on a Nil." );
+    return false;
+  }
+  if (!list_ck_Sesp (a)) {
+    DBog0( "Called on an atom!" );
+    return false;
+  }
+  a_cell = to_SespCell (a);
+  a_cell->car = b;
+  return true;
+}
+
+qual_inline
+  bool
+cdr_fo_Sesp (Sesp a, Sesp b)
+{
+  SespCell a_cell = to_SespCell (a);
+  if (nil_ck_Sesp (a)) {
+    DBog0( "Called on a Nil." );
+    return false;
+  }
+  if (!list_ck_Sesp (a)) {
+    DBog0( "Called on an atom!" );
+    return false;
+  }
+  if (!list_ck_Sesp (b)) {
+    DBog0( "Can't replace cdr with non-list!" );
+    return false;
+  }
+  a_cell->cdr = to_SespCell (b);
+  return true;
+}
+
 SespCStr
 make_SespCStr (SespCtx* ctx, const char* s);
 SespCCStr
@@ -227,34 +306,6 @@ SespNat
 make_SespNat (SespCtx* ctx, uint u);
 SespInt
 make_SespInt (SespCtx* ctx, int i);
-
-qual_inline
-  SespCStr
-to_SespCStr (Sesp sp)
-{
-  return CastUp( SespCStrBase, base, sp );
-}
-
-qual_inline
-  SespCCStr
-to_SespCCStr (Sesp sp)
-{
-  return CastUp( SespCCStrBase, base, sp );
-}
-
-qual_inline
-  SespNat
-to_SespNat (Sesp sp)
-{
-  return CastUp( SespNatBase, base, sp );
-}
-
-qual_inline
-  SespInt
-to_SespInt (Sesp sp)
-{
-  return CastUp( SespIntBase, base, sp );
-}
 
 qual_inline
   Sesp

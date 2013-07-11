@@ -31,6 +31,14 @@ eql_cstr (const char* a, const char* b)
 { return eq_cstr (a, b); }
 
 qual_inline
+  bool
+pfxeq_cstr (const char* pfx, const char* s)
+{
+  if (!s)  return false;
+  return (0 == strncmp (pfx, s, strlen (pfx)));
+}
+
+qual_inline
     AlphaTab
 dflt_AlphaTab ()
 {
