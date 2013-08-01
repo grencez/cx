@@ -127,11 +127,11 @@ parse_args_sysCx (int* pargc, char*** pargv)
     void
 init_sysCx (int* pargc, char*** pargv)
 {
-    stderr_FileB ();
+    stderr_OFileB ();
     parse_args_sysCx (pargc, pargv);
 
-    stdin_FileB ();
-    stdout_FileB ();
+    stdin_XFileB ();
+    stdout_OFileB ();
     signal (SIGSEGV, signal_hook_sysCx);
 }
 
@@ -163,9 +163,9 @@ lose_sysCx ()
     }
     LoseTable( LoseFns );
 
-    lose_FileB (stdin_FileB ());
-    lose_FileB (stdout_FileB ());
-    lose_FileB (stderr_FileB ());
+    lose_XFileB (stdin_XFileB ());
+    lose_OFileB (stdout_OFileB ());
+    lose_OFileB (stderr_OFileB ());
 }
 
     void
@@ -178,8 +178,8 @@ failout_sysCx (const char* msg)
         FILE* f = stderr;
 
         /* Flush these so the next message is last.*/
-        flusho_FileB (stdout_FileB ());
-        flusho_FileB (stderr_FileB ());
+        flush_OFileB (stdout_OFileB ());
+        flush_OFileB (stderr_OFileB ());
 
         fprintf (f, "FAILOUT: %s\n", exename_of_sysCx ());
         if (msg[0])
@@ -198,107 +198,105 @@ dbglog_printf3 (const char* file,
                 const char* fmt,
                 ...)
 {
-    va_list args;
-    int err = errno;
-    OFileB* f = stderr_OFileB ();
+  va_list args;
+  int err = errno;
+  OFile* of = stderr_OFile ();
 
-    printf_OFileB (f, "%s(%u) %s: ", file, line, func);
+  printf_OFile (of, "%s(%u) %s: ", file, line, func);
 
-    va_start (args, fmt);
-    vprintf_OFileB (f, fmt, args);
-    va_end(args);
+  va_start (args, fmt);
+  vprintf_OFile (of, fmt, args);
+  va_end(args);
 
-    oput_char_OFileB (f, '\n');
+  oput_char_OFile (of, '\n');
 
-    if (err != 0)
-    {
+  if (err != 0)
+  {
 #if 0
-            /* Why no work? */
-        const uint n = 2048 * sizeof(char);
-        char* s;
+    /* Why no work? */
+    const uint n = 2048 * sizeof(char);
+    char* s;
 
-        printf_FileB (f, "^^^ errno:%d ", err);
+    printf_FileB (of, "^^^ errno:%d ", err);
 
-        s = (char*) ensure_FileB (f, n);
-        s[0] = '\0';
+    s = (char*) ensure_OFile (of, n);
+    s[0] = '\0';
 
-        strerror_r (err, s, n);
+    strerror_r (err, s, n);
 
-        f->off += strlen (s) * sizeof(char);
-        oput_char_FileB (f, '\n');
+    of->off += strlen (s) * sizeof(char);
+    oput_char_File (of, '\n');
 #else
-        printf_OFileB (f, "^^^ errno:%d %s\n", err, strerror (err));
+    printf_OFile (of, "^^^ errno:%d %s\n", err, strerror (err));
 #endif
-        errno = 0;
-    }
-    flush_OFileB (f);
+    errno = 0;
+  }
+  flush_OFile (of);
 }
 
 
-    FileB*
-stdin_FileB ()
-{
-    static FileB f_mem;
-    static FileB* f = 0;
-    if (!f)
-    {
-        f = &f_mem;
-        init_FileB (f);
-        set_FILE_FileB (f, stdin);
-        f->byline = true;
-    }
-    return f;
-}
-
-    FileB*
-stdout_FileB ()
-{
-    static FileB f_mem;
-    static FileB* f = 0;
-    if (!f)
-    {
-        f = &f_mem;
-        init_FileB (f);
-        seto_FileB (f, true);
-        set_FILE_FileB (f, stdout);
-    }
-    return f;
-}
-
-    FileB*
-stderr_FileB ()
-{
-    static FileB f_mem;
-    static FileB* f = 0;
-    if (!f)
-    {
-        f = &f_mem;
-        init_FileB (f);
-        seto_FileB (f, true);
-        set_FILE_FileB (f, stderr);
-    }
-    return f;
-}
-
-    XFileB*
+  XFileB*
 stdin_XFileB ()
 {
-    FileB* fb = stdin_FileB ();
-    return &fb->xo;
+  static bool initialized = false;
+  static XFileB xfb[1];
+  if (!initialized)
+  {
+    init_XFileB (xfb);
+    set_FILE_FileB (&xfb->fb, stdin);
+    xfb->fb.byline = true;
+    initialized = true;
+  }
+  return xfb;
 }
 
-    OFileB*
+  OFileB*
 stdout_OFileB ()
 {
-    FileB* fb = stdout_FileB ();
-    return &fb->xo;
+  static bool initialized = false;
+  static OFileB ofb[1];
+  if (!initialized)
+  {
+    init_OFileB (ofb);
+    set_FILE_FileB (&ofb->fb, stdout);
+    initialized = true;
+  }
+  return ofb;
 }
 
-    OFileB*
+  OFileB*
 stderr_OFileB ()
 {
-    FileB* fb = stderr_FileB ();
-    return &fb->xo;
+  static bool initialized = false;
+  static OFileB ofb[1];
+  if (!initialized)
+  {
+    init_OFileB (ofb);
+    set_FILE_FileB (&ofb->fb, stderr);
+    initialized = true;
+  }
+  return ofb;
+}
+
+  XFile*
+stdin_XFile ()
+{
+  XFileB* xfb = stdin_XFileB ();
+  return &xfb->xf;
+}
+
+  OFile*
+stdout_OFile ()
+{
+  OFileB* ofb = stdout_OFileB ();
+  return &ofb->of;
+}
+
+  OFile*
+stderr_OFile ()
+{
+  OFileB* ofb = stderr_OFileB ();
+  return &ofb->of;
 }
 
     bool
@@ -360,16 +358,16 @@ fdopen_sysCx (fd_t fd, const char* mode)
 static void
 oput_execvp_args (const char* fn, char* const* argv)
 {
-    OFileB* of = stderr_OFileB ();
-    oput_cstr_OFileB (of, fn);
-    oput_char_OFileB (of, ':');
-    for (uint i = 0; argv[i]; ++i)
-    {
-        oput_char_OFileB (of, ' ');
-        oput_cstr_OFileB (of, argv[i]);
-    }
-    oput_char_OFileB (of, '\n');
-    flush_OFileB (of);
+  OFile* of = stderr_OFile ();
+  oput_cstr_OFile (of, fn);
+  oput_char_OFile (of, ':');
+  for (uint i = 0; argv[i]; ++i)
+  {
+    oput_char_OFile (of, ' ');
+    oput_cstr_OFile (of, argv[i]);
+  }
+  oput_char_OFile (of, '\n');
+  flush_OFile (of);
 }
 
     pid_t
@@ -451,51 +449,52 @@ waitpid_sysCx (pid_t pid, int* status)
 /**
  * \param path  Return value. Can come in as a hint for the path name.
  **/
-    void
+  void
 mktmppath_sysCx (AlphaTab* path)
 {
-    const char* v = 0;
+  const char* v = 0;
 #ifdef POSIX_SOURCE
-    pid_t pid = getpid ();
+  pid_t pid = getpid ();
 #else
-    pid_t pid = _getpid ();
+  pid_t pid = _getpid ();
 #endif
-    DecloStack1( OFileB, of, dflt_OFileB () );
+  OFile of[1];
+  init_OFile (of);
 
 #ifdef POSIX_SOURCE
-    v = getenv ("TMPDIR");
-    if (!v)  v = "/tmp";
+  v = getenv ("TMPDIR");
+  if (!v)  v = "/tmp";
 #else
-    v = getenv ("TEMP");
+  v = getenv ("TEMP");
 #endif
 
-    if (!v)
-    {
-        path->sz = 0;
-        return;
-    }
-    oput_cstr_OFileB (of, v);
-    oput_char_OFileB (of, '/');
-    oput_AlphaTab (of, path);
-    oput_char_OFileB (of, '-');
-    oput_ujint_OFileB (of, pid);
-    oput_char_OFileB (of, '-');
-
+  if (!v)
+  {
     path->sz = 0;
-    for (ujint i = 0; i < Max_ujint; ++i)
-    {
-        ujint off = of->off;
-        oput_ujint_OFileB (of, i);
+    return;
+  }
+  oput_cstr_OFile (of, v);
+  oput_char_OFile (of, '/');
+  oput_AlphaTab (of, path);
+  oput_char_OFile (of, '-');
+  oput_ujint_OFile (of, pid);
+  oput_char_OFile (of, '-');
 
-        if (mkdir_sysCx (cstr1_OFileB (of, 0)))
-        {
-            copy_AlphaTab_OFileB (path, of);
-            break;
-        }
-        
-        of->off = off;
+  path->sz = 0;
+  for (ujint i = 0; i < Max_ujint; ++i)
+  {
+    ujint off = of->off;
+    oput_ujint_OFile (of, i);
+
+    if (mkdir_sysCx (cstr1_OFile (of, 0)))
+    {
+      copy_AlphaTab_OFile (path, of);
+      break;
     }
-    lose_OFileB (of);
+
+    of->off = off;
+  }
+  lose_OFile (of);
 }
 
     void

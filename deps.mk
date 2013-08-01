@@ -12,12 +12,15 @@ cx.c:sxpn.h
 cx.c:table.h
 def.h:synhax.h
 fileb.c:fileb.h
-fileb.h:alphatab.h
+fileb.h:ofile.h
 fileb.h:syscx.h
+fileb.h:xfile.h
 lgtable.h:bittable.h
 sesp.c:sesp.h
 sesp.h:alphatab.h
 sesp.h:associa.h
+ofile.c:ofile.h
+ofile.h:alphatab.h
 ospc.c:ospc.h
 ospc.h:syscx.h
 ospc.h:fileb.h
@@ -29,3 +32,5 @@ sxpn.h:fileb.h
 syscx.c:syscx.h
 syscx.c:fileb.h
 table.h:def.h
+xfile.c:xfile.h
+xfile.h:alphatab.h

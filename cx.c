@@ -364,102 +364,102 @@ init_lexwords (Associa* map)
 }
 
 void
-oput_AST (OFileB* of, AST* ast, const ASTree* t);
+oput_AST (OFile* of, AST* ast, const ASTree* t);
 
     void
-oput1_AST (OFileB* of, AST* ast, const ASTree* t)
+oput1_AST (OFile* of, AST* ast, const ASTree* t)
 {
-    if (!ast)  return;
+  if (!ast)  return;
 
-    switch (ast->kind)
+  switch (ast->kind)
+  {
+  case Syntax_WS:
+    oput_AlphaTab (of, &ast->txt);
+    break;
+  case Syntax_Iden:
+    Claim2( ast->txt.sz ,>, 0 );
+    oput_AlphaTab (of, &ast->txt);
+    break;
+  case Syntax_CharLit:
+    oput_char_OFile (of, '\'');
+    Claim2( ast->txt.sz ,>, 0 );
+    oput_AlphaTab (of, &ast->txt);
+    oput_char_OFile (of, '\'');
+    break;
+  case Syntax_StringLit:
+    oput_char_OFile (of, '"');
+    Claim2( ast->txt.sz ,>, 0 );
+    oput_AlphaTab (of, &ast->txt);
+    oput_char_OFile (of, '"');
+    break;
+  case Syntax_Parens:
+    oput_char_OFile (of, '(');
+    oput_AST (of, cdar_of_AST (ast), t);
+    oput_char_OFile (of, ')');
+    break;
+  case Syntax_Braces:
+    oput_char_OFile (of, '{');
+    oput_AST (of, cdar_of_AST (ast), t);
+    oput_char_OFile (of, '}');
+    break;
+  case Syntax_Brackets:
+    oput_char_OFile (of, '[');
+    oput_AST (of, cdar_of_AST (ast), t);
+    oput_char_OFile (of, ']');
+    break;
+  case Syntax_Stmt:
+    oput_AST (of, cdar_of_AST (ast), t);
+    oput_char_OFile (of, ';');
+    break;
+  case Syntax_ForLoop:
+    oput_cstr_OFile (of, "for");
+    oput_AST (of, cdar_of_AST (ast), t);
+    break;
+  case Syntax_WhileLoop:
+    oput_cstr_OFile (of, "while");
+    oput_AST (of, cdar_of_AST (ast), t);
+    break;
+  case Syntax_If:
+    oput_cstr_OFile (of, "if");
+    oput_AST (of, cdar_of_AST (ast), t);
+    break;
+  case Syntax_Else:
+    oput_cstr_OFile (of, "else");
+    oput_AST (of, cdar_of_AST (ast), t);
+    break;
+  case Syntax_LineComment:
+    oput_cstr_OFile (of, "//");
+    oput_AlphaTab (of, &ast->txt);
+    oput_char_OFile (of, '\n');
+    break;
+  case Syntax_BlockComment:
+    oput_cstr_OFile (of, "/*");
+    oput_AlphaTab (of, &ast->txt);
+    oput_cstr_OFile (of, "*/");
+    break;
+  case Syntax_Directive:
+    oput_char_OFile (of, '#');
+    oput_AlphaTab (of, &ast->txt);
+    oput_char_OFile (of, '\n');
+    break;
+  default:
+    if ((ast->kind >= Beg_Syntax_LexWords &&
+         ast->kind < End_Syntax_LexWords) ||
+        (ast->kind >= Beg_Syntax_LexOps &&
+         ast->kind < End_Syntax_LexOps))
     {
-    case Syntax_WS:
-        oput_AlphaTab (of, &ast->txt);
-        break;
-    case Syntax_Iden:
-        Claim2( ast->txt.sz ,>, 0 );
-        oput_AlphaTab (of, &ast->txt);
-        break;
-    case Syntax_CharLit:
-        oput_char_OFileB (of, '\'');
-        Claim2( ast->txt.sz ,>, 0 );
-        oput_AlphaTab (of, &ast->txt);
-        oput_char_OFileB (of, '\'');
-        break;
-    case Syntax_StringLit:
-        oput_char_OFileB (of, '"');
-        Claim2( ast->txt.sz ,>, 0 );
-        oput_AlphaTab (of, &ast->txt);
-        oput_char_OFileB (of, '"');
-        break;
-    case Syntax_Parens:
-        oput_char_OFileB (of, '(');
-        oput_AST (of, cdar_of_AST (ast), t);
-        oput_char_OFileB (of, ')');
-        break;
-    case Syntax_Braces:
-        oput_char_OFileB (of, '{');
-        oput_AST (of, cdar_of_AST (ast), t);
-        oput_char_OFileB (of, '}');
-        break;
-    case Syntax_Brackets:
-        oput_char_OFileB (of, '[');
-        oput_AST (of, cdar_of_AST (ast), t);
-        oput_char_OFileB (of, ']');
-        break;
-    case Syntax_Stmt:
-        oput_AST (of, cdar_of_AST (ast), t);
-        oput_char_OFileB (of, ';');
-        break;
-    case Syntax_ForLoop:
-        oput_cstr_OFileB (of, "for");
-        oput_AST (of, cdar_of_AST (ast), t);
-        break;
-    case Syntax_WhileLoop:
-        oput_cstr_OFileB (of, "while");
-        oput_AST (of, cdar_of_AST (ast), t);
-        break;
-    case Syntax_If:
-        oput_cstr_OFileB (of, "if");
-        oput_AST (of, cdar_of_AST (ast), t);
-        break;
-    case Syntax_Else:
-        oput_cstr_OFileB (of, "else");
-        oput_AST (of, cdar_of_AST (ast), t);
-        break;
-    case Syntax_LineComment:
-        oput_cstr_OFileB (of, "//");
-        oput_AlphaTab (of, &ast->txt);
-        oput_char_OFileB (of, '\n');
-        break;
-    case Syntax_BlockComment:
-        oput_cstr_OFileB (of, "/*");
-        oput_AlphaTab (of, &ast->txt);
-        oput_cstr_OFileB (of, "*/");
-        break;
-    case Syntax_Directive:
-        oput_char_OFileB (of, '#');
-        oput_AlphaTab (of, &ast->txt);
-        oput_char_OFileB (of, '\n');
-        break;
-    default:
-        if ((ast->kind >= Beg_Syntax_LexWords &&
-            ast->kind < End_Syntax_LexWords) ||
-            (ast->kind >= Beg_Syntax_LexOps &&
-             ast->kind < End_Syntax_LexOps))
-        {
-            oput_cstr_OFileB (of, cstr_SyntaxKind (ast->kind));
-        }
-        else
-        {
-            DBog1( "No Good! Enum value: %u", (uint) ast->kind );
-        }
-        break;
+      oput_cstr_OFile (of, cstr_SyntaxKind (ast->kind));
     }
+    else
+    {
+      DBog1( "No Good! Enum value: %u", (uint) ast->kind );
+    }
+    break;
+  }
 }
 
     void
-oput_AST (OFileB* of, AST* ast, const ASTree* t)
+oput_AST (OFile* of, AST* ast, const ASTree* t)
 {
     while (ast)
     {
@@ -469,36 +469,36 @@ oput_AST (OFileB* of, AST* ast, const ASTree* t)
 }
 
     void
-oput_ASTree (OFileB* of, ASTree* t)
+oput_ASTree (OFile* of, ASTree* t)
 {
     oput_AST (of, AST_of_Cons (t->head), t);
 }
 
     void
-oput_sxpn_AST (OFileB* of, AST* ast)
+oput_sxpn_AST (OFile* of, AST* ast)
 {
     bool first = true;
     while (ast)
     {
         if (first)  first = false;
-        else        oput_char_OFileB (of, ' ');
-        oput_uint_OFileB (of, (uint) ast->kind);
+        else        oput_char_OFile (of, ' ');
+        oput_uint_OFile (of, (uint) ast->kind);
         if (ast->cons->car.kind == Cons_Cons)
         {
-            oput_char_OFileB (of, ':');
-            oput_char_OFileB (of, '(');
+            oput_char_OFile (of, ':');
+            oput_char_OFile (of, '(');
             oput_sxpn_AST (of, cdar_of_AST (ast));
-            oput_char_OFileB (of, ')');
+            oput_char_OFile (of, ')');
         }
         ast = cdr_of_AST (ast);
     }
 }
 
     void
-oput_sxpn_ASTree (OFileB* of, ASTree* t)
+oput_sxpn_ASTree (OFile* of, ASTree* t)
 {
     oput_sxpn_AST (of, AST_of_Cons (t->head));
-    oput_char_OFileB (of, '\n');
+    oput_char_OFile (of, '\n');
 }
 
     void
@@ -514,16 +514,16 @@ bevel_AST (AST* ast, ASTree* t)
 }
 
     bool
-parse_escaped (XFileB* xf, AlphaTab* t, char delim)
+parse_escaped (XFile* xf, AlphaTab* t, char delim)
 {
     char delims[2];
 
     delims[0] = delim;
     delims[1] = 0;
 
-    for (char* s = nextds_XFileB (xf, 0, delims);
+    for (char* s = nextds_XFile (xf, 0, delims);
          s;
-         s = nextds_XFileB (xf, 0, delims))
+         s = nextds_XFile (xf, 0, delims))
     {
         bool escaped = false;
         ujint off;
@@ -561,7 +561,7 @@ count_newlines (const char* s)
  * - statement ending with semicolon
  **/
     void
-lex_AST (XFileB* xf, ASTree* t)
+lex_AST (XFile* xf, ASTree* t)
 {
     char match = 0;
     const char delims[] = "'\"(){}[];#+-*/%&^|~!.,?:><=";
@@ -581,36 +581,36 @@ lex_AST (XFileB* xf, ASTree* t)
 
     init_lexwords (keyword_map);
 
-    for (char* s = nextds_XFileB (xf, &match, delims);
+    for (char* s = nextds_XFile (xf, &match, delims);
          s;
-         s = nextds_XFileB (xf, &match, delims))
+         s = nextds_XFile (xf, &match, delims))
     {
         off = IdxEltTable( xf->buf, s );
 
         if (s[0])
         {
-            DecloStack( XFileB, olay );
-            *olay = olay_XFileB (xf, off);
+            XFile olay[1];
+            olay_XFile (olay, xf, off);
 
             while (olay->buf.sz > 0)
             {
-                skipds_XFileB (olay, 0);
+                skipds_XFile (olay, 0);
                 if (olay->off > 0)
                 {
-                    AlphaTab ts = AlphaTab_XFileB (olay, 0);
+                    AlphaTab ts = AlphaTab_XFile (olay, 0);
                     InitLeaf( ast );
                     ast->kind = Syntax_WS;
                     cat_AlphaTab (&ast->txt, &ts);
                     line += count_newlines (cstr_AlphaTab (&ast->txt));
                 }
                 off += olay->off;
-                *olay = olay_XFileB (xf, off);
+                olay_XFile (olay, xf, off);
                 if (!olay->buf.s[0])  break;
 
-                olay->off = IdxEltTable( olay->buf, tods_XFileB (olay, 0) );
+                olay->off = IdxEltTable( olay->buf, tods_XFile (olay, 0) );
                 if (olay->off > 0)
                 {
-                    AlphaTab ts = AlphaTab_XFileB (olay, 0);
+                    AlphaTab ts = AlphaTab_XFile (olay, 0);
                     Assoc* luk = lookup_Associa (keyword_map, &ts);
 
                     InitLeaf( ast );
@@ -629,7 +629,7 @@ lex_AST (XFileB* xf, ASTree* t)
                 }
 
                 off += olay->off;
-                *olay = olay_XFileB (xf, off);
+                olay_XFile (olay, xf, off);
             }
         }
 
@@ -697,12 +697,12 @@ lex_AST (XFileB* xf, ASTree* t)
         case '#':
             InitLeaf( ast );
             ast->kind = Syntax_Directive;
-            cat_cstr_AlphaTab (&ast->txt, getlined_XFileB (xf, "\n"));
+            cat_cstr_AlphaTab (&ast->txt, getlined_XFile (xf, "\n"));
             ++ line;
             while (endc_ck_AlphaTab (&ast->txt, '\\'))
             {
                 cat_cstr_AlphaTab (&ast->txt, "\n");
-                cat_cstr_AlphaTab (&ast->txt, getlined_XFileB (xf, "\n"));
+                cat_cstr_AlphaTab (&ast->txt, getlined_XFile (xf, "\n"));
                 ++ line;
             }
             break;
@@ -730,7 +730,7 @@ lex_AST (XFileB* xf, ASTree* t)
             if (ast->kind == Lexical_Div)
             {
                 ast->kind = Syntax_BlockComment;
-                cat_cstr_AlphaTab (&ast->txt, getlined_XFileB (xf, "*/"));
+                cat_cstr_AlphaTab (&ast->txt, getlined_XFile (xf, "*/"));
                 line += count_newlines (ast->txt.s);
             }
             else
@@ -743,7 +743,7 @@ lex_AST (XFileB* xf, ASTree* t)
             if (ast->kind == Lexical_Div)
             {
                 ast->kind = Syntax_LineComment;
-                cat_cstr_AlphaTab (&ast->txt, getlined_XFileB (xf, "\n"));
+                cat_cstr_AlphaTab (&ast->txt, getlined_XFile (xf, "\n"));
                 ++ line;
             }
             else
@@ -1327,78 +1327,80 @@ xfrm_stmts_AST (Cons** ast_p, ASTree* t)
 }
 
     void
-xget_ASTree (XFileB* xf, ASTree* t)
+xget_ASTree (XFile* xf, ASTree* t)
 {
     Associa type_lookup;
     InitAssocia( AlphaTab, uint, type_lookup, swapped_AlphaTab );
 
     lex_AST (xf, t);
     build_stmts_AST (&t->head, t);
-    //oput_sxpn_ASTree (stderr_OFileB (), t);
+    //oput_sxpn_ASTree (stderr_OFile (), t);
     xfrm_stmts_AST (&t->head, t);
 
     lose_Associa (&type_lookup);
 }
 
-int main (int argc, char** argv)
+  int
+main (int argc, char** argv)
 {
-    int argi =
-        (init_sysCx (&argc, &argv),
-         1);
-    DecloStack1( ASTree, t, cons_ASTree () );
-    FileB xfb = dflt_FileB ();
-    XFileB* xf = 0;
-    FileB ofb = dflt_FileB ();
-    OFileB* of = 0;
+  int argi =
+    (init_sysCx (&argc, &argv),
+     1);
+  DecloStack1( ASTree, t, cons_ASTree () );
+  XFileB xfb[1];
+  XFile* xf = 0;
+  OFileB ofb[1];
+  OFile* of = 0;
 
-    seto_FileB (&ofb, 1);
+  init_XFileB (xfb);
+  init_OFileB (ofb);
 
-    while (argi < argc)
+  while (argi < argc)
+  {
+    if (0 == strcmp (argv[argi], "-x"))
     {
-        if (0 == strcmp (argv[argi], "-x"))
-        {
-            ++ argi;
-            if (!open_FileB (&xfb, 0, argv[argi++]))
-            {
-                failout_sysCx ("Could not open file for reading.");
-            }
-            xf = &xfb.xo;
-        }
-        else if (0 == strcmp (argv[argi], "-o"))
-        {
-            ++ argi;
-            if (!open_FileB (&ofb, 0, argv[argi++]))
-            {
-                failout_sysCx ("Could not open file for writing.");
-            }
-            of = &ofb.xo;
-        }
-        else
-        {
-            bool good = (0 == strcmp (argv[argi], "-h"));
-            OFileB* of = (good ? stdout_OFileB () : stderr_OFileB ());
-            printf_OFileB (of, "Usage: %s [-x IN] [-o OUT]\n", argv[0]);
-            oput_cstr_OFileB (of, "  If -x is not specified, stdin is used.\n");
-            oput_cstr_OFileB (of, "  If -o is not specified, stdout is used.\n");
-            if (!good)  failout_sysCx ("Exiting in failure...");
-            lose_sysCx ();
-            return 0;
-        }
+      ++ argi;
+      if (!open_FileB (&xfb->fb, 0, argv[argi++]))
+      {
+        failout_sysCx ("Could not open file for reading.");
+      }
+      xf = &xfb->xf;
     }
+    else if (0 == strcmp (argv[argi], "-o"))
+    {
+      ++ argi;
+      if (!open_FileB (&ofb->fb, 0, argv[argi++]))
+      {
+        failout_sysCx ("Could not open file for writing.");
+      }
+      of = &ofb->of;
+    }
+    else
+    {
+      bool good = (0 == strcmp (argv[argi], "-h"));
+      OFile* of = (good ? stdout_OFile () : stderr_OFile ());
+      printf_OFile (of, "Usage: %s [-x IN] [-o OUT]\n", argv[0]);
+      oput_cstr_OFile (of, "  If -x is not specified, stdin is used.\n");
+      oput_cstr_OFile (of, "  If -o is not specified, stdout is used.\n");
+      if (!good)  failout_sysCx ("Exiting in failure...");
+      lose_sysCx ();
+      return 0;
+    }
+  }
 
-    if (!xf)  xf = stdin_XFileB ();
-    if (!of)  of = stdout_OFileB ();
+  if (!xf)  xf = stdin_XFile ();
+  if (!of)  of = stdout_OFile ();
 
-    xget_ASTree (xf, t);
-    close_XFileB (xf);
-    lose_FileB (&xfb);
+  xget_ASTree (xf, t);
+  close_XFile (xf);
+  lose_XFileB (xfb);
 
-    oput_ASTree (of, t);
-    close_OFileB (of);
-    lose_FileB (&ofb);
+  oput_ASTree (of, t);
+  close_OFile (of);
+  lose_OFileB (ofb);
 
-    lose_ASTree (t);
-    lose_sysCx ();
-    return 0;
+  lose_ASTree (t);
+  lose_sysCx ();
+  return 0;
 }
 

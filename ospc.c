@@ -9,8 +9,8 @@ close_OSPc (OSPc* ospc)
 {
     bool good = false;
     if (ospc->pid < 0)  return 0;
-    close_FileB (&ospc->xfb);
-    close_FileB (&ospc->ofb);
+    close_XFileB (&ospc->xfb);
+    close_OFileB (&ospc->ofb);
     /* if (ospc->pid > 0)  kill (ospc->pid, SIGKILL); */
     good = waitpid_sysCx (ospc->pid, &ospc->status);
     ospc->pid = -1;
@@ -21,8 +21,8 @@ close_OSPc (OSPc* ospc)
 lose_OSPc (OSPc* ospc)
 {
     close_OSPc (ospc);
-    lose_FileB (&ospc->xfb);
-    lose_FileB (&ospc->ofb);
+    lose_XFileB (&ospc->xfb);
+    lose_OFileB (&ospc->ofb);
     lose_AlphaTab (&ospc->cmd);
     {:for (i ; ospc->args.sz)
         lose_AlphaTab (&ospc->args.s[i]);
@@ -32,20 +32,20 @@ lose_OSPc (OSPc* ospc)
 
 /** Make a pipe to process input.
  **/
-    void
+  void
 stdxpipe_OSPc (OSPc* ospc)
 {
-    Claim( !ospc->of );
-    ospc->of = &ospc->ofb.xo;
+  Claim( !ospc->of );
+  ospc->of = &ospc->ofb.of;
 }
 
 /** Make a pipe from process output.
  **/
-    void
+  void
 stdopipe_OSPc (OSPc* ospc)
 {
-    Claim( !ospc->xf );
-    ospc->xf = &ospc->xfb.xo;
+  Claim( !ospc->xf );
+  ospc->xf = &ospc->xfb.xf;
 }
 
     bool
@@ -105,14 +105,14 @@ spawn_OSPc (OSPc* ospc)
     if (ospc->of)
     {
         closefd_sysCx (xfd[0]);
-        ospc->ofb.fd = xfd[1];
-        set_FILE_FileB (&ospc->ofb, fdopen_sysCx (ospc->ofb.fd, "wb"));
+        ospc->ofb.fb.fd = xfd[1];
+        set_FILE_FileB (&ospc->ofb.fb, fdopen_sysCx (ospc->ofb.fb.fd, "wb"));
     }
     if (ospc->xf)
     {
         closefd_sysCx (ofd[1]);
-        ospc->xfb.fd = ofd[0];
-        set_FILE_FileB (&ospc->xfb, fdopen_sysCx (ospc->xfb.fd, "rb"));
+        ospc->xfb.fb.fd = ofd[0];
+        set_FILE_FileB (&ospc->xfb.fb, fdopen_sysCx (ospc->xfb.fb.fd, "rb"));
     }
   }
 

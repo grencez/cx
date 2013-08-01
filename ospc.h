@@ -18,31 +18,30 @@ typedef struct OSPc OSPc;
  **/
 struct OSPc
 {
-    AlphaTab cmd;
-    TableT(AlphaTab) args;
-    OFileB* of; /**< Write to process (its stdin).**/
-    XFileB* xf; /**< Read from process (its stdout).**/
-    pid_t pid;
-    FileB ofb;
-    FileB xfb;
-    int status;
+  AlphaTab cmd;
+  TableT(AlphaTab) args;
+  OFile* of; /**< Write to process (its stdin).**/
+  XFile* xf; /**< Read from process (its stdout).**/
+  pid_t pid;
+  OFileB ofb;
+  XFileB xfb;
+  int status;
 };
 
 qual_inline
-    OSPc
+  OSPc
 dflt_OSPc ()
 {
-    OSPc p;
-    p.cmd = dflt_AlphaTab ();
-    InitTable( p.args );
-    p.of = 0;
-    p.xf = 0;
-    p.pid = -1;
-    init_FileB( &p.ofb );
-    seto_FileB (&p.ofb, true);
-    init_FileB( &p.xfb );
-    p.status = 0;
-    return p;
+  OSPc p;
+  p.cmd = dflt_AlphaTab ();
+  InitTable( p.args );
+  p.of = 0;
+  p.xf = 0;
+  p.pid = -1;
+  init_OFileB( &p.ofb );
+  init_XFileB( &p.xfb );
+  p.status = 0;
+  return p;
 }
 
 bool

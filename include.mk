@@ -24,7 +24,7 @@ CxExe ?= $(BinPath)/cx
 
 CxBldPath ?= $(PfxBldPath)/cx
 
-CxDeps = alphatab bstree fileb ospc rbtree sesp sxpn syscx
+CxDeps = alphatab bstree xfile ofile fileb ospc rbtree sesp sxpn syscx
 
 CxHFiles = \
 	$(CxDeps) \
@@ -47,6 +47,8 @@ CxHFiles := $(addprefix $(CxBldPath)/,$(CxHFileDeps))
 CxHHFiles := $(addprefix $(CxBldPath)/,$(CxHHFileDeps))
 
 CxObjs = $(addprefix $(CxBldPath)/,$(addsuffix .o,$(CxDeps)))
+
+CxStdObjs = $(addprefix $(CxBldPath)/,$(addsuffix .o,alphatab xfile ofile fileb syscx))
 
 ## Serious debugging is about to happen.
 ifneq (,$(filter ultradebug,$(CONFIG)))

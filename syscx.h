@@ -19,9 +19,9 @@ lose_sysCx ();
 
 /* synhax.h - failout_sysCx() */
 /* synhax.h - dbglog_printf3() */
-/* fileb.h - stdin_FileB () */
-/* fileb.h - stdout_FileB () */
-/* fileb.h - stderr_FileB () */
+/* fileb.h - stdin_XFileB () */
+/* fileb.h - stdout_OFileB () */
+/* fileb.h - stderr_OFileB () */
 
 #ifndef _WIN32
 /* TODO: Figure out the correct POSIX_SOURCE to use!*/
