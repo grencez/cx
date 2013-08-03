@@ -47,6 +47,13 @@ dflt_AlphaTab ()
 }
 
 qual_inline
+  void
+init_AlphaTab (AlphaTab* ab)
+{
+  InitTable( *ab );
+}
+
+qual_inline
     AlphaTab
 dflt1_AlphaTab (const char* s)
 {

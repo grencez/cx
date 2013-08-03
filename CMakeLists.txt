@@ -19,7 +19,7 @@ list (APPEND CFiles test.c)
 
 include (${CxPath}/include.cmake)
 
-addbinexe (test ${BldPath}/test.c ${CxFullCFiles})
+addbinexe (test test.c)
 set_target_properties (test PROPERTIES
     OUTPUT_NAME test
     RUNTIME_OUTPUT_DIRECTORY .)

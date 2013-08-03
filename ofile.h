@@ -92,6 +92,16 @@ oput_cstr_OFile (OFile* of, const char* s)
 }
 
 qual_inline
+  const char*
+ccstr1_of_OFile (const OFile* of, ujint off)
+{ return (char*) &of->buf.s[off]; }
+
+qual_inline
+  const char*
+ccstr_of_OFile (const OFile* of)
+{ return ccstr1_of_OFile (of, of->off); }
+
+qual_inline
   char*
 cstr1_OFile (OFile* f, ujint off)
 { return (char*) &f->buf.s[off]; }

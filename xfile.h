@@ -59,6 +59,13 @@ void
 inject_XFile (XFile* in, XFile* src, const char* delim);
 void
 skipto_XFile (XFile* xf, const char* pos);
+bool
+skip_cstr_XFile (XFile* xf, const char* pfx);
+
+bool
+getlined_olay_XFile (XFile* olay, XFile* xf, const char* delim);
+bool
+nextds_olay_XFile (XFile* olay, XFile* xf, char* ret_match, const char* delims);
 
 bool
 xget_int_XFile (XFile* xf, int*);
@@ -107,6 +114,16 @@ mayflush_XFile (XFile* xf, Trit may)
 
   if (may == Nil)  xf->flushsz = 0;
 }
+
+qual_inline
+  const char*
+ccstr1_of_XFile (const XFile* xf, ujint off)
+{ return (char*) &xf->buf.s[off]; }
+
+qual_inline
+  const char*
+ccstr_of_XFile (const XFile* xf)
+{ return ccstr1_of_XFile (xf, xf->off); }
 
 qual_inline
   char*

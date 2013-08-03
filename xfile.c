@@ -89,41 +89,42 @@ getline_XFile (XFile* in)
     char*
 getlined_XFile (XFile* xf, const char* delim)
 {
-    uint ret_off;
-    char* s;
-    uint delim_sz = strlen (delim);
+  uint ret_off;
+  char* s;
+  uint delim_sz = strlen (delim);
 
-    mayflush_XFile (xf, May);
-    ret_off = xf->off;
-    Claim2( ret_off ,<, xf->buf.sz );
+  mayflush_XFile (xf, May);
+  ret_off = xf->off;
+  Claim2( ret_off ,<, xf->buf.sz );
+  s = strstr (cstr_XFile (xf), delim);
+
+  while (!s)
+  {
+    /* We only need to re-check the last /delim_sz-1/ chars,
+     * which start at /buf.sz-delim_sz/ due to the NUL byte.
+     */
+    if (xf->off + delim_sz < xf->buf.sz)
+      xf->off = xf->buf.sz - delim_sz;
+
+    if (!xget_chunk_XFile (xf))  break;
+
     s = strstr (cstr_XFile (xf), delim);
+  }
 
-    while (!s)
-    {
-            /* We only need to re-check the last /delim_sz-1/ chars,
-             * which start at /buf.sz-delim_sz/ due to the NUL byte.
-             */
-        if (xf->off + delim_sz < xf->buf.sz)
-            xf->off = xf->buf.sz - delim_sz;
+  if (s)
+  {
+    s[0] = '\0';
+    s = &s[delim_sz];
+    s[-1] = '\0';
+    xf->off = IdxElt( xf->buf.s, s );
+    Claim2( xf->off ,<, xf->buf.sz );
+  }
+  else
+  {
+    xf->off = xf->buf.sz - 1;
+  }
 
-        if (!xget_chunk_XFile (xf))  break;
-
-        s = strstr (cstr_XFile (xf), delim);
-    }
-
-    if (s)
-    {
-        s[0] = '\0';
-        s = &s[delim_sz];
-        xf->off = IdxElt( xf->buf.s, s );
-        Claim2( xf->off ,<, xf->buf.sz );
-    }
-    else
-    {
-        xf->off = xf->buf.sz - 1;
-    }
-
-    return (ret_off + 1 == xf->buf.sz) ? 0 : (char*) &xf->buf.s[ret_off];
+  return (ret_off + 1 == xf->buf.sz) ? 0 : (char*) &xf->buf.s[ret_off];
 }
 
     void
@@ -146,40 +147,43 @@ skipds_XFile (XFile* xf, const char* delims)
     mayflush_XFile (xf, May);
 }
 
-    char*
+  char*
 nextds_XFile (XFile* in, char* ret_match, const char* delims)
 {
-    uint ret_off;
-    char* s;
-    if (!delims)  delims = WhiteSpaceChars;
-    mayflush_XFile (in, May);
-    ret_off = in->off;
-    Claim2( ret_off ,<, in->buf.sz );
-    s = (char*) &in->buf.s[ret_off];
+  uint ret_off;
+  char* s;
+  if (!delims)  delims = WhiteSpaceChars;
+  mayflush_XFile (in, May);
+  ret_off = in->off;
+  Claim2( ret_off ,<, in->buf.sz );
+  s = (char*) &in->buf.s[ret_off];
+  s = &s[strcspn (s, delims)];
+
+  while (!s[0])
+  {
+    uint off = in->buf.sz - 1;
+    if (!xget_chunk_XFile (in))  break;
+    s = (char*) &in->buf.s[off];
     s = &s[strcspn (s, delims)];
+  }
 
-    while (!s[0])
-    {
-        uint off = in->buf.sz - 1;
-        if (!xget_chunk_XFile (in))  break;
-        s = (char*) &in->buf.s[off];
-        s = &s[strcspn (s, delims)];
-    }
+  if (ret_match)  *ret_match = s[0];
+  if (s[0])
+  {
+    //Claim2( IdxElt( in->buf.s, s ) ,<, in->buf.sz );
+    s[0] = 0;
+    in->off = IdxElt( in->buf.s, s );
+    if (in->off + 1 < in->buf.sz)
+      in->off += 1;
+    Claim2( in->off ,<, in->buf.sz );
+  }
+  else
+  {
+    in->off = in->buf.sz - 1;
+  }
 
-    if (ret_match)  *ret_match = s[0];
-    if (s[0])
-    {
-        s[0] = 0;
-        in->off = IdxElt( in->buf.s, s );
-        if (in->off + 1 < in->buf.sz)
-            in->off += 1;
-    }
-    else
-    {
-        in->off = in->buf.sz - 1;
-    }
-
-    return (ret_off + 1 == in->buf.sz) ? 0 : (char*) &in->buf.s[ret_off];
+  Claim( (ret_off + 1 != in->buf.sz) || !in->buf.s[ret_off]);
+  return (ret_off + 1 == in->buf.sz) ? 0 : (char*) &in->buf.s[ret_off];
 }
 
     char*
@@ -242,6 +246,55 @@ inject_XFile (XFile* in, XFile* src, const char* delim)
 skipto_XFile (XFile* xf, const char* pos)
 {
     xf->off = IdxElt( xf->buf.s, pos );
+}
+
+  bool
+skip_cstr_XFile (XFile* xf, const char* pfx)
+{
+  uint n;
+  if (!pfx)  return false;
+  n = strlen (pfx);
+  while (xf->off + n > xf->buf.sz)
+  {
+    if (!xget_chunk_XFile (xf))
+      return false;
+  }
+  if (0 == strncmp (pfx, ccstr_of_XFile (xf), n))
+  {
+    xf->off += n;
+    return true;
+  }
+  return false;
+}
+
+qual_inline
+  void
+olay_txt_XFile (XFile* olay, XFile* xf, uint off)
+{
+  init_XFile (olay);
+  olay->buf.s = &xf->buf.s[off];
+  if (xf->off + 1 == xf->buf.sz)
+    olay->buf.sz = xf->buf.sz - off;
+  else
+    olay->buf.sz = xf->off - off;
+}
+
+  bool
+getlined_olay_XFile (XFile* olay, XFile* xf, const char* delim)
+{
+  char* s = getlined_XFile (xf, delim);
+  if (!s)  return false;
+  olay_txt_XFile (olay, xf, IdxEltTable( xf->buf, s ));
+  return true;
+}
+
+  bool
+nextds_olay_XFile (XFile* olay, XFile* xf, char* ret_match, const char* delims)
+{
+  char* s = nextds_XFile (xf, ret_match, delims);
+  if (!s)  return false;
+  olay_txt_XFile (olay, xf, IdxEltTable( xf->buf, s ));
+  return true;
 }
 
   bool

@@ -187,6 +187,10 @@ $(CxBldPath)/%.h: $(CxPath)/%.h $(CxExe)
 endif
 
 .PRECIOUS: $(CxBldPath)/%.hh
+.PRECIOUS: $(CxBldPath)/%.h
+.PRECIOUS: $(CxBldPath)/%.c
+.PRECIOUS: $(BldPath)/%.c
+
 $(CxBldPath)/%.hh: $(CxPath)/%.hh
 	cp -f $< $@
 
