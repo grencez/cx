@@ -84,6 +84,15 @@ public:
     return *(const T*) elt_Table ((C::Table*)&t, i);
   }
 
+  bool elem_ck(const T& e) const
+  {
+    for (ujint i = 0; i < t.sz; ++i) {
+      if (e == (*this)[i])
+        return true;
+    }
+    return false;
+  }
+
   T& grow1() {
     T* e = (T*) grow1_Table (&t);
     new (e) T();

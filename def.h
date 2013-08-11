@@ -23,7 +23,7 @@ typedef Trit (* SwappedFn) (const void*, const void*);
 
     /** Define bool.**/
 #ifndef __cplusplus
-typedef int bool;
+typedef char bool;
 #define true 1
 #define false 0
 #endif

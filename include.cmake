@@ -22,7 +22,9 @@ list (APPEND CxHFiles
   )
 
 list (APPEND CxHHFiles
-  alphatab.hh map.hh synhax.hh set.hh table.hh)
+  alphatab.hh map.hh synhax.hh set.hh table.hh
+  xfile.hh ofile.hh fileb.hh
+  )
 
 foreach (d ${CxDeps})
   list (APPEND CxCFiles ${d}.c)

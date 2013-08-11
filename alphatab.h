@@ -8,6 +8,9 @@ DeclTableT( AlphaTab, AlphaTab );
 
 static const char WhiteSpaceChars[] = " \t\v\r\n";
 
+char*
+get_empty_cstr();
+
 qual_inline
     char*
 dup_cstr (const char* s)
@@ -175,6 +178,8 @@ Trit
 swapped_AlphaTab (const AlphaTab* a, const AlphaTab* b);
 void
 cat_uint_AlphaTab (AlphaTab* a, uint x);
+void
+cat_ujint_AlphaTab (AlphaTab* a, ujint x);
 void
 cat_int_AlphaTab (AlphaTab* a, int x);
 

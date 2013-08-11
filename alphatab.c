@@ -3,6 +3,13 @@
 #include <stdio.h>
 
   char*
+get_empty_cstr()
+{
+  static char empty[1] = { '\0' };
+  return empty;
+}
+
+  char*
 itoa_dup_cstr (int x)
 {
   char buf[50];
@@ -93,6 +100,14 @@ cat_uint_AlphaTab (AlphaTab* a, uint x)
 {
   char buf[50];
   (void) sprintf(buf, "%u", x);
+  cat_cstr_AlphaTab (a, buf);
+}
+
+  void
+cat_ujint_AlphaTab (AlphaTab* a, ujint x)
+{
+  char buf[50];
+  (void) sprintf(buf, "%lu", x);
   cat_cstr_AlphaTab (a, buf);
 }
 

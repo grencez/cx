@@ -260,6 +260,20 @@ caddr_of_Sesp (Sesp a)
 }
 
 qual_inline
+  Sesp
+cdddr_of_Sesp (Sesp a)
+{
+  return cdr_of_Sesp (cddr_of_Sesp (a));
+}
+
+qual_inline
+  Sesp
+cadddr_of_Sesp (Sesp a)
+{
+  return car_of_Sesp (cdddr_of_Sesp (a));
+}
+
+qual_inline
   bool
 car_fo_Sesp (Sesp a, Sesp b)
 {

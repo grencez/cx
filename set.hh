@@ -31,11 +31,11 @@ public:
   }
 
   Set<T>& operator|=(const T& e)
-  { insert(e); return *this; }
+  { this->insert(e); return *this; }
 
   Set<T>& operator|=(const Set<T>& b)
   {
-    insert(b.begin(), b.end());
+    this->insert(b.begin(), b.end());
     return *this;
   }
 

@@ -11,6 +11,8 @@ extern "C" {
 }
 
 namespace Cx {
+class OFile;
+
 namespace C {
   using ::AlphaTab;
 }
@@ -39,17 +41,6 @@ public:
     lose_AlphaTab (&t);
   }
 
-  const AlphaTab& operator=(uint x) {
-    copy_cstr_AlphaTab (&t, "");
-    cat_uint_AlphaTab (&t, x);
-    return *this;
-  }
-  const AlphaTab& operator=(int x) {
-    copy_cstr_AlphaTab (&t, "");
-    cat_int_AlphaTab (&t, x);
-    return *this;
-  }
-
   const AlphaTab& operator+=(const AlphaTab& b) {
     cat_AlphaTab (&t, &b.t);
     return *this;
@@ -64,7 +55,25 @@ public:
     cat_uint_AlphaTab (&t, x);
     return *this;
   }
+  const AlphaTab& operator=(uint x) {
+    copy_cstr_AlphaTab (&t, "");
+    return (*this) += x;
+  }
   AlphaTab operator+(uint x) const {
+    AlphaTab a( *this );
+    a += x;
+    return a;
+  }
+
+  const AlphaTab& operator+=(ujint x) {
+    cat_ujint_AlphaTab (&t, x);
+    return *this;
+  }
+  const AlphaTab& operator=(ujint x) {
+    copy_cstr_AlphaTab (&t, "");
+    return (*this) += x;
+  }
+  AlphaTab operator+(ujint x) const {
     AlphaTab a( *this );
     a += x;
     return a;
@@ -73,6 +82,10 @@ public:
   const AlphaTab& operator+=(int x) {
     cat_int_AlphaTab (&t, x);
     return *this;
+  }
+  const AlphaTab& operator=(int x) {
+    copy_cstr_AlphaTab (&t, "");
+    return (*this) += x;
   }
   AlphaTab operator+(int x) const {
     AlphaTab a( *this );
@@ -83,6 +96,9 @@ public:
   bool operator==(const AlphaTab& b) const {
     return (May == swapped_AlphaTab (&t, &b.t));
   }
+  bool operator!=(const AlphaTab& b) const {
+    return !(*this == b);
+  }
   bool operator<(const AlphaTab& b) const {
     return (Nil == swapped_AlphaTab (&t, &b.t));
   }
@@ -90,6 +106,8 @@ public:
   const char* cstr() const {
     return t.s;
   }
+
+  friend class OFile;
 };
 
 inline

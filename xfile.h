@@ -85,9 +85,8 @@ qual_inline
   void
 init_XFile (XFile* xf)
 {
-  static char empty[1] = { 0 };
   InitTable( xf->buf );
-  xf->buf.s = (byte*) empty;
+  xf->buf.s = (byte*) get_empty_cstr ();
   xf->buf.sz = 1;
   xf->off = 0;
   xf->flushsz = 0;
