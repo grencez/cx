@@ -97,7 +97,7 @@ lg_ujint (ujint x)
 
 #define DeclBitTableIdcs( p, q, i ) \
     const ujint p = (i) / NBits_BitTableEl; \
-    const uint    q = (i) % NBits_BitTableEl
+    const uint  q = (i) % NBits_BitTableEl
 
 qual_inline
     void

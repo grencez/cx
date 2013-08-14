@@ -109,6 +109,13 @@
 #define DeclAlloc( T, a, n ) \
     T* const restrict a = AllocT( T, n )
 
+/** Swap two values.**/
+#define SwapT( T, a, b ) \
+do { \
+  T SwapT_tmp = a; \
+  a = b; \
+  b = SwapT_tmp; \
+} while (0)
 
 /** Implemented in sys-cx.c **/
 void
@@ -149,14 +156,8 @@ do { \
   } \
 } while (0)
 
-#define Do_stat( stat ) \
-  stat = (stat != 0) ? stat :
-
-#define Ck_stat( stat ) \
-  ((stat == 0) || ((stat > 0) && ((stat = -1), false)))
-
-#define Ck1_stat( stat, msg ) \
-  ((stat == 0) || ((stat > 0) && ((stat = -1), DBog2("stat:%i %s",stat,msg), false)))
+#define DoLegit(good, msg) \
+  for (good = good ? -1 : 0; (good < 0); good = good ? 1 : (DBog0(msg), 0))
 
 /** Wrap this in an if statement.
  * if (LegitCk( status == 0, invariant, "last_call()"))

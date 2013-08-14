@@ -11,7 +11,8 @@
 typedef int Bit;
 //enum Trit { Nil = -1, Yes = 1, May = 0 };
 enum Trit { Nil = 0, Yes = 1, May = 2 };
-typedef int Signum;
+typedef char Sign;
+
 typedef enum Trit Trit;
 /** Type of function which compares two objects.
  * Return values should conform to:
@@ -51,6 +52,9 @@ struct ujint2 { ujint s[2]; };
 
 #ifndef uint32
 #define uint32 uint
+#endif
+#ifndef Max_uint32
+#define Max_uint32 (0xFFFFFFFFu)
 #endif
 
 #if 0

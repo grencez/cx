@@ -32,12 +32,14 @@ CxHFiles = \
 	bittable \
 	def \
 	gmrand \
+	urandom \
 	lgtable \
 	synhax \
 	table
 
 CxHHFiles = \
 	alphatab map synhax set table \
+	urandom \
 	xfile ofile fileb
 
 

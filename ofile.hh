@@ -57,6 +57,9 @@ public:
     oput_AlphaTab (of, &s.t);
     return *this;
   }
+  void flush() {
+    flush_OFile (of);
+  }
 };
 }
 

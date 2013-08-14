@@ -16,6 +16,7 @@ list (APPEND CxHFiles
 	bittable.h
 	def.h
 	gmrand.h
+	urandom.h
 	lgtable.h
 	synhax.h
 	table.h
@@ -23,6 +24,7 @@ list (APPEND CxHFiles
 
 list (APPEND CxHHFiles
   alphatab.hh map.hh synhax.hh set.hh table.hh
+  urandom.hh
   xfile.hh ofile.hh fileb.hh
   )
 

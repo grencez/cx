@@ -10,11 +10,41 @@ struct GMRand {
   uint32 w;
   uint32 k0;
   uint32 k1;
+  uint sys_npcs;
 };
 
 qual_inline
+  uint32
+step_GMRand (GMRand* a, uint n)
+{
+  /* Need mask for 64-bit machines,
+   * otherwise overflowing sums
+   * are not guaranteed to be truncated.
+   */
+  static const uint32 mask = Max_uint32;
+  uint32 z = a->z;
+  uint32 w = a->w;
+  uint i;
+  for (i = 0; i < n; ++i)
+  {
+    z = mask&(a->k0*(z&65535)+(z>>16));
+    w = mask&(a->k1*(w&65535)+(w>>16));
+  }
+  a->z = z;
+  a->w = w;
+  return (mask & ((z<<16) + (w&65535)));
+}
+
+qual_inline
+  uint32
+uint32_GMRand (GMRand* a)
+{
+  return step_GMRand (a, a->sys_npcs);
+}
+
+qual_inline
   void
-init1_GMRand (GMRand* a, uint i)
+init2_GMRand (GMRand* a, uint sys_pcidx, uint sys_npcs)
 {
   /* You may replace the two constants 36969 and 18000 by any
    * pair of distinct constants from this list.
@@ -32,51 +62,24 @@ init1_GMRand (GMRand* a, uint i)
     27960, 28320, 28380, 28689, 28710, 28794, 28854, 28959, 28980, 29013,
     29379, 29889, 30135, 30345, 30459, 30714, 30903, 30963, 31059, 31083
   };
-  const uint n = ArraySz( ks );
-
-  i = i % n;
+  //const uint n = ArraySz( ks );
 
   a->z = 362436069;
   a->w = 521288629;
   a->k0 = 36969;
-  a->k1 = ks[i];
+  a->k1 = ks[1];
+  a->sys_npcs = sys_npcs;
+  step_GMRand (a, sys_pcidx);
 }
 
 qual_inline
   void
 init_GMRand (GMRand* a)
 {
-  init1_GMRand (a, 0);
+  init2_GMRand (a, 0, 1);
 }
 
-qual_inline
-  uint32
-uint32_GMRand (GMRand* a)
-{
-  /* Need mask for 64-bit machines,
-   * otherwise overflowing sums
-   * are not guaranteed to be truncated.
-   */
-  static const uint32 mask = 0xffffffff;
-  uint32 z = a->z;
-  uint32 w = a->w;
-  z = mask&(a->k0*(z&65535)+(z>>16));
-  w = mask&(a->k1*(w&65535)+(w>>16));
-  a->z = z;
-  a->w = w;
-  return (mask & ((z<<16) + (w&65535)));
-}
-
-qual_inline
-  void
-step_GMRand (GMRand* a, uint n)
-{
-  {:for (i ; n)
-    uint32_GMRand (a);
-  }
-}
-
-/** A random real in [0,1).**/
+/** Generate a real in [0,1).**/
 qual_inline
   real
 real_GMRand (GMRand* a)
@@ -84,18 +87,36 @@ real_GMRand (GMRand* a)
   return (real) (uint32_GMRand (a) * 2.328306e-10);
 }
 
+/** Generate a uint in {0,...,n-1}.**/
 qual_inline
   uint
 uint_GMRand (GMRand* a, uint n)
 {
+#if 1
   return (uint) (n * real_GMRand (a));
+#else
+  const uint32 q = (Max_uint32 / n);
+  const uint32 m = Max_uint32 - (Max_uint32 % n);
+  uint32 x;
+  do {
+    x = uint32_GMRand (a);
+  } while (x >= m);
+  return x / q;
+#endif
+}
+
+qual_inline
+  Bit
+bit_GMRand (GMRand* a)
+{
+  return uint_GMRand (a, 2);
 }
 
 qual_inline
   bool
 bool_GMRand (GMRand* a)
 {
-  return real_GMRand (a) < .5;
+  return (bit_GMRand (a) == 1);
 }
 
 #endif
