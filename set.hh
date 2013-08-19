@@ -99,5 +99,21 @@ public:
 }
 using Cx::Set;
 
+template <class T>
+  void
+Remove(vector<T>& a, const Cx::Set<T>& set)
+{
+  uint n = 0;
+  for (uint i = 0; i < a.size(); ++i) {
+    if (set.elem_ck(a[i])) {
+      ++ n;
+    }
+    else if (n > 0) {
+      a[i-n] = a[i]; 
+    }
+  }
+  a.resize(a.size() - n);
+}
+
 #endif
 
