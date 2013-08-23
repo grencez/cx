@@ -48,6 +48,14 @@ public:
   Set<T>& operator-=(const Set<T>& b)
   {
     Set<T>& a = *this;
+#if 0
+    for (typename Set<T>::const_iterator itb = b.begin();
+         itb != b.end();
+         ++ itb)
+    {
+      a.erase(*itb);
+    }
+#else
     typename Set<T>::const_iterator itb = b.begin();
     typename Set<T>::iterator ita = a.lower_bound(*itb);
     typename Set<T>::key_compare f = a.key_comp();
@@ -66,6 +74,7 @@ public:
         a.erase(tmp);
       }
     }
+#endif
     return a;
   }
 
@@ -92,6 +101,23 @@ public:
   void fill(vector<T>& a) const
   {
     a.assign(this->begin(), this->end());
+  }
+
+  bool subseteq_ck(const Set<T>& b) const
+  {
+    const Set<T>& a = *this;
+    for (typename Set<T>::const_iterator ita = a.begin();
+         ita != a.end();
+         ++ ita)
+    {
+      if (!b.elem_ck(*ita))
+        return false;
+    }
+    return true;
+  }
+
+  bool operator<=(const Set<T>& b) const {
+    return this->subseteq_ck(b);
   }
 
   ujint sz() const { return this->size(); }

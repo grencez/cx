@@ -188,7 +188,7 @@ failout_sysCx (const char* msg)
             fprintf (f, "^^^ errno:%d %s\n", err, strerror (err));
     }
     lose_sysCx ();
-    exit (1);
+    abort();
 }
 
     void

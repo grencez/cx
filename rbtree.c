@@ -30,21 +30,20 @@ rotate (RBTNode* x, Bit lowup)
     rotate_BSTNode (&x->bst, lowup);
 }
 
-    RBTree
-dflt2_RBTree (RBTNode* sentinel,
-              Trit (* swapped) (const BSTNode* lhs, const BSTNode* rhs))
+  RBTree
+dflt2_RBTree (RBTNode* sentinel, PosetCmp cmp)
 {
-    RBTree t;
-    sentinel->red = 0;
-    t.bst = dflt2_BSTree (&sentinel->bst, swapped);
-    return t;
+  RBTree t;
+  sentinel->red = 0;
+  cmp = dflt3_PosetCmp (offsetof(RBTNode, bst), cmp.off, cmp.fn);
+  t.bst = dflt2_BSTree (&sentinel->bst, cmp);
+  return t;
 }
 
-    void
-init_RBTree (RBTree* t, RBTNode* sentinel,
-             Trit (* swapped) (const BSTNode* lhs, const BSTNode* rhs))
+  void
+init_RBTree (RBTree* t, RBTNode* sentinel, PosetCmp cmp)
 {
-    *t = dflt2_RBTree (sentinel, swapped);
+  *t = dflt2_RBTree (sentinel, cmp);
 }
 
 static void

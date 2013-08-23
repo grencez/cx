@@ -299,6 +299,7 @@ qual_inline
 nextidx_LgTable (const LgTable* t, ujint idx)
 {
     ujintlg lgidx = lg_ujint (idx);
+    if (lgidx >= t->allocs.sz)  return Max_ujint;
     if (lgidx > 0)  idx ^= ((ujint) 1 << lgidx);
     idx = next_BitTable (t->allocs.s[lgidx].bt, idx);
 

@@ -5,24 +5,24 @@
 #include "bstree.h"
 #include <assert.h>
 
+#define positive_bit( x )  ((x) > 0 ? 1 : 0)
+
     BSTree
-dflt2_BSTree (BSTNode* sentinel,
-              Trit (* swapped) (const BSTNode* lhs, const BSTNode* rhs))
+dflt2_BSTree (BSTNode* sentinel, PosetCmp cmp)
 {
     BSTree t;
     sentinel->joint = 0;
     sentinel->split[0] = 0;
     sentinel->split[1] = 0;
     t.sentinel = sentinel;
-    t.swapped = swapped;
+    t.cmp = cmp;
     return t;
 }
 
     void
-init_BSTree (BSTree* t, BSTNode* sentinel,
-             Trit (* swapped) (const BSTNode* lhs, const BSTNode* rhs))
+init_BSTree (BSTree* t, BSTNode* sentinel, PosetCmp cmp)
 {
-    *t = dflt2_BSTree (sentinel, swapped);
+    *t = dflt2_BSTree (sentinel, cmp);
 }
 
     void
@@ -93,70 +93,64 @@ walk_BSTree (BSTree* t, Trit postorder,
     }
 }
 
-    BSTNode*
-find_BSTree (BSTree* t, const BSTNode* x)
+  BSTNode*
+find_BSTree (BSTree* t, const void* key)
 {
-    BSTNode* y = root_of_BSTree (t);
+  BSTNode* y = root_of_BSTree (t);
 
-    while (y)
-    {
-        switch (t->swapped (x, y))
-        {
-            case Nil:  y = y->split[0];  break;
-            case Yes:  y = y->split[1];  break;
-            case May:  return y;
-        }
-    }
-    return 0;
+  while (y)
+  {
+    Sign si = poset_cmp_lhs (t->cmp, key, y);
+    if (si == 0)  return y;
+    y = y->split[positive_bit (si)];
+  }
+  return 0;
 }
 
-    void
+  void
 insert_BSTree (BSTree* t, BSTNode* x)
 {
-    BSTNode* a = t->sentinel;
-    BSTNode* y = root_of_BSTree (t);
-    Bit side = side_of_BSTNode (y);
+  BSTNode* a = t->sentinel;
+  BSTNode* y = root_of_BSTree (t);
+  Bit side = side_of_BSTNode (y);
 
-    while (y)
-    {
-        side = (t->swapped (x, y) == Yes) ? 1 : 0;
-        a = y;
-        y = y->split[side];
-    }
+  while (y)
+  {
+    side = positive_bit (poset_cmp (t->cmp, x, y));
+    a = y;
+    y = y->split[side];
+  }
 
-    a->split[side] = x;
-    x->joint = a;
-    x->split[0] = 0;
-    x->split[1] = 0;
+  a->split[side] = x;
+  x->joint = a;
+  x->split[0] = 0;
+  x->split[1] = 0;
 }
 
 /** If a node matching /x/ exists, return that node.
  * Otherwise, add /x/ to the tree and return it.
  **/
-    BSTNode*
+  BSTNode*
 ensure_BSTree (BSTree* t, BSTNode* x)
 {
-    BSTNode* a = t->sentinel;
-    BSTNode* y = root_of_BSTree (t);
-    Bit side = side_of_BSTNode (y);
+  BSTNode* a = t->sentinel;
+  BSTNode* y = root_of_BSTree (t);
+  Bit side = side_of_BSTNode (y);
 
-    while (y)
-    {
-        switch (t->swapped (x, y))
-        {
-            case Nil:  side = 0;  break;
-            case Yes:  side = 1;  break;
-            case May:  return y;
-        }
-        a = y;
-        y = y->split[side];
-    }
+  while (y)
+  {
+    Sign si = poset_cmp (t->cmp, x, y);
+    if (si == 0)  return y;
+    side = positive_bit (si);
+    a = y;
+    y = y->split[side];
+  }
 
-    a->split[side] = x;
-    x->joint = a;
-    x->split[0] = 0;
-    x->split[1] = 0;
-    return x;
+  a->split[side] = x;
+  x->joint = a;
+  x->split[0] = 0;
+  x->split[1] = 0;
+  return x;
 }
 
 /**

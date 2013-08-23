@@ -16,11 +16,11 @@ typedef char Sign;
 typedef enum Trit Trit;
 /** Type of function which compares two objects.
  * Return values should conform to:
- * - Nil: lhs < rhs
- * - May: lhs == rhs
- * - Yes: lhs > rhs
+ *  -1: lhs < rhs
+ *   0: lhs == rhs
+ *  +1: lhs > rhs
  **/
-typedef Trit (* SwappedFn) (const void*, const void*);
+typedef Sign (* PosetCmpFn) (const void*, const void*);
 
     /** Define bool.**/
 #ifndef __cplusplus

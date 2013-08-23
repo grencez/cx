@@ -352,7 +352,7 @@ cstr_SyntaxKind (SyntaxKind kind)
     void
 init_lexwords (Associa* map)
 {
-    InitAssocia( AlphaTab, SyntaxKind, *map, swapped_AlphaTab );
+    InitAssocia( AlphaTab, SyntaxKind, *map, cmp_AlphaTab );
 
     for (SyntaxKind kind = Beg_Syntax_LexWords;
          kind < End_Syntax_LexWords;
@@ -618,7 +618,7 @@ lex_AST (XFile* xf, ASTree* t)
 
                     if (luk)
                     {
-                        ast->kind = *(SyntaxKind*) val_of_Assoc (luk);
+                        ast->kind = *(SyntaxKind*) val_of_Assoc (keyword_map, luk);
                     }
                     else
                     {
@@ -1330,7 +1330,7 @@ xfrm_stmts_AST (Cons** ast_p, ASTree* t)
 xget_ASTree (XFile* xf, ASTree* t)
 {
     Associa type_lookup;
-    InitAssocia( AlphaTab, uint, type_lookup, swapped_AlphaTab );
+    InitAssocia( AlphaTab, uint, type_lookup, cmp_AlphaTab );
 
     lex_AST (xf, t);
     build_stmts_AST (&t->head, t);

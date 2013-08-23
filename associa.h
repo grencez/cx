@@ -14,14 +14,12 @@ typedef struct Associa Associa;
 struct Assoc
 {
     RBTNode rbt;
-    Associa* map;
 };
 
 /** Associative array.**/
 struct Associa
 {
     LgTable nodes;
-    SwappedFn swapped;
     RBTree rbt;
     size_t key_sz;
     size_t val_sz;
@@ -34,9 +32,9 @@ struct Associa
  * \param K  Type of key.
  * \param V  Type of value.
  * \param name  Name of variable to create.
- * \param swapped  \ref SwappedFn which acts on keys.
+ * \param cmp_fn  \ref PosetCmpFn which acts on keys.
  **/
-#define InitAssocia( K, V, name, swapped )  do \
+#define InitAssocia( K, V, name, cmp_fn )  do \
 { \
   struct Assoc_Tmp \
   { \
@@ -45,7 +43,7 @@ struct Associa
       V val; \
   }; \
   typedef struct Assoc_Tmp Assoc_Tmp; \
-  name = cons7_Associa ((SwappedFn) swapped, \
+  name = cons7_Associa ((PosetCmpFn) cmp_fn, \
                         sizeof(Assoc_Tmp), \
                         sizeof(K), \
                         sizeof(V), \
@@ -54,7 +52,7 @@ struct Associa
                         offsetof( Assoc_Tmp, val )); \
 } while (0)
 
-#define InitSet( K, name, swapped )  do \
+#define InitSet( K, name, cmp_fn )  do \
 { \
   struct Assoc_Tmp \
   { \
@@ -62,15 +60,13 @@ struct Associa
       K key; \
   }; \
   typedef struct Assoc_Tmp Assoc_Tmp; \
-  name = cons7_Associa ((SwappedFn) swapped, \
+  name = cons7_Associa ((PosetCmpFn) cmp_fn, \
                         sizeof(Assoc_Tmp), \
                         sizeof(K), 0, \
                         offsetof( Assoc_Tmp, assoc ), \
                         offsetof( Assoc_Tmp, key ), 0);  \
 } while (0)
 
-static
-Trit swapped_Assoc (const BSTNode* lhs_bst, const BSTNode* rhs_bst);
 
 /** Construct an associative array.
  * Don't use this directly.
@@ -78,7 +74,7 @@ Trit swapped_Assoc (const BSTNode* lhs_bst, const BSTNode* rhs_bst);
  **/
 qual_inline
     Associa
-cons7_Associa (SwappedFn swapped,
+cons7_Associa (PosetCmpFn cmp_fn,
                size_t node_sz,
                size_t key_sz,
                size_t val_sz,
@@ -86,21 +82,23 @@ cons7_Associa (SwappedFn swapped,
                size_t key_offset,
                size_t val_offset)
 {
-    Associa map;
-    map.nodes = dflt1_LgTable (node_sz);
-    map.swapped      = swapped;
-    map.key_sz       =  key_sz;
-    map.val_sz       =  val_sz;
-    map.assoc_offset =  assoc_offset;
-    map.key_offset   =  key_offset;
-    map.val_offset   =  val_offset;
+  Associa map;
+  map.nodes = dflt1_LgTable (node_sz);
+  map.key_sz       =  key_sz;
+  map.val_sz       =  val_sz;
+  map.assoc_offset =  assoc_offset;
+  map.key_offset   =  key_offset;
+  map.val_offset   =  val_offset;
 
-    {
-        void* node = take_LgTable (&map.nodes);
-        Assoc* assoc = (Assoc*) ((size_t) node + map.assoc_offset);
-        map.rbt = dflt2_RBTree (&assoc->rbt, swapped_Assoc);
-    }
-    return map;
+  {
+    void* node = take_LgTable (&map.nodes);
+    Assoc* assoc = (Assoc*) ((size_t) node + map.assoc_offset);
+    PosetCmp cmp;
+    cmp.off = (ptrdiff_t) (key_offset - assoc_offset);
+    cmp.fn = cmp_fn;
+    map.rbt = dflt2_RBTree (&assoc->rbt, cmp);
+  }
+  return map;
 }
 
 /** Free everything.**/
@@ -111,29 +109,19 @@ lose_Associa (Associa* map)
     lose_LgTable (&map->nodes);
 }
 
-/** Get the map (associative array) to which the association belongs.**/
-qual_inline
-    Associa*
-map_of_Assoc (Assoc* a)
-{
-    return a->map;
-}
-
 /** Get the key of an association.**/
 qual_inline
     void*
-key_of_Assoc (Assoc* a)
+key_of_Assoc (Associa* map, Assoc* a)
 {
-    Associa* map = map_of_Assoc (a);
     return (void*) ((size_t) a - map->assoc_offset + map->key_offset);
 }
 
 /** Get the value of an association.**/
 qual_inline
     void*
-val_of_Assoc (Assoc* a)
+val_of_Assoc (Associa* map, Assoc* a)
 {
-    Associa* map = map_of_Assoc (a);
     return (void*) ((size_t) a - map->assoc_offset + map->val_offset);
 }
 
@@ -144,37 +132,19 @@ val_of_Assoc (Assoc* a)
  **/
 qual_inline
     void
-key_fo_Assoc (Assoc* a, const void* key)
+key_fo_Assoc (Associa* map, Assoc* a, const void* key)
 {
-    Associa* map = map_of_Assoc (a);
-    void* p = key_of_Assoc (a);
+    void* p = key_of_Assoc (map, a);
     memcpy (p, key, map->key_sz);
 }
 
 /** Set the value for an association.**/
 qual_inline
     void
-val_fo_Assoc (Assoc* a, const void* val)
+val_fo_Assoc (Associa* map, Assoc* a, const void* val)
 {
-    Associa* map = map_of_Assoc (a);
-    void* p = val_of_Assoc (a);
+    void* p = val_of_Assoc (map, a);
     memcpy (p, val, map->val_sz);
-}
-
-/** Check if two Assoc nodes are swapped in order.
- * One of them must be in the tree.
- **/
-    Trit
-swapped_Assoc (const BSTNode* lhs_bst, const BSTNode* rhs_bst)
-{
-    Assoc* lhs =
-        CastUp( Assoc, rbt, CastUp( RBTNode, bst, lhs_bst ) );
-    Assoc* rhs =
-        CastUp( Assoc, rbt, CastUp( RBTNode, bst, rhs_bst ) );
-    Associa* map = map_of_Assoc (lhs);
-
-    return map->swapped (key_of_Assoc (lhs),
-                         key_of_Assoc (rhs));
 }
 
 /** Request a new element from the map.
@@ -190,7 +160,6 @@ take_Associa (Associa* map)
     void* node = take_LgTable (&map->nodes);
     Assoc* a = (Assoc*) ((size_t) node + map->assoc_offset);
     a->rbt.bst.joint = 0;
-    a->map = map;
     return a;
 }
 
@@ -211,17 +180,6 @@ give_Associa (Associa* map, Assoc* assoc)
     give_LgTable (&map->nodes, (void*) ((size_t) assoc - map->assoc_offset));
 }
 
-/** Lose an association.
- * \sa give_Associa()
- **/
-qual_inline
-    void
-lose_Assoc (Assoc* assoc)
-{
-    Associa* map = map_of_Assoc (assoc);
-    give_Associa (map, assoc);
-}
-
 /** Associate a key with a value in the map.
  * This can form duplicates.
  * \sa ensure_Associa()
@@ -231,8 +189,8 @@ qual_inline
 insert_Associa (Associa* map, const void* key, const void* val)
 {
     Assoc* a = take_Associa (map);
-    key_fo_Assoc (a, key);
-    val_fo_Assoc (a, val);
+    key_fo_Assoc (map, a, key);
+    val_fo_Assoc (map, a, val);
     insert_RBTree (&map->rbt, &a->rbt);
     return a;
 }
@@ -241,18 +199,13 @@ insert_Associa (Associa* map, const void* key, const void* val)
  * \return  NULL when the association could not be found.
  **/
 qual_inline
-    Assoc*
+  Assoc*
 lookup_Associa (Associa* map, const void* key)
 {
-    Assoc* a = take_Associa (map);
-    BSTNode* bst;
+  BSTNode* bst = find_BSTree (&map->rbt.bst, key);
 
-    key_fo_Assoc (a, key);
-    bst = find_BSTree (&map->rbt.bst, &a->rbt.bst);
-    give_Associa (map, a);
-
-    if (!bst)  return 0;
-    return CastUp( Assoc, rbt, CastUp( RBTNode, bst, bst ) );
+  if (!bst)  return 0;
+  return CastUp( Assoc, rbt, CastUp( RBTNode, bst, bst ) );
 }
 
 /** Ensure an entry exists for the given key.
@@ -265,7 +218,7 @@ ensure1_Associa (Associa* map, const void* key, bool* added)
 {
     Assoc* b = take_Associa (map);
     Assoc* a = 0;
-    key_fo_Assoc (b, key);
+    key_fo_Assoc (map, b, key);
 
     {
         RBTNode* rbt = ensure_RBTree (&map->rbt, &b->rbt);

@@ -40,16 +40,10 @@ struct TNode
     uint val;
 };
 
-    Trit
-swapped_TNode (const BSTNode* lhs, const BSTNode* rhs)
+  Sign
+cmp_TNode (const char* const* lhs, const char* const* rhs)
 {
-    const TNode* a = CastUp( TNode, rbt, CastUp( RBTNode, bst, lhs ) );
-    const TNode* b = CastUp( TNode, rbt, CastUp( RBTNode, bst, rhs ) );
-    int ret = strcmp (a->key, b->key);
-
-    if (ret < 0)  return Nil;
-    if (ret > 0)  return Yes;
-    return May;
+  return strcmp (*lhs, *rhs);
 }
 
     void
@@ -178,10 +172,7 @@ static
     TNode*
 find_TNode (RBTree* t, const char* s)
 {
-    TNode a;
-    BSTNode* x;
-    a.key = s;
-    x = find_BSTree (&t->bst, &a.rbt.bst);
+    BSTNode* x = find_BSTree (&t->bst, s);
     if (!x)  return 0;
     return CastUp( TNode, rbt, CastUp( RBTNode, bst, x ) );
 }
@@ -223,7 +214,7 @@ testfn_Associa ()
     Associa map[1];
     uint n_expect = 1; /* Sentinel node.*/
 
-    InitAssocia( AlphaTab, uint, *map, swapped_AlphaTab );
+    InitAssocia( AlphaTab, uint, *map, cmp_AlphaTab );
 
     Claim2( map->nodes.sz ,==, n_expect );
     {:for (mi ; nmuls)
@@ -238,7 +229,7 @@ testfn_Associa ()
                     bool added = false;
                     Assoc* assoc = ensure1_Associa (map, &key, &added);
                     Claim( added );
-                    val_fo_Assoc (assoc, &idx);
+                    val_fo_Assoc (map, assoc, &idx);
                 }
                 ++ n_expect;
                 Claim2( map->nodes.sz ,==, n_expect );
@@ -259,10 +250,10 @@ testfn_Associa ()
                 }
                 Claim( a );
                 {
-                    uint val = *(uint*) val_of_Assoc (a);
+                    uint val = *(uint*) val_of_Assoc (map, a);
                     Claim2( idx ,==, val );
                 }
-                lose_Assoc (a);
+                give_Associa (map, a);
                 -- n_expect;
                 Claim2( map->nodes.sz ,==, n_expect );
             }
@@ -539,7 +530,11 @@ testfn_RBTree ()
     const uint nkeys = ArraySz( keys );
     const uint nmuls = ArraySz( muls );
     TNode sentinel;
-    DecloStack1( RBTree, t, dflt2_RBTree (&sentinel.rbt, swapped_TNode) );
+    PosetCmp cmp =
+      dflt3_PosetCmp (offsetof( TNode, rbt ),
+                      offsetof( TNode, key ),
+                      (PosetCmpFn) cmp_TNode);
+    DecloStack1( RBTree, t, dflt2_RBTree (&sentinel.rbt, cmp) );
     DecloStack1( LgTable, lgt, dflt1_LgTable (sizeof(TNode)) );
     uint n_expect = 0;
 

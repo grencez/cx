@@ -174,8 +174,8 @@ char*
 xget_int_cstr (int* ret, const char* in);
 char*
 xget_real_cstr (real* ret, const char* in);
-Trit
-swapped_AlphaTab (const AlphaTab* a, const AlphaTab* b);
+Sign
+cmp_AlphaTab (const AlphaTab* a, const AlphaTab* b);
 void
 cat_uint_AlphaTab (AlphaTab* a, uint x);
 void

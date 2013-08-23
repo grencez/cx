@@ -7,13 +7,11 @@
 
 #include "synhax.hh"
 extern "C" {
-#include "lgtable.h"
 #include "table.h"
 }
 
 namespace Cx {
 namespace C {
-  using ::LgTable;
   using ::Table;
 }
 
@@ -154,6 +152,11 @@ public:
   const T* end() const {
     return *(T*) elt_Table ((C::Table*)&t, t.sz);
   }
+  void reverse() {
+    ujint n = this->sz() / 2;
+    for (ujint i = 0; i < n; ++i)
+      SwapT( T, (*this)[i], (*this)[this->sz()-1-i] );
+  }
 
   /** If this Table represents a mapping from state indices,
    * this method grows the state space to allow a new variable of
@@ -194,66 +197,6 @@ inline
 index_of_state (const uint* state, const Table<uint>& doms)
 {
   return ::index_of_state (state, &doms[0], doms.sz());
-}
-
-/** Table that does not reallocate existing elements.
- *
- * Due to its nature, the LgTable does not store elements contiguously.
- */
-template <class T>
-class LgTable
-{
-private:
-  C::LgTable t;
-public:
-  LgTable() {
-    t = dflt1_LgTable (sizeof(T));
-  }
-  ~LgTable() {
-    for (ujint i = begidx_LgTable (&t);
-         i != Max_ujint;
-         i = nextidx_LgTable (&t, i))
-    {
-      (*this)[i].~T();
-    }
-    lose_LgTable (&t);
-  }
-
-  ujint sz() const {
-    return t.sz;
-  }
-
-  const T& operator[](ujint i) const {
-    return *(const T*) elt_LgTable ((C::LgTable*)&t, i);
-  }
-  T& operator[](ujint i) {
-    return *(T*) elt_LgTable (&t, i);
-  }
-
-  T& grow1() {
-    T* e = (T*) take_LgTable (&t);
-    new (e) T();
-    return *e;
-  }
-  T& push(const T& x) {
-    T* e = (T*) take_LgTable (&t);
-    new (e) T(x);
-    return *e;
-  }
-
-  T& top() {
-    return (*this)[t.sz-1];
-  }
-  const T& top() const {
-    return (*this)[t.sz-1];
-  }
-};
-
-template <class T>
-  ujint
-sz_of (const LgTable<T>& t)
-{
-  return t.sz();
 }
 }
 

@@ -38,7 +38,8 @@ CxHFiles = \
 	table
 
 CxHHFiles = \
-	alphatab map synhax set table \
+	alphatab map synhax set \
+	table lgtable \
 	urandom \
 	xfile ofile fileb
 

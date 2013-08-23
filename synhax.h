@@ -112,10 +112,49 @@
 /** Swap two values.**/
 #define SwapT( T, a, b ) \
 do { \
-  T SwapT_tmp = a; \
+  const T SwapT_tmp = a; \
   a = b; \
   b = SwapT_tmp; \
 } while (0)
+
+typedef struct PosetCmp PosetCmp;
+struct PosetCmp
+{
+  ptrdiff_t off;
+  PosetCmpFn fn;
+};
+
+qual_inline
+  PosetCmp
+dflt2_PosetCmp (ptrdiff_t off, PosetCmpFn fn)
+{
+  PosetCmp cmp;
+  cmp.off = off;
+  cmp.fn = fn;
+  return cmp;
+}
+
+qual_inline
+  PosetCmp
+dflt3_PosetCmp (ptrdiff_t node_offset, ptrdiff_t key_offset, PosetCmpFn fn)
+{
+  return dflt2_PosetCmp (key_offset - node_offset, fn);
+}
+
+qual_inline
+  Sign
+poset_cmp (PosetCmp cmp, const void* a, const void* b)
+{
+  return cmp.fn ((const void*) (cmp.off + (ptrdiff_t)a),
+                 (const void*) (cmp.off + (ptrdiff_t)b));
+}
+
+qual_inline
+  Sign
+poset_cmp_lhs (PosetCmp cmp, const void* a, const void* b)
+{
+  return cmp.fn (a, (const void*) (cmp.off + (ptrdiff_t)b));
+}
 
 /** Implemented in sys-cx.c **/
 void

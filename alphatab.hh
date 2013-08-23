@@ -94,13 +94,13 @@ public:
   }
 
   bool operator==(const AlphaTab& b) const {
-    return (May == swapped_AlphaTab (&t, &b.t));
+    return (0 == cmp_AlphaTab (&t, &b.t));
   }
   bool operator!=(const AlphaTab& b) const {
     return !(*this == b);
   }
   bool operator<(const AlphaTab& b) const {
-    return (Nil == swapped_AlphaTab (&t, &b.t));
+    return (0 > cmp_AlphaTab (&t, &b.t));
   }
 
   const char* cstr() const {

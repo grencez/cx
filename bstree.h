@@ -19,15 +19,13 @@ struct BSTNode
 struct BSTree
 {
     BSTNode* sentinel;
-    Trit (* swapped) (const BSTNode* lhs, const BSTNode* rhs);
+    PosetCmp cmp;
 };
 
 BSTree
-dflt2_BSTree (BSTNode* sentinel,
-              Trit (* swapped) (const BSTNode* lhs, const BSTNode* rhs));
+dflt2_BSTree (BSTNode* sentinel, PosetCmp cmp);
 void
-init_BSTree (BSTree* t, BSTNode* sentinel,
-             Trit (* swapped) (const BSTNode* lhs, const BSTNode* rhs));
+init_BSTree (BSTree* t, BSTNode* sentinel, PosetCmp cmp);
 void
 lose_BSTree (BSTree* t, void (* lose) (BSTNode*));
 
@@ -35,7 +33,7 @@ void
 walk_BSTree (BSTree* t, Trit postorder,
              void (* f) (BSTNode*, void*), void* dat);
 BSTNode*
-find_BSTree (BSTree* t, const BSTNode* x);
+find_BSTree (BSTree* t, const void* key);
 void
 insert_BSTree (BSTree* t, BSTNode* x);
 BSTNode*

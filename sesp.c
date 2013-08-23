@@ -3,23 +3,23 @@
 #include "alphatab.h"
 
 static
-  Trit
-swapped_MemLoc (const void* a, const void* b)
+  Sign
+cmp_MemLoc (const void* a, const void* b)
 {
   if ((size_t) a < (size_t) b) {
-    return Nil;
+    return -1;
   }
   if ((size_t) a == (size_t) b) {
-    return May;
+    return 0;
   }
-  return Yes;
+  return 1;
 }
 
   SespCtx*
 make_SespCtx ()
 {
   SespCtx* ctx = AllocT( SespCtx, 1 );
-  InitAssocia( SespVT*, SespKind*, ctx->kindmap, swapped_MemLoc );
+  InitAssocia( SespVT*, SespKind*, ctx->kindmap, cmp_MemLoc );
   ctx->nil.base.kind = 0;
   ctx->nil.car = 0;
   ctx->nil.cdr = 0;
@@ -34,7 +34,7 @@ free_SespCtx (SespCtx* ctx)
        assoc;
        assoc = next_Assoc (assoc))
   {
-    SespKind* kind = *(SespKind**) val_of_Assoc (assoc);
+    SespKind* kind = *(SespKind**) val_of_Assoc (&ctx->kindmap, assoc);
     free_SespKind (kind);
   }
   lose_Associa (&ctx->kindmap);
@@ -58,9 +58,9 @@ ensure_kind_SespCtx (SespCtx* ctx, const SespVT* vt)
   if (added) {
     SespKind* kind = make_SespKind (vt);
     kind->ctx = ctx;
-    val_fo_Assoc (assoc, &kind);
+    val_fo_Assoc (&ctx->kindmap, assoc, &kind);
   }
-  return *(SespKind**) val_of_Assoc (assoc);
+  return *(SespKind**) val_of_Assoc (&ctx->kindmap, assoc);
 }
 
 /** Easy make function for SespKind.*/

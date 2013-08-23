@@ -70,8 +70,8 @@ xget_real_cstr (real* ret, const char* in)
   return out;
 }
 
-  Trit
-swapped_AlphaTab (const AlphaTab* a, const AlphaTab* b)
+  Sign
+cmp_AlphaTab (const AlphaTab* a, const AlphaTab* b)
 {
   ujint na = a->sz;
   ujint nb = b->sz;
@@ -84,7 +84,6 @@ swapped_AlphaTab (const AlphaTab* a, const AlphaTab* b)
     ret = memcmp (a->s, b->s, na * sizeof(char));
     if (ret == 0 && na < nb)
       ret = -1;
-
   }
   else
   {
@@ -92,7 +91,7 @@ swapped_AlphaTab (const AlphaTab* a, const AlphaTab* b)
     if (ret == 0)
       ret = 1;
   }
-  return (ret < 0 ? Nil : (ret > 0 ? Yes : May));
+  return ret;
 }
 
   void

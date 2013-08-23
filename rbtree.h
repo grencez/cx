@@ -21,11 +21,9 @@ struct RBTree
 };
 
 RBTree
-dflt2_RBTree (RBTNode* sentinel,
-              Trit (* swapped) (const BSTNode* lhs, const BSTNode* rhs));
+dflt2_RBTree (RBTNode* sentinel, PosetCmp cmp);
 void
-init_RBTree (RBTree* t, RBTNode* sentinel,
-             Trit (* swapped) (const BSTNode* lhs, const BSTNode* rhs));
+init_RBTree (RBTree* t, RBTNode* sentinel, PosetCmp cmp);
 void
 insert_RBTree (RBTree* t, RBTNode* x);
 RBTNode*
