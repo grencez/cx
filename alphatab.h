@@ -20,6 +20,18 @@ dup_cstr (const char* s)
 }
 
 qual_inline
+  Sign
+cmp_cstr (const char* a, const char* b)
+{
+  int ret;
+  if (a == b)  return 0;
+  if (!a)  return -1;
+  if (!b)  return 1;
+  ret = strcmp (a, b);
+  return sign_of (ret);
+}
+
+qual_inline
     bool
 eq_cstr (const char* a, const char* b)
 {

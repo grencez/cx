@@ -43,7 +43,7 @@ struct TNode
   Sign
 cmp_TNode (const char* const* lhs, const char* const* rhs)
 {
-  return strcmp (*lhs, *rhs);
+  return cmp_cstr (*lhs, *rhs);
 }
 
     void
@@ -172,7 +172,7 @@ static
     TNode*
 find_TNode (RBTree* t, const char* s)
 {
-    BSTNode* x = find_BSTree (&t->bst, s);
+    BSTNode* x = find_BSTree (&t->bst, &s);
     if (!x)  return 0;
     return CastUp( TNode, rbt, CastUp( RBTNode, bst, x ) );
 }

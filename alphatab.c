@@ -91,7 +91,7 @@ cmp_AlphaTab (const AlphaTab* a, const AlphaTab* b)
     if (ret == 0)
       ret = 1;
   }
-  return ret;
+  return sign_of (ret);
 }
 
   void

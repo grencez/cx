@@ -156,6 +156,8 @@ poset_cmp_lhs (PosetCmp cmp, const void* a, const void* b)
   return cmp.fn (a, (const void*) (cmp.off + (ptrdiff_t)b));
 }
 
+#define sign_of(x)  ((x) < 0 ? -1 : (x) > 0 ? 1 : 0)
+
 /** Implemented in sys-cx.c **/
 void
 dbglog_printf3 (const char* file,
