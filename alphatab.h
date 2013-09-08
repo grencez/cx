@@ -185,6 +185,8 @@ xget_uint_cstr (uint* ret, const char* in);
 char*
 xget_int_cstr (int* ret, const char* in);
 char*
+xget_ujint_cstr (ujint* ret, const char* in);
+char*
 xget_real_cstr (real* ret, const char* in);
 Sign
 cmp_AlphaTab (const AlphaTab* a, const AlphaTab* b);

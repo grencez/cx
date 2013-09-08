@@ -249,6 +249,43 @@ skipto_XFile (XFile* xf, const char* pos)
 }
 
   bool
+skiplined_XFile (XFile* xf, const char* delim)
+{
+  char* s;
+  uint delim_sz = strlen (delim);
+
+  mayflush_XFile (xf, May);
+  s = strstr (cstr_XFile (xf), delim);
+
+  while (!s)
+  {
+    /* We only need to re-check the last /delim_sz-1/ chars,
+     * which start at /buf.sz-delim_sz/ due to the NUL byte.
+     */
+    if (xf->off + delim_sz < xf->buf.sz)
+      xf->off = xf->buf.sz - delim_sz;
+
+    mayflush_XFile (xf, May);
+    if (!xget_chunk_XFile (xf))  break;
+
+    s = strstr (cstr_XFile (xf), delim);
+  }
+
+  if (s)
+  {
+    s = &s[delim_sz];
+    xf->off = IdxElt( xf->buf.s, s );
+  }
+  else
+  {
+    xf->off = xf->buf.sz - 1;
+  }
+
+  mayflush_XFile (xf, May);
+  return !!s;
+}
+
+  bool
 skip_cstr_XFile (XFile* xf, const char* pfx)
 {
   uint n;
@@ -267,7 +304,6 @@ skip_cstr_XFile (XFile* xf, const char* pfx)
   return false;
 }
 
-qual_inline
   void
 olay_txt_XFile (XFile* olay, XFile* xf, uint off)
 {
@@ -321,8 +357,17 @@ xget_uint_XFile (XFile* xf, uint* x)
   return true;
 }
 
-//bool
-//xget_ujint_XFile (XFile xf, ujint*);
+  bool
+xget_ujint_XFile (XFile* xf, ujint* x)
+{
+  const char* s;
+  skipds_XFile (xf, WhiteSpaceChars);
+  tods_XFile (xf, WhiteSpaceChars);
+  s = xget_ujint_cstr (x, (char*)&xf->buf.s[xf->off]);
+  if (!s)  return false;
+  xf->off = IdxElt( xf->buf.s, s );
+  return true;
+}
 
   bool
 xget_real_XFile (XFile* xf, real* x)

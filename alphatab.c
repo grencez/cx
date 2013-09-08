@@ -20,20 +20,13 @@ itoa_dup_cstr (int x)
   char*
 xget_uint_cstr (uint* ret, const char* in)
 {
-  unsigned long v;
-  char* out = 0;
-
-  assert (ret);
-  assert (in);
-  v = strtoul (in, &out, 10);
-
-  if (out == in)  out = 0;
-  if (out)
-  {
-    *ret = (uint) v;
-    if (*ret != v)  out = 0;
-  }
-  return out;
+  ujint x = 0;
+  char* s =
+    xget_ujint_cstr (&x, in);
+  if (!s)  return 0;
+  if (x > Max_uint)  return 0;
+  *ret = x;
+  return s;
 }
 
   char*
@@ -50,6 +43,25 @@ xget_int_cstr (int* ret, const char* in)
   if (out)
   {
     *ret = (int) v;
+    if (*ret != v)  out = 0;
+  }
+  return out;
+}
+
+  char*
+xget_ujint_cstr (ujint* ret, const char* in)
+{
+  unsigned long v;
+  char* out = 0;
+
+  assert (ret);
+  assert (in);
+  v = strtoul (in, &out, 10);
+
+  if (out == in)  out = 0;
+  if (out)
+  {
+    *ret = (ujint) v;
     if (*ret != v)  out = 0;
   }
   return out;

@@ -60,8 +60,12 @@ inject_XFile (XFile* in, XFile* src, const char* delim);
 void
 skipto_XFile (XFile* xf, const char* pos);
 bool
+skiplined_XFile (XFile* xf, const char* delim);
+bool
 skip_cstr_XFile (XFile* xf, const char* pfx);
 
+void
+olay_txt_XFile (XFile* olay, XFile* xf, uint off);
 bool
 getlined_olay_XFile (XFile* olay, XFile* xf, const char* delim);
 bool

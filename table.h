@@ -359,6 +359,14 @@ affy_Table (Table* t, ujint capac)
 } while (0)
 
 qual_inline
+  void
+affysz_Table (Table* t, ujint sz)
+{
+  affy_Table (t, sz);
+  t->sz = sz;
+}
+
+qual_inline
     void
 copy_Table (Table* a, const Table* b)
 {

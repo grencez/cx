@@ -58,6 +58,23 @@ public:
   }
   ujint size() const { return this->sz(); }
 
+  void affy(ujint capac) {
+    ujint old_sz = this->sz();
+    for (ujint i = capac; i < old_sz; ++i)
+      (*this)[i].~T();
+    affy_Table (&t, capac);
+  }
+
+  void affysz(ujint capac, const T& e = T()) {
+    ujint old_sz = this->sz();
+    for (ujint i = capac; i < old_sz; ++i)
+      (*this)[i].~T();
+    affysz_Table (&t, capac);
+    for (ujint i = old_sz; i < t.sz; ++i) {
+      new (&(*this)[i]) T(e);
+    }
+  }
+
   void grow(ujint capac, const T& e = T()) {
     ujint old_sz = t.sz;
     grow_Table (&t, capac);
@@ -73,6 +90,9 @@ public:
     size_Table (&t, capac);
     for (ujint i = old_sz; i < capac; ++i)
       new (&(*this)[i]) T();
+  }
+  void clear() {
+    this->resize(0);
   }
 
   T& operator[](ujint i) {
@@ -127,30 +147,43 @@ public:
     return !(*this == b);
   }
 
-  bool operator<=(const Table<T>& b) const {
+  Sign cmp(const Table<T>& b) const
+  {
     const Table<T>& a = *this;
     const ujint n = (a.sz() <= b.sz()) ? a.sz() : b.sz();
     for (ujint i = 0; i < n; ++i) {
-      if (a[i] < b[i])  return true;
-      if (a[i] > b[i])  return false;
+      if (a[i] < b[i])  return -1;
+      if (b[i] < a[i])  return  1;
     }
-    return (a.sz() <= b.sz());
-  }
-  bool operator<(const Table<T>& b) const {
-    return ((*this <= b) && (*this != b));
-  }
-  bool operator>(const Table<T>& b) const {
-    return !(*this <= b);
-  }
-  bool operator>=(const Table<T>& b) const {
-    return !(*this < b);
+    if (a.sz() < b.sz())  return -1;
+    if (b.sz() < a.sz())  return  1;
+    return 0;
   }
 
+  bool operator<=(const Table<T>& b) const {
+    return (this->cmp(b) <= 0);
+  }
+  bool operator<(const Table<T>& b) const {
+    return (this->cmp(b) < 0);
+  }
+  bool operator>(const Table<T>& b) const {
+    return (this->cmp(b) > 0);
+  }
+  bool operator>=(const Table<T>& b) const {
+    return (this->cmp(b) >= 0);
+  }
+
+  T* begin() {
+    return (T*) elt_Table ((C::Table*)&t, 0);
+  }
+  T* end() {
+    return (T*) elt_Table ((C::Table*)&t, t.sz);
+  }
   const T* begin() const {
-    return *(T*) elt_Table ((C::Table*)&t, 0);
+    return (T*) elt_Table ((C::Table*)&t, 0);
   }
   const T* end() const {
-    return *(T*) elt_Table ((C::Table*)&t, t.sz);
+    return (T*) elt_Table ((C::Table*)&t, t.sz);
   }
   void reverse() {
     ujint n = this->sz() / 2;

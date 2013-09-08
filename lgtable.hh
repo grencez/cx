@@ -35,6 +35,9 @@ public:
   ujint nextidx(ujint idx) const {
     return nextidx_LgTable (&t, idx);
   }
+  bool endidx_ck(ujint idx) const {
+    return endidx_ck_LgTable (&t, idx);
+  }
 
   ~LgTable() {
     for (ujint i = begidx(); i != Max_ujint; i = nextidx(i))

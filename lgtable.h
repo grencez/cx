@@ -194,19 +194,16 @@ takeidx_LgTable (LgTable* t)
         const ujint hibit = ((ujint) 1 << lgidx);
         LgTableAlloc* a = &t->allocs.s[lgidx];
 
-        if (a->avails.sz > 0)
+        do
         {
-            do
-            {
-                idx = *TopTable( a->avails );
-                MPopTable( a->avails, 1 );
-            } while (idx >= a->bt.sz);
-        }
-        else
-        {
-            idx = a->bt.sz;
-            ++ a->bt.sz;
-        }
+            if (a->avails.sz == 0) {
+              idx = a->bt.sz;
+              ++ a->bt.sz;
+              break;
+            }
+            idx = *TopTable( a->avails );
+            MPopTable( a->avails, 1 );
+        } while (idx >= a->bt.sz);
 
         if (set1_BitTable (a->bt, idx))
             Claim( false );
@@ -327,6 +324,13 @@ begidx_LgTable (const LgTable* t)
         return nextidx_LgTable (t, 0);
     }
     return Max_ujint;
+}
+
+qual_inline
+  Bool
+endidx_ck_LgTable (const LgTable* t, ujint idx)
+{
+  return (idx >= ((ujint) 1 << t->allocs.sz));
 }
 
 #endif

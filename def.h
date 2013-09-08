@@ -12,6 +12,7 @@ typedef int Bit;
 //enum Trit { Nil = -1, Yes = 1, May = 0 };
 enum Trit { Nil = 0, Yes = 1, May = 2 };
 typedef char Sign;
+typedef char Bool;
 
 typedef enum Trit Trit;
 /** Type of function which compares two objects.
