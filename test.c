@@ -481,6 +481,56 @@ testfn_LgTable ()
     lose_LgTable (lgt);
 }
 
+/** \test
+ * Stress test of the LgTable data structure.
+ **/
+static
+  void
+testfn_stress_LgTable ()
+{
+  const uint n = 1e5;
+  LgTable lgt[1];
+  *lgt = dflt1_LgTable (sizeof(int));
+
+  {:for (i ; n)
+    uint nallocs;
+    uint idx;
+    idx = takeidx_LgTable (lgt);
+    Claim2( idx ,==, i );
+    nallocs = lgt->allocs.sz;
+    giveidx_LgTable (lgt, i);
+    Claim2( nallocs ,==, lgt->allocs.sz );
+    idx = takeidx_LgTable (lgt);
+    Claim2( idx ,==, i );
+    Claim2( nallocs ,==, lgt->allocs.sz );
+  }
+
+  {:for (i ; n)
+    giveidx_LgTable (lgt, n-i-1);
+    if (lgt->sz >= 2)
+      Claim2( 8 * lgt->sz / 3 ,>, allocsz_of_LgTable (lgt) );
+    else
+      Claim2( allocsz_of_LgTable (lgt) ,==, 4);
+
+    if (i > n / 2) {
+      Claim2( 4 * lgt->sz / 3 ,<=, allocsz_of_LgTable (lgt) );
+    }
+  }
+  Claim2( lgt->sz ,==, 0 );
+  Claim2( allocsz_of_LgTable (lgt) ,==, 4 );
+
+  {:for (i ; n)
+    takeidx_LgTable (lgt);
+  }
+  {:for (i ; n)
+    giveidx_LgTable (lgt, i);
+  }
+  Claim2( lgt->sz ,==, 0 );
+  Claim2( allocsz_of_LgTable (lgt) ,==, 4 );
+
+  lose_LgTable (lgt);
+}
+
     void
 testfn_OSPc ()
 {
@@ -733,6 +783,7 @@ int main (int argc, char** argv)
   testfn_BitTable ();
   testfn_cache_BitTable ();
   testfn_LgTable ();
+  testfn_stress_LgTable ();
   testfn_Cons ();
   testfn_skipws_FileB ();
   testfn_RBTree ();

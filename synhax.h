@@ -41,8 +41,10 @@
  * \param a  Dividend.
  * \param b  Divisor.
  **/
-#define CeilQuot( a, b ) \
-    (((a) + (b) - 1) / (b))
+#define ceil_quot( a, b ) \
+    (((a) + ((b) - 1)) / (b))
+
+#define CeilQuot( a, b )  ceil_quot(a,b)
 
 #define InitDomMax( a )  do { a = 0; a = ~(a); } while (0)
 

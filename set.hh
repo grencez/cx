@@ -49,7 +49,7 @@ public:
   Set<T>& operator-=(const Set<T>& b)
   {
     Set<T>& a = *this;
-#if 0
+#if 1
     for (typename Set<T>::const_iterator itb = b.begin();
          itb != b.end();
          ++ itb)

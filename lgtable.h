@@ -271,7 +271,8 @@ giveidx_LgTable (LgTable* t, ujint idx)
 
     -- t->sz;
     while (t->allocs.sz > 2 &&
-           t->allocs.s[t->allocs.sz-1].bt.sz == 0)
+           t->allocs.s[t->allocs.sz-1].bt.sz == 0 &&
+           t->sz <= 3 * ((ujint)1 << (t->allocs.sz - 3)))
     {
         a = TopTable( t->allocs );
         lose_LgTableAlloc (a);
@@ -327,10 +328,19 @@ begidx_LgTable (const LgTable* t)
 }
 
 qual_inline
+  ujint
+allocsz_of_LgTable (const LgTable* t)
+{
+  if (t->allocs.sz > 0)
+    return (1 << t->allocs.sz);
+  return 0;
+}
+
+qual_inline
   Bool
 endidx_ck_LgTable (const LgTable* t, ujint idx)
 {
-  return (idx >= ((ujint) 1 << t->allocs.sz));
+  return (idx >= allocsz_of_LgTable (t));
 }
 
 #endif
