@@ -13,6 +13,12 @@
 /** Get size of an array (allocated on the stack in your current scope).**/
 #define ArraySz( a )  (sizeof(a) / sizeof(*a))
 
+/** Given some memory address and some offset,
+ * cast the resulting memory address to a 
+ */
+#define CastOff( T, p ,op, off ) \
+  ((T*) ((size_t) (p) op (ptrdiff_t) (off)))
+
 /** Given the memory address of a structure's field,
  * get the address of the structure.
  * \param T      Type.
@@ -20,7 +26,7 @@
  * \param p      Memory address of the field.
  **/
 #define CastUp( T, field, p ) \
-    ((T*) ((size_t) p - offsetof( T, field )))
+  CastOff( T, p ,-, offsetof( T, field ) )
 
 #define EltZ( a, idx, elsz ) \
     ((void*) ((size_t) a + (size_t) ((idx) * (elsz))))

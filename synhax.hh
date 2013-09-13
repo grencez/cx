@@ -63,5 +63,22 @@ umod_int (int i, uint n)
   return (uint) i;
 }
 
+/** Increment followed by modulo.**/
+inline
+  uint
+incmod(uint i, uint by, uint n)
+{
+  return (i + by) % n;
+}
+
+/** Decrement followed by modulo.**/
+inline
+  uint
+decmod(uint i, uint by, uint n)
+{
+  return (i + n - (by % n)) % n;
+}
+
+
 #endif
 

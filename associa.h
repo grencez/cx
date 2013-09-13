@@ -92,7 +92,7 @@ cons7_Associa (PosetCmpFn cmp_fn,
 
   {
     void* node = take_LgTable (&map.nodes);
-    Assoc* assoc = (Assoc*) ((size_t) node + map.assoc_offset);
+    Assoc* assoc = CastOff( Assoc, node ,+, map.assoc_offset );
     PosetCmp cmp;
     cmp.off = (ptrdiff_t) (key_offset - assoc_offset);
     cmp.fn = cmp_fn;
@@ -158,7 +158,7 @@ qual_inline
 take_Associa (Associa* map)
 {
     void* node = take_LgTable (&map->nodes);
-    Assoc* a = (Assoc*) ((size_t) node + map->assoc_offset);
+    Assoc* a = CastOff( Assoc, node ,+, map->assoc_offset );
     a->rbt.bst.joint = 0;
     return a;
 }
@@ -177,7 +177,7 @@ give_Associa (Associa* map, Assoc* assoc)
 {
     if (assoc->rbt.bst.joint)
         remove_RBTree (&map->rbt, &assoc->rbt);
-    give_LgTable (&map->nodes, (void*) ((size_t) assoc - map->assoc_offset));
+    give_LgTable (&map->nodes, CastOff( void, assoc ,-, map->assoc_offset ));
 }
 
 /** Associate a key with a value in the map.

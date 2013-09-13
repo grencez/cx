@@ -77,7 +77,7 @@ make_SespKind (const SespVT* vt)
 take_SespKind (SespKind* kind)
 {
   void* el = take_LgTable (&kind->cells);
-  Sesp sp = (Sesp) ((size_t) el + kind->vt->base_offset);
+  Sesp sp = CastOff( SespBase, el ,+, kind->vt->base_offset );
   sp->kind = kind;
   return sp;
 }
@@ -90,7 +90,7 @@ free_SespKind (SespKind* kind)
        i = nextidx_LgTable (&kind->cells, i))
   {
     void* el = elt_LgTable (&kind->cells, i);
-    Sesp sp = (Sesp) ((size_t) el + kind->vt->base_offset);
+    Sesp sp = CastOff( SespBase, el ,+, kind->vt->base_offset );
     lose_Sesp (sp);
   }
   lose_LgTable (&kind->cells);
