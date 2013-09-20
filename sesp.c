@@ -199,7 +199,7 @@ static void lose_SespCStr (Sesp base)
 }
 
 static
-  const char* 
+  const char*
 ccstr_of_SespCStr (const Sesp base)
 {
   return to_SespCStr (base) -> s;
@@ -232,7 +232,7 @@ make_SespCCStr (SespCtx* ctx, const char* s)
 }
 
 static
-  const char* 
+  const char*
 ccstr_of_SespCCStr (const Sesp base)
 {
   return to_SespCCStr (base) -> s;

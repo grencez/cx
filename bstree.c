@@ -193,7 +193,7 @@ remove_BSTNode (BSTNode* a)
     BSTNode* x;
     BSTNode* y;
 
-    /*  a          y 
+    /*  a          y
      *   \        / \
      *    y   => *   *
      *   / \

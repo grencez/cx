@@ -14,7 +14,7 @@
 #define ArraySz( a )  (sizeof(a) / sizeof(*a))
 
 /** Given some memory address and some offset,
- * cast the resulting memory address to a 
+ * cast the resulting memory address to a pointer of some type.
  */
 #define CastOff( T, p ,op, off ) \
   ((T*) ((size_t) (p) op (ptrdiff_t) (off)))

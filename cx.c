@@ -1227,7 +1227,6 @@ build_stmts_AST (Cons** ast_p, ASTree* t)
             }
             else
             {
-                
             }
             pending = 0;
             break;
@@ -1237,7 +1236,6 @@ build_stmts_AST (Cons** ast_p, ASTree* t)
             /* Empty statement.*/
             if (!pending)  break;
 
-            
             *p = 0;
             *pending_p = ast->cons;
             ast->cons->car.as.cons->cdr = pending->cons;

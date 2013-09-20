@@ -8,6 +8,9 @@
 #include <algorithm>
 
 namespace Cx {
+template <class T> class Set;
+template <class T> class FlatSet;
+
 template <class T>
 class Set : public std::set<T>
 {
@@ -20,6 +23,7 @@ public:
   explicit Set(const Table<T>& a) :
     std::set<T>(a.begin(), a.end())
   {}
+  explicit Set(const FlatSet<T>& a);
 
   bool elem_ck(const T& e) const
   {
@@ -46,39 +50,30 @@ public:
     return c |= b;
   }
 
+  Set<T>& operator-=(const T& e)
+  {
+    this->erase(e);
+    return *this;
+  }
+
   Set<T>& operator-=(const Set<T>& b)
   {
     Set<T>& a = *this;
-#if 1
     for (typename Set<T>::const_iterator itb = b.begin();
          itb != b.end();
          ++ itb)
     {
-      a.erase(*itb);
+      a -= *itb;
     }
-#else
-    typename Set<T>::const_iterator itb = b.begin();
-    typename Set<T>::iterator ita = a.lower_bound(*itb);
-    typename Set<T>::key_compare f = a.key_comp();
-
-    while (ita != a.end() && itb != b.end()) {
-      if (f(*ita,*itb)) {
-        ita = a.lower_bound(*itb);
-      }
-      else if (f(*itb,*ita)) {
-        itb = b.lower_bound(*ita);
-      }
-      else {
-        typename Set<T>::iterator tmp = ita;
-        ++ita;
-        ++itb;
-        a.erase(tmp);
-      }
-    }
-#endif
     return a;
   }
 
+  Set<T>& operator-(const T& e) const
+  {
+    Set<T> c( *this );
+    c -= e;
+    return c;
+  }
   Set<T> operator-(const Set<T>& b) const
   {
     Set<T> c( *this );
@@ -123,50 +118,47 @@ public:
 };
 
 template <class T>
-class FlatSet
+class FlatSet : public Table<T>
 {
-private:
-  Table<T> t;
 public:
-  FlatSet(const FlatSet<T>& a) {
-    t.affy(a.sz());
-    for (ujint i = 0; i < a.sz(); ++i)  
-      t.push(a[i]);
+  FlatSet() {}
+  FlatSet(const FlatSet<T>& a)
+    : Table<T>()
+  {
+    this->affy(a.sz());
+    for (ujint i = 0; i < a.sz(); ++i)
+      this->push(a[i]);
   }
   ~FlatSet() {}
   void operator=(const FlatSet<T>& a) {
-    t.affysz(a.sz());
-    for (ujint i = 0; i < a.sz(); ++i)  
-      t[i] = a[i];
+    this->affysz(a.sz());
+    for (ujint i = 0; i < a.sz(); ++i)
+      (*this)[i] = a[i];
   }
 
   explicit FlatSet(const Table<T>& a) {
-    t.affy(a.sz());
-    for (ujint i = 0; i < a.sz(); ++i)  
-      t.push(a[i]);
-    std::sort (t.begin(), t.end());
+    this->affy(a.sz());
+    for (ujint i = 0; i < a.sz(); ++i)
+      this->push(a[i]);
+    std::sort (this->begin(), this->end());
+  }
+  explicit FlatSet(const vector<T>& a) {
+    this->affy(a.size());
+    for (ujint i = 0; i < a.size(); ++i)
+      this->push(a[i]);
+    std::sort (this->begin(), this->end());
   }
   explicit FlatSet(const Set<T>& a) {
-    t.affy(a.sz());
+    this->affy(a.sz());
     typename Set<T>::const_iterator it = a.begin();
-    while (t.sz() < a.sz()) {
-      t.push(*it);
+    while (this->sz() < a.sz()) {
+      this->push(*it);
       ++it;
     }
   }
 
-  bool operator==(const FlatSet& b) const { return (t == b.t); }
-  bool operator!=(const FlatSet& b) const { return (t != b.t); }
-  bool operator< (const FlatSet& b) const { return (t <  b.t); }
-  bool operator<=(const FlatSet& b) const { return (t <= b.t); }
-  bool operator> (const FlatSet& b) const { return (t >  b.t); }
-  bool operator>=(const FlatSet& b) const { return (t >= b.t); }
-  const T& operator[](ujint i) const { return t[i]; }
-  T& operator[](ujint i) { return t[i]; }
-  ujint sz() const { return t.sz(); }
-
   bool elem_ck(const T& e) const {
-    return std::binary_search (t.begin(), t.end(), e);
+    return std::binary_search (this->begin(), this->end(), e);
   }
 
   bool subseteq_ck(const FlatSet<T>& b) const {
@@ -189,7 +181,32 @@ public:
     }
     return true;
   }
+
+  bool overlap_ck(const FlatSet<T>& b) const {
+    const FlatSet<T>& a = *this;
+    if (a.sz() > b.sz())  return b.overlap_ck(a);
+    ujint i = 0;
+    ujint j = 0;
+    while (i < a.sz() && j < b.sz()) {
+      if (a[i] == b[j])  return true;
+      if (a[i] < b[j])  ++i;
+      if (b[j] < a[i])  ++j;
+    }
+    return false;
+  }
+
+  bool overlap_ck(const Set<T>& b) const {
+    const FlatSet<T>& a = *this;
+    for (ujint i = 0; i < a.sz(); ++i) {
+      if (b.elem_ck(a[i]))  return true;
+    }
+    return false;
+  }
 };
+template <class T>
+Set<T>::Set(const FlatSet<T>& a) :
+  std::set<T>(a.begin(), a.end())
+{}
 }
 using Cx::Set;
 using Cx::FlatSet;
@@ -204,7 +221,7 @@ Remove(vector<T>& a, const Cx::Set<T>& set)
       ++ n;
     }
     else if (n > 0) {
-      a[i-n] = a[i]; 
+      a[i-n] = a[i];
     }
   }
   a.resize(a.size() - n);

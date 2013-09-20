@@ -104,7 +104,7 @@ public:
 };
 
 template <class T>
-  ujint 
+  ujint
 sz_of (const LgTable<T>& t)
 {
   return t.sz();

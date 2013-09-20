@@ -104,7 +104,7 @@ qual_inline
 wipe_BitTable (BitTable bt, Bit val)
 {
     const ujint n = CeilQuot( bt.sz, NBits_BitTableEl );
-    memset (bt.s, 
+    memset (bt.s,
             (val == 0) ? 0x00 : 0xFF,
             n * sizeof (BitTableEl));
 }
