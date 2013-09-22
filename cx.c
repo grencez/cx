@@ -14,7 +14,7 @@
 
 typedef struct AST AST;
 typedef struct ASTree ASTree;
-typedef struct CxCtx CxCtx;
+typedef struct CxExecOpt CxExecOpt;
 
 typedef
 enum SyntaxKind
@@ -142,13 +142,24 @@ struct ASTree
     Sxpn sx;
 };
 
-/** Unused.**/
-struct CxCtx
+struct CxExecOpt
 {
-    ASTree ast;
-    Associa type_lookup;
+  bool cplusplus;
+  Associa del_pragmas;
 };
 
+  void
+init_CxExecOpt (CxExecOpt* opt)
+{
+  opt->cplusplus = false;
+  InitSet( const char*, opt->del_pragmas, (PosetCmpFn) cmp_cstr_loc );
+}
+
+  void
+lose_CxExecOpt (CxExecOpt* opt)
+{
+  lose_Associa (&opt->del_pragmas);
+}
 
     AST
 dflt_AST ()
@@ -553,6 +564,51 @@ count_newlines (const char* s)
     return n;
 }
 
+static
+  uint
+parse_multiline (XFile* xf, AlphaTab* txt)
+{
+  uint nlines = 1;
+  while (endc_ck_AlphaTab (txt, '\\'))
+  {
+    ++ nlines;
+    cat_cstr_AlphaTab (txt, "\n");
+    cat_cstr_AlphaTab (txt, getlined_XFile (xf, "\n"));
+  }
+  return nlines;
+}
+
+static
+  bool
+check_delete_directive (AlphaTab* txt, CxExecOpt* exec_opt)
+{
+  XFile olay[1];
+  char matched = '\0';
+  char delims[1+ArraySz( WhiteSpaceChars )];
+  char* s;
+  bool delete_it;
+
+  init_XFile_olay_AlphaTab (olay, txt);
+  if (!skip_cstr_XFile (olay, "pragma"))
+    return false;
+
+  delims[0] = '\\';
+  strcpy (&delims[1], WhiteSpaceChars);
+  s = nextok_XFile (olay, &matched, delims);
+  if (!s)  return false;
+
+  delete_it = !!lookup_Associa (&exec_opt->del_pragmas, &s);
+  replace_delim_XFile (olay, matched);
+
+  if (delete_it) {
+    uint nlines = 1 + count_newlines (cstr_of_AlphaTab (txt));
+    flush_AlphaTab (txt);
+    for (i ; nlines)
+      cat_cstr_AlphaTab (txt, "\n");
+  }
+  return delete_it;
+}
+
 /** Tokenize while dealing with
  * - line/block comment
  * - directive (perhaps this should happen later)
@@ -698,13 +754,7 @@ lex_AST (XFile* xf, ASTree* t)
             InitLeaf( ast );
             ast->kind = Syntax_Directive;
             cat_cstr_AlphaTab (&ast->txt, getlined_XFile (xf, "\n"));
-            ++ line;
-            while (endc_ck_AlphaTab (&ast->txt, '\\'))
-            {
-                cat_cstr_AlphaTab (&ast->txt, "\n");
-                cat_cstr_AlphaTab (&ast->txt, getlined_XFile (xf, "\n"));
-                ++ line;
-            }
+            line += parse_multiline (xf, &ast->txt);
             break;
 
 #define LexiCase( c, k )  case c: \
@@ -1269,7 +1319,7 @@ declaration_ck (AST* a)
 }
 
     void
-xfrm_stmts_AST (Cons** ast_p, ASTree* t)
+xfrm_stmts_AST (Cons** ast_p, ASTree* t, CxExecOpt* exec_opt)
 {
     AST* ast = AST_of_Cons (*ast_p);
     Cons** p = ast_p;
@@ -1277,12 +1327,17 @@ xfrm_stmts_AST (Cons** ast_p, ASTree* t)
     while (ast)
     {
         if (ast->cons->car.kind == Cons_Cons)
-            xfrm_stmts_AST (&ast->cons->car.as.cons->cdr, t);
+            xfrm_stmts_AST (&ast->cons->car.as.cons->cdr, t, exec_opt);
         if (ast->kind == Syntax_LineComment)
         {
             AlphaTab ts = dflt1_AlphaTab ("\n");
             ast->kind = Syntax_WS;
             copy_AlphaTab (&ast->txt, &ts);
+        }
+        else if (ast->kind == Syntax_Directive)
+        {
+          if (check_delete_directive (&ast->txt, exec_opt))
+            ast->kind = Syntax_WS;
         }
         else if (ast->kind == Syntax_ForLoop)
         {
@@ -1325,7 +1380,7 @@ xfrm_stmts_AST (Cons** ast_p, ASTree* t)
 }
 
     void
-xget_ASTree (XFile* xf, ASTree* t)
+xget_ASTree (XFile* xf, ASTree* t, CxExecOpt* exec_opt)
 {
     Associa type_lookup;
     InitAssocia( AlphaTab, uint, type_lookup, cmp_AlphaTab );
@@ -1333,9 +1388,42 @@ xget_ASTree (XFile* xf, ASTree* t)
     lex_AST (xf, t);
     build_stmts_AST (&t->head, t);
     //oput_sxpn_ASTree (stderr_OFile (), t);
-    xfrm_stmts_AST (&t->head, t);
+    xfrm_stmts_AST (&t->head, t, exec_opt);
 
     lose_Associa (&type_lookup);
+}
+
+  void
+copy_cplusplus (XFile* xf, OFile* of, CxExecOpt* exec_opt)
+{
+  const char* s = 0;
+  AlphaTab txt[1];
+
+  init_AlphaTab (txt);
+
+  for (s = getlined_XFile (xf, "\n");
+       s;
+       s = getlined_XFile (xf, "\n"))
+  {
+    if (pfxeq_cstr ("#pragma", s)) {
+      cat_cstr_AlphaTab (txt, &s[1]);
+      parse_multiline (xf, txt);
+      if (check_delete_directive (txt, exec_opt)) {
+        oput_AlphaTab (of, txt);
+      }
+      else {
+        oput_char_OFile (of, '#');
+        oput_AlphaTab (of, txt);
+        oput_char_OFile (of, '\n');
+      }
+      flush_AlphaTab (txt);
+    }
+    else {
+      oput_cstr_OFile (of, s);
+      oput_char_OFile (of, '\n');
+    }
+  }
+  lose_AlphaTab (txt);
 }
 
   int
@@ -1349,33 +1437,47 @@ main (int argc, char** argv)
   XFile* xf = 0;
   OFileB ofb[1];
   OFile* of = 0;
+  CxExecOpt exec_opt[1];
 
+  init_CxExecOpt (exec_opt);
   init_XFileB (xfb);
   init_OFileB (ofb);
 
   while (argi < argc)
   {
-    if (0 == strcmp (argv[argi], "-x"))
+    const char* arg = argv[argi++];
+    if (eq_cstr (arg, "-x"))
     {
-      ++ argi;
-      if (!open_FileB (&xfb->fb, 0, argv[argi++]))
+      const char* filename = argv[argi++];
+      if (!open_FileB (&xfb->fb, 0, filename))
       {
         failout_sysCx ("Could not open file for reading.");
       }
       xf = &xfb->xf;
     }
-    else if (0 == strcmp (argv[argi], "-o"))
+    else if (eq_cstr (arg, "-o"))
     {
-      ++ argi;
-      if (!open_FileB (&ofb->fb, 0, argv[argi++]))
+      const char* filename = argv[argi++];
+      if (!open_FileB (&ofb->fb, 0, filename))
       {
         failout_sysCx ("Could not open file for writing.");
       }
       of = &ofb->of;
     }
+    else if (eq_cstr (arg, "-c++"))
+    {
+      exec_opt->cplusplus = true;
+    }
+    else if (eq_cstr (arg, "-no-pragma"))
+    {
+      const char* pragmaname = argv[argi++];
+      if (!pragmaname)
+        failout_sysCx ("-no-pragma requires an argument.");
+      ensure_Associa (&exec_opt->del_pragmas, &pragmaname);
+    }
     else
     {
-      bool good = (0 == strcmp (argv[argi], "-h"));
+      bool good = eq_cstr(arg, "-h");
       OFile* of = (good ? stdout_OFile () : stderr_OFile ());
       printf_OFile (of, "Usage: %s [-x IN] [-o OUT]\n", argv[0]);
       oput_cstr_OFile (of, "  If -x is not specified, stdin is used.\n");
@@ -1389,14 +1491,24 @@ main (int argc, char** argv)
   if (!xf)  xf = stdin_XFile ();
   if (!of)  of = stdout_OFile ();
 
-  xget_ASTree (xf, t);
-  close_XFile (xf);
-  lose_XFileB (xfb);
+  if (exec_opt->cplusplus) {
+    copy_cplusplus (xf, of, exec_opt);
+    close_XFile (xf);
+    lose_XFileB (xfb);
+    close_OFile (of);
+    lose_OFileB (ofb);
+  }
+  else {
+    xget_ASTree (xf, t, exec_opt);
+    close_XFile (xf);
+    lose_XFileB (xfb);
 
-  oput_ASTree (of, t);
-  close_OFile (of);
-  lose_OFileB (ofb);
+    oput_ASTree (of, t);
+    close_OFile (of);
+    lose_OFileB (ofb);
+  }
 
+  lose_CxExecOpt (exec_opt);
   lose_ASTree (t);
   lose_sysCx ();
   return 0;

@@ -106,6 +106,12 @@ cmp_AlphaTab (const AlphaTab* a, const AlphaTab* b)
   return sign_of (ret);
 }
 
+  Sign
+cmp_cstr_loc (const char* const* a, const char* const* b)
+{
+  return cmp_cstr (*a, *b);
+}
+
   void
 cat_uint_AlphaTab (AlphaTab* a, uint x)
 {

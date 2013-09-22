@@ -212,6 +212,14 @@ nextok_XFile (XFile* xf, char* ret_match, const char* delims)
     return nextds_XFile (xf, ret_match, delims);
 }
 
+  void
+replace_delim_XFile (XFile* xf, char delim)
+{
+  char* s = cstr_of_XFile (xf);
+  Claim2( xf->off ,>, 0 );
+  s[-1] = delim;
+}
+
 /** Inject content from a file /src/
  * at the current read position of file /in/.
  * This allows a trivial implementation of #include.

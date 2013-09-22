@@ -178,6 +178,28 @@ endc_ck_AlphaTab (AlphaTab* a, char c)
     return (s && !s[1]);
 }
 
+qual_inline
+  void
+trim_end_AlphaTab (AlphaTab* a, ujint capac)
+{
+  bool nullt = (a->sz > 0) && (a->s[a->sz-1] == '\0');
+  if (capac == 0)  return;
+  if (!nullt) capac -= 1;
+  Claim2( capac ,<, a->sz );
+  a->sz -= capac;
+  a->s[a->sz-1] = '\0';
+}
+
+qual_inline
+  void
+flush_AlphaTab (AlphaTab* a)
+{
+  if (a->sz > 0) {
+    a->sz = 1;
+    a->s[0] = '\0';
+  }
+}
+
 char*
 itoa_dup_cstr (int x);
 char*
@@ -190,6 +212,8 @@ char*
 xget_real_cstr (real* ret, const char* in);
 Sign
 cmp_AlphaTab (const AlphaTab* a, const AlphaTab* b);
+Sign
+cmp_cstr_loc (const char* const* a, const char* const* b);
 void
 cat_uint_AlphaTab (AlphaTab* a, uint x);
 void

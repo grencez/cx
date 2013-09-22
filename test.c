@@ -40,12 +40,6 @@ struct TNode
     uint val;
 };
 
-  Sign
-cmp_TNode (const char* const* lhs, const char* const* rhs)
-{
-  return cmp_cstr (*lhs, *rhs);
-}
-
     void
 lose_TNode (BSTNode* x)
 {
@@ -583,7 +577,7 @@ testfn_RBTree ()
     PosetCmp cmp =
       dflt3_PosetCmp (offsetof( TNode, rbt ),
                       offsetof( TNode, key ),
-                      (PosetCmpFn) cmp_TNode);
+                      (PosetCmpFn) cmp_cstr_loc);
     DecloStack1( RBTree, t, dflt2_RBTree (&sentinel.rbt, cmp) );
     DecloStack1( LgTable, lgt, dflt1_LgTable (sizeof(TNode)) );
     uint n_expect = 0;

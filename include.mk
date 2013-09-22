@@ -55,6 +55,8 @@ CxObjs = $(addprefix $(CxBldPath)/,$(addsuffix .o,$(CxDeps)))
 
 CxStdObjs = $(addprefix $(CxBldPath)/,$(addsuffix .o,alphatab xfile ofile fileb syscx))
 
+CxFlags =
+
 ## Serious debugging is about to happen.
 ifneq (,$(filter ultradebug,$(CONFIG)))
 	CONFIG := $(filter-out snappy fast debug,$(CONFIG))
@@ -102,6 +104,8 @@ ifneq (,$(filter openmp,$(CONFIG)))
 	else
 		CFLAGS += -fopenmp
 	endif
+else
+	CxFlags += -no-pragma omp
 endif
 
 CFLAGS += -Wall -Wextra -Wstrict-aliasing
@@ -185,10 +189,10 @@ $(CxExe): $(CxBldPath)/cx.o $(CxObjs)
 else
 
 $(CxBldPath)/%.c: $(CxPath)/%.c $(CxExe)
-	$(ExecCx) -x $< -o $@
+	$(ExecCx) $(CxFlags) -x $< -o $@
 
 $(CxBldPath)/%.h: $(CxPath)/%.h $(CxExe)
-	$(ExecCx) -x $< -o $@
+	$(ExecCx) $(CxFlags) -x $< -o $@
 endif
 
 .PRECIOUS: $(CxBldPath)/%.hh
@@ -197,7 +201,7 @@ endif
 .PRECIOUS: $(BldPath)/%.c
 
 $(CxBldPath)/%.hh: $(CxPath)/%.hh
-	cp -f $< $@
+	$(ExecCx) -c++ $(CxFlags) -x $< -o $@
 
 $(eval $(shell \
 	sed \
@@ -205,16 +209,16 @@ $(eval $(shell \
 	$(CxPath)/deps.mk))
 
 $(BldPath)/%.c: %.c $(CxExe) $(CxHFiles)
-	$(ExecCx) -x $< -o $@
+	$(ExecCx) $(CxFlags) -x $< -o $@
 
 $(BldPath)/%.h: %.h $(CxExe) $(CxHFiles)
-	$(ExecCx) -x $< -o $@
+	$(ExecCx) $(CxFlags) -x $< -o $@
 
 $(BldPathCXX)/%.cc: %.cc $(CxExe)
-	cp -f $< $@
+	$(ExecCx) -c++ $(CxFlags) -x $< -o $@
 
 $(BldPathCXX)/%.hh: %.hh $(CxExe)
-	cp -f $< $@
+	$(ExecCx) -c++ $(CxFlags) -x $< -o $@
 
 $(CxBldPath)/%.o: $(CxBldPath)/%.c
 	$(CC) -c $(CFLAGS) $< -o $@

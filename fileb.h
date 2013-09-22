@@ -117,5 +117,12 @@ olay_OFile (XFile* olay, OFile* of, uint off)
   olay->buf.sz = of->off - off;
 }
 
+qual_inline
+  void
+init_XFile_olay_OFile (XFile* olay, OFile* of)
+{
+  olay_OFile (olay, of, 0);
+}
+
 #endif
 

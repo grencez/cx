@@ -403,6 +403,17 @@ copy_const_Table (Table* a, const ConstTable* b)
 
 qual_inline
   void
+flush_Table (Table* a)
+{
+  a->sz = 0;
+}
+#define FlushTable( a )  do \
+{ \
+  (a).sz = 0; \
+} while (0)
+
+qual_inline
+  void
 state_of_index (uint* state, ujint idx, const uint* doms, uint n)
 {
   for (uint i = n; i > 0; --i) {
