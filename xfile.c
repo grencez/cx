@@ -5,8 +5,7 @@
   void
 close_XFile (XFile* xf)
 {
-  if (xf->ctx && xf->ctx->vt->close_fn)
-    xf->ctx->vt->close_fn (xf);
+  VTCall( xf->vt, (void),close_fn,(xf) );
 }
 
   void
@@ -18,16 +17,14 @@ lose_XFile (XFile* xf)
   void
 free_XFile (XFile* xf)
 {
-  if (xf->ctx && xf->ctx->vt->free_fn)
-    xf->ctx->vt->free_fn (xf);
+  VTCall( xf->vt, (void),free_fn,(xf) );
 }
 
   bool
 xget_chunk_XFile (XFile* xf)
 {
   uint sz = xf->buf.sz;
-  if (xf->ctx && xf->ctx->vt->xget_chunk_fn)
-    xf->ctx->vt->xget_chunk_fn (xf);
+  VTCall( xf->vt, (void),xget_chunk_fn,(xf) );
   return (sz < xf->buf.sz);
 }
 

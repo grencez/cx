@@ -27,6 +27,11 @@ public:
     this->of = of;
   }
 
+  static OFile& null() {
+    static OFile of( null_OFile () );
+    return of;
+  }
+
   OFile& operator<<(int x)
   {
     oput_int_OFile (of, x);

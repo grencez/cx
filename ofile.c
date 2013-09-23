@@ -5,8 +5,7 @@
   void
 close_OFile (OFile* of)
 {
-  if (of->ctx && of->ctx->vt->close_fn)
-    of->ctx->vt->close_fn (of);
+  VTCall( of->vt, (void),close_fn,(of) );
 }
 
   void
@@ -18,8 +17,7 @@ lose_OFile (OFile* of)
   void
 free_OFile (OFile* of)
 {
-  if (of->ctx && of->ctx->vt->free_fn)
-    of->ctx->vt->free_fn (of);
+  VTCall( of->vt, (void),free_fn,(of) );
 }
 
   void
@@ -27,25 +25,53 @@ flush_OFile (OFile* of)
 {
   /* In the future, we may not want to flush all the time!*/
   /* Also, we may not wish to flush the whole buffer.*/
-  if (of->ctx && of->ctx->vt->flush_fn)
+  VTCall( of->vt, (void),flush_fn,(of); return );
+
+  Claim2( of->flushsz ,==, 0 );
+  if (of->off > 0)
   {
-    of->ctx->vt->flush_fn (of);
+    of->off = 0;
+    of->buf.sz = 1;
+    of->buf.s[0] = 0;
   }
-  else
-  {
-    Claim2( of->flushsz ,==, 0 );
-    if (of->off > 0)
-    {
-      of->off = 0;
-      of->buf.sz = 1;
-      of->buf.s[0] = 0;
-    }
+}
+
+static void do_nothing_OFile () {}
+
+  OFile*
+null_OFile ()
+{
+  static bool vt_initialized = false;
+  static OFileVT vt;
+  static OFile of[1];
+
+  if (!vt_initialized) {
+    void (*f) () = do_nothing_OFile;
+    memset (&vt, 0, sizeof (vt));
+    vt.flush_fn = (bool (*) (OFile*)) f;
+    vt.free_fn = (void (*) (OFile*)) f;
+    vt.close_fn = (void (*) (OFile*)) f;
+    vt.oput_int_fn = (void (*) (OFile*, int)) f;
+    vt.oput_uint_fn = (void (*) (OFile*, uint)) f;
+    vt.oput_ujint_fn = (void (*) (OFile*, ujint)) f;
+    vt.oput_real_fn = (void (*) (OFile*, real)) f;
+    vt.oput_char_fn = (void (*) (OFile*, char)) f;
+    vt.oput_AlphaTab_fn = (void (*) (OFile*, const AlphaTab*)) f;
+    vt.vprintf_fn = (void (*) (OFile*, const char*, va_list)) f;
+    vt.oputn_char_fn = (void (*) (OFile*, const char*, ujint)) f;
+
+    vt_initialized = true;
+
+    init_OFile (of);
+    of->vt = &vt;
   }
+  return of;
 }
 
   void
 oput_int_OFile (OFile* f, int x)
 {
+  VTCall( f->vt, (void),oput_int_fn,(f, x); return );
   EnsizeTable( f->buf, f->off + 50 );
   f->off += sprintf (cstr_OFile (f), "%i", x);
   mayflush_OFile (f);
@@ -54,6 +80,7 @@ oput_int_OFile (OFile* f, int x)
   void
 oput_uint_OFile (OFile* f, uint x)
 {
+  VTCall( f->vt, (void),oput_uint_fn,(f, x); return );
   EnsizeTable( f->buf, f->off + 50 );
   f->off += sprintf (cstr_OFile (f), "%u", x);
   mayflush_OFile (f);
@@ -62,6 +89,7 @@ oput_uint_OFile (OFile* f, uint x)
   void
 oput_ujint_OFile (OFile* f, ujint x)
 {
+  VTCall( f->vt, (void),oput_ujint_fn,(f, x); return );
   EnsizeTable( f->buf, f->off + 50 );
   f->off += sprintf (cstr_OFile (f), "%lu", x);
   mayflush_OFile (f);
@@ -70,6 +98,7 @@ oput_ujint_OFile (OFile* f, ujint x)
   void
 oput_real_OFile (OFile* f, real x)
 {
+  VTCall( f->vt, (void),oput_real_fn,(f, x); return );
   EnsizeTable( f->buf, f->off + 50 );
   f->off += sprintf (cstr_OFile (f), "%.16e", x);
   mayflush_OFile (f);
@@ -78,6 +107,7 @@ oput_real_OFile (OFile* f, real x)
   void
 oput_char_OFile (OFile* f, char c)
 {
+  VTCall( f->vt, (void),oput_char_fn,(f, c); return );
   EnsizeTable( f->buf, f->off + 2 );
   f->buf.s[f->off] = c;
   f->buf.s[++f->off] = 0;
@@ -88,6 +118,7 @@ oput_char_OFile (OFile* f, char c)
 oput_AlphaTab (OFile* of, const AlphaTab* t)
 {
   ujint n = t->sz;
+  VTCall( of->vt, (void),oput_AlphaTab_fn,(of, t); return );
   if (n == 0)  return;
   if (!t->s[n-1])  -- n;
   GrowTable( of->buf, n*sizeof(char) );
@@ -102,6 +133,7 @@ vprintf_OFile (OFile* f, const char* fmt, va_list args)
 {
   ujint sz = 2048;  /* Not good :( */
   int iret = 0;
+  VTCall( f->vt, (void),vprintf_fn,(f, fmt, args); return );
 
   EnsizeTable( f->buf, f->off + sz );
   iret = vsprintf ((char*) &f->buf.s[f->off], fmt, args);
@@ -123,6 +155,7 @@ printf_OFile (OFile* f, const char* fmt, ...)
   void
 oputn_char_OFile (OFile* of, const char* a, ujint n)
 {
+  VTCall( of->vt, (void),oputn_char_fn,(of, a, n); return );
   GrowTable( of->buf, n );
   memcpy (&of->buf.s[of->off], a, (n+1)*sizeof(char));
   of->off += n;

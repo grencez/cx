@@ -14,12 +14,13 @@ struct XFile
   TableT(byte) buf;
   ujint off;
   ujint flushsz;
+  const XFileVT* vt;
   XFileCtx* ctx;
 };
 
 struct XFileCtx
 {
-  const XFileVT* vt;
+  byte nothing;
 };
 
 
@@ -96,6 +97,7 @@ init_XFile (XFile* xf)
   xf->buf.sz = 1;
   xf->off = 0;
   xf->flushsz = 0;
+  xf->vt = 0;
   xf->ctx = 0;
 }
 

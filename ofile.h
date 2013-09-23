@@ -15,12 +15,13 @@ struct OFile
   TableT(byte) buf;
   ujint off;
   ujint flushsz;
+  const OFileVT* vt;
   OFileCtx* ctx;
 };
 
 struct OFileCtx
 {
-  const OFileVT* vt;
+  byte nothing;
 };
 
 struct OFileVT
@@ -28,6 +29,15 @@ struct OFileVT
   bool (*flush_fn) (OFile*);
   void (*free_fn) (OFile*);
   void (*close_fn) (OFile*);
+
+  void (*oput_int_fn) (OFile*, int);
+  void (*oput_uint_fn) (OFile*, uint);
+  void (*oput_ujint_fn) (OFile*, ujint);
+  void (*oput_real_fn) (OFile*, real);
+  void (*oput_char_fn) (OFile*, char);
+  void (*oput_AlphaTab_fn) (OFile*, const AlphaTab*);
+  void (*vprintf_fn) (OFile*, const char*, va_list);
+  void (*oputn_char_fn) (OFile*, const char*, ujint);
 };
 
 void
@@ -38,6 +48,8 @@ void
 free_OFile (OFile* of);
 void
 flush_OFile (OFile* of);
+OFile*
+null_OFile ();
 
 void
 oput_int_OFile (OFile* of, int x);
@@ -71,6 +83,7 @@ init_OFile (OFile* of)
   of->buf.sz = 1;
   of->off = 0;
   of->flushsz = 0;
+  of->vt = 0;
   of->ctx = 0;
 }
 
@@ -78,8 +91,8 @@ qual_inline
   void
 mayflush_OFile (OFile* of)
 {
-  if (of->flushsz > 0 && of->off > of->flushsz)
-    of->ctx->vt->flush_fn (of);
+  if (of->flushsz > 0 && of->off >= of->flushsz)
+    of->vt->flush_fn (of);
 }
 
 qual_inline

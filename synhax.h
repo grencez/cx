@@ -19,6 +19,14 @@
 #define CastOff( T, p ,op, off ) \
   ((T*) ((size_t) (p) op (ptrdiff_t) (off)))
 
+/** Call a virtual function.**/
+#define VTCall(vt,pfx,fn,sfx) \
+do { \
+  if ((vt) && (vt)->fn) { \
+    pfx (vt)->fn sfx; \
+  } \
+} while (0)
+
 /** Given the memory address of a structure's field,
  * get the address of the structure.
  * \param T      Type.

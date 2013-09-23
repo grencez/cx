@@ -53,9 +53,9 @@ init_XFileB (XFileB* xfb)
   init_XFile (&xfb->xf);
   xfb->xf.flushsz = BUFSIZ;
   init_FileB (&xfb->fb, false);
+  xfb->xf.vt = &vt;
   xfb->xf.ctx = &ctx;
   if (!vt_initialized) {
-    ctx.vt = &vt;
     memset (&vt, 0, sizeof (vt));
     vt.xget_chunk_fn = xget_chunk_fn_XFileB;
     vt.close_fn = close_fn_XFileB;
@@ -73,9 +73,9 @@ init_OFileB (OFileB* ofb)
   init_OFile (&ofb->of);
   ofb->of.flushsz = BUFSIZ;
   init_FileB (&ofb->fb, true);
+  ofb->of.vt = &vt;
   ofb->of.ctx = &ctx;
   if (!vt_initialized) {
-    ctx.vt = &vt;
     memset (&vt, 0, sizeof (vt));
     vt.flush_fn = flush_fn_OFileB;
     vt.close_fn = close_fn_OFileB;
