@@ -19,6 +19,12 @@ private:
   C::OFile* of;
 
 public:
+  struct EndL {
+    bool empty;
+  };
+
+  static EndL endl() { return EndL(); }
+
   OFile()
     : of( 0 )
   {}
@@ -64,6 +70,13 @@ public:
   }
   void flush() {
     flush_OFile (of);
+  }
+  OFile& operator<<(const EndL& e)
+  {
+    (void) e;
+    *this << '\n';
+    this->flush();
+    return *this;
   }
 };
 }

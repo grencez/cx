@@ -458,6 +458,7 @@ flush1_OFileB (OFileB* ofb, const byte* a, uint n)
       good = foput_OFileB (ofb, a, n);
       if (!good)  return false;
     }
+    fflush (ofb->fb.f);
   }
 
 

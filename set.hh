@@ -182,6 +182,46 @@ public:
     return true;
   }
 
+  bool subseteq_fuzz_ck(Cx::Table<T>* diff, const FlatSet<T>& b, ujint nmisses) const {
+    const FlatSet<T>& a = *this;
+    if (diff)
+      diff->flush();
+    if (a.sz() > b.sz() + nmisses)
+      return false;
+    ujint i = 0;
+    ujint j = 0;
+    while (i < a.sz() && j < b.sz())
+    {
+      Sign si = (a[i] == b[j] ? 0 : (a[i] < b[j] ? -1 : 1));
+      if (si == 0) {
+        i += 1;
+        j += 1;
+      }
+      else if (si > 0) {
+        j += 1;
+        if (a.sz() - i > b.sz() - j + nmisses)
+          return false;
+      }
+      else {
+        if (nmisses == 0)
+          return false;
+        nmisses -= 1;
+        if (diff)
+          diff->push(a[i]);
+        i += 1;
+      }
+    }
+    while (i < a.sz()) {
+      if (nmisses == 0)
+        return false;
+      nmisses -= 1;
+      if (diff)
+        diff->push(a[i]);
+      i += 1;
+    }
+    return true;
+  }
+
   bool overlap_ck(const FlatSet<T>& b) const {
     const FlatSet<T>& a = *this;
     if (a.sz() > b.sz())  return b.overlap_ck(a);

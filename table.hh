@@ -190,6 +190,11 @@ public:
     for (ujint i = 0; i < n; ++i)
       SwapT( T, (*this)[i], (*this)[this->sz()-1-i] );
   }
+  void flush() {
+    for (ujint i = 0; i < this->sz(); ++i)
+      (*this)[i].~T();
+    flush_Table (&this->t);
+  }
 
   /** If this Table represents a mapping from state indices,
    * this method grows the state space to allow a new variable of
