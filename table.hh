@@ -32,9 +32,13 @@ public:
     }
   }
   const Table<T>& operator=(const Table<T>& a) {
-    this->resize(a.sz());
-    for (uint i = 0; i < a.sz(); ++i) {
+    if (this->sz() > a.sz())
+      this->mpop(this->sz() - a.sz());
+    for (uint i = 0; i < this->sz(); ++i) {
       (*this)[i] = a[i];
+    }
+    while (this->sz() < a.sz()) {
+      this->push(a[this->sz()]);
     }
     return *this;
   }
