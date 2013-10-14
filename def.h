@@ -13,6 +13,7 @@ typedef int Bit;
 enum Trit { Nil = 0, Yes = 1, May = 2 };
 typedef char Sign;
 typedef char Bool;
+#define MPI_Bool MPI_CHAR
 
 typedef enum Trit Trit;
 /** Type of function which compares two objects.
@@ -71,9 +72,7 @@ typedef double real;
 #define M_PI 3.14159265358979323846
 #endif
 
-#ifdef DistribCompute
 #define MPI_real MPI_DOUBLE
-#endif
 
 #else
 typedef float real;
@@ -88,9 +87,7 @@ typedef float real;
 #define M_PI 3.14159265358979323846f
 #endif
 
-#ifdef DistribCompute
 #define MPI_real MPI_FLOAT
-#endif
 
 #endif
 
