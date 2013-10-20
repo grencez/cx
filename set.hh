@@ -94,6 +94,9 @@ public:
     return (b - (b - *this));
   }
 
+  Set<T>& operator|=(const FlatSet<T>& b);
+  Set<T>& operator-=(const FlatSet<T>& b);
+
   void fill(vector<T>& a) const
   {
     a.assign(this->begin(), this->end());
@@ -112,6 +115,19 @@ public:
         return false;
     }
     return true;
+  }
+
+  bool overlap_ck(const Set<T>& b) const {
+    const Set<T>& a = *this;
+    if (a.sz() > b.sz())  return b.overlap_ck(a);
+    for (typename Set<T>::const_iterator ita = a.begin();
+         ita != a.end();
+         ++ ita)
+    {
+      if (b.elem_ck(*ita))
+        return true;
+    }
+    return false;
   }
 
   ujint sz() const { return this->size(); }
@@ -247,7 +263,24 @@ template <class T>
 Set<T>::Set(const FlatSet<T>& a) :
   std::set<T>(a.begin(), a.end())
 {}
+template <class T>
+  Set<T>&
+Set<T>::operator|=(const FlatSet<T>& b)
+{
+  this->insert(b.begin(), b.end());
+  return *this;
 }
+template <class T>
+  Set<T>&
+Set<T>::operator-=(const FlatSet<T>& b)
+{
+  Set<T>& a = *this;
+  for (ujint i = 0; i < b.sz(); ++i)
+    a -= b[i];
+  return a;
+}
+}
+
 using Cx::Set;
 using Cx::FlatSet;
 
