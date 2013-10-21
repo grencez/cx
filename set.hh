@@ -8,15 +8,32 @@
 #include <algorithm>
 
 namespace Cx {
+template <class T> class LoneSet;
 template <class T> class Set;
 template <class T> class FlatSet;
+
+template <class T>
+class LoneSet
+{
+private:
+  T e;
+public:
+  LoneSet(const T& _e) : e(_e) {}
+  T& elem() { return e; }
+  const T& elem() const { return e; }
+  bool operator==(const LoneSet<T>& b) const { return (e == b.e); }
+  bool operator<=(const LoneSet<T>& b) const { return (e <= b.e); }
+  bool operator>=(const LoneSet<T>& b) const { return (e >= b.e); }
+  bool operator< (const LoneSet<T>& b) const { return (e <  b.e); }
+  bool operator> (const LoneSet<T>& b) const { return (e >  b.e); }
+};
 
 template <class T>
 class Set : public std::set<T>
 {
 public:
   Set() {}
-  explicit Set(const T& e) { *this |= e; }
+  explicit Set(const T& e) { *this << e; }
   explicit Set(const vector<T>& a) :
     std::set<T>(a.begin(), a.end())
   {}
@@ -35,8 +52,11 @@ public:
     return *this->begin();
   }
 
-  Set<T>& operator|=(const T& e)
+  Set<T>& operator<<(const T& e)
   { this->insert(e); return *this; }
+
+  Set<T>& operator|=(const LoneSet<T>& b)
+  { this->insert(b.elem()); return *this; }
 
   Set<T>& operator|=(const Set<T>& b)
   {
@@ -50,9 +70,9 @@ public:
     return c |= b;
   }
 
-  Set<T>& operator-=(const T& e)
+  Set<T>& operator-=(const LoneSet<T>& b)
   {
-    this->erase(e);
+    this->erase(b.elem());
     return *this;
   }
 
@@ -68,10 +88,10 @@ public:
     return a;
   }
 
-  Set<T>& operator-(const T& e) const
+  Set<T> operator-(const LoneSet<T>& b) const
   {
     Set<T> c( *this );
-    c -= e;
+    c -= b.elem();
     return c;
   }
   Set<T> operator-(const Set<T>& b) const
@@ -281,6 +301,7 @@ Set<T>::operator-=(const FlatSet<T>& b)
 }
 }
 
+using Cx::LoneSet;
 using Cx::Set;
 using Cx::FlatSet;
 
