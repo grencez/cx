@@ -97,12 +97,14 @@ endif
 ifneq (,$(filter openmp,$(CONFIG)))
 	ifeq ($(CC),icc)
 		CFLAGS += -openmp
-	else ifneq (,$(filter sunstudio,$(CONFIG)))
+	else
+	ifneq (,$(filter sunstudio,$(CONFIG)))
 		# Important! Set the OMP_NUM_THREADS
 		# environment variable to see parallelism!
 		CFLAGS += -xopenmp
 	else
 		CFLAGS += -fopenmp
+	endif
 	endif
 else
 	CxFlags += -no-pragma omp
