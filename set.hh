@@ -192,6 +192,12 @@ public:
       ++it;
     }
   }
+  explicit FlatSet(const T* a, ujint n) {
+    this->affy(n);
+    for (ujint i = 0; i < n; ++i)
+      this->push(a[i]);
+    std::sort (this->begin(), this->end());
+  }
 
   bool elem_ck(const T& e) const {
     return std::binary_search (this->begin(), this->end(), e);

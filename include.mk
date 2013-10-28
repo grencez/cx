@@ -57,6 +57,10 @@ CxStdObjs = $(addprefix $(CxBldPath)/,$(addsuffix .o,alphatab xfile ofile fileb 
 
 CxFlags =
 
+define FindCmd
+$(shell for cmd in $(1) false ; do if type "$$cmd" >/dev/null 2>&1 ; then echo "$$cmd"; break; fi ; done)
+endef
+
 ## Serious debugging is about to happen.
 ifneq (,$(filter ultradebug,$(CONFIG)))
 	CONFIG := $(filter-out snappy fast debug,$(CONFIG))
