@@ -106,6 +106,14 @@ public:
   const char* cstr() const {
     return t.s;
   }
+  bool null_ck() const {
+    return (t.sz == 0);
+  }
+  bool empty_ck() const {
+    if (null_ck())
+      return true;
+    return (t.s[0] == '\0');
+  }
 
   friend class OFile;
 };
