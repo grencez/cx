@@ -41,6 +41,10 @@ public:
     lose_AlphaTab (&t);
   }
 
+  bool operator!() const {
+    return (t.sz == 0);
+  }
+
   const AlphaTab& operator+=(const AlphaTab& b) {
     cat_AlphaTab (&t, &b.t);
     return *this;

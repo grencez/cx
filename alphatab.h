@@ -112,13 +112,14 @@ tac_AlphaTab (AlphaTab* a, const AlphaTab* b)
 }
 
 qual_inline
-    AlphaTab
+  AlphaTab
 cons1_AlphaTab (const char* s)
 {
-    AlphaTab a = dflt_AlphaTab ();
-    AlphaTab b = dflt1_AlphaTab (s);
+  AlphaTab a = dflt_AlphaTab ();
+  AlphaTab b = dflt1_AlphaTab (s);
+  if (s)
     cat_AlphaTab (&a, &b);
-    return a;
+  return a;
 }
 
 qual_inline
