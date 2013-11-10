@@ -27,17 +27,34 @@ public:
   }
   Table(const Table<T>& a) {
     t = dflt1_Table (sizeof(T));
-    for (uint i = 0; i < a.sz(); ++i) {
+    for (ujint i = 0; i < a.sz(); ++i) {
+      this->push(a[i]);
+    }
+  }
+  explicit Table(const std::vector<T>& a) {
+    t = dflt1_Table (sizeof(T));
+    for (ujint i = 0; i < a.size(); ++i) {
       this->push(a[i]);
     }
   }
   const Table<T>& operator=(const Table<T>& a) {
     if (this->sz() > a.sz())
       this->mpop(this->sz() - a.sz());
-    for (uint i = 0; i < this->sz(); ++i) {
+    for (ujint  i = 0; i < this->sz(); ++i) {
       (*this)[i] = a[i];
     }
     while (this->sz() < a.sz()) {
+      this->push(a[this->sz()]);
+    }
+    return *this;
+  }
+  const Table<T>& operator=(const std::vector<T>& a) {
+    if (this->sz() > a.size())
+      this->mpop(this->sz() - a.size());
+    for (ujint  i = 0; i < this->sz(); ++i) {
+      (*this)[i] = a[i];
+    }
+    while (this->sz() < a.size()) {
       this->push(a[this->sz()]);
     }
     return *this;
@@ -193,6 +210,23 @@ public:
     ujint n = this->sz() / 2;
     for (ujint i = 0; i < n; ++i)
       SwapT( T, (*this)[i], (*this)[this->sz()-1-i] );
+  }
+  bool remove(const T& e)
+  {
+    ujint pos = 0;
+    for (ujint i = 0; i < this->sz(); ++i) {
+      if ((*this)[i] != e) {
+        if (pos != i) {
+          (*this)[pos] = (*this)[i];
+        }
+        pos += 1;
+      }
+    }
+    if (pos != this->sz()) {
+      this->mpop(this->sz() - pos);
+      return true;
+    }
+    return false;
   }
   void flush() {
     for (ujint i = 0; i < this->sz(); ++i)

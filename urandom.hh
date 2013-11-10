@@ -39,7 +39,7 @@ public:
     {
       uint i = n-1;
       uint j = uint_URandom (&urandom, n);
-      SwapT( uint, a[i], a[j] );
+      SwapT( T, a[i], a[j] );
     }
   }
 };
