@@ -97,6 +97,12 @@ public:
     return a;
   }
 
+  template <typename T>
+  AlphaTab& operator<<(const T& x) {
+    (*this) += x;
+    return *this;
+  }
+
   bool operator==(const AlphaTab& b) const {
     return (0 == cmp_AlphaTab (&t, &b.t));
   }
@@ -107,7 +113,13 @@ public:
     return (0 > cmp_AlphaTab (&t, &b.t));
   }
 
+  const char* ccstr() const {
+    return t.s;
+  }
   const char* cstr() const {
+    return this->ccstr();
+  }
+  char* cstr() {
     return t.s;
   }
   bool null_ck() const {

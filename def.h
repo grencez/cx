@@ -38,6 +38,7 @@ typedef unsigned char byte;
 
 typedef unsigned int uint;
 #define Max_uint UINT_MAX
+#define NBits_uint (NBits_byte*sizeof(uint))
 
 typedef long int jint;
 typedef unsigned long int ujint;

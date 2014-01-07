@@ -268,26 +268,44 @@ static
     void
 testfn_BitTable ()
 {
-    uint n = 1000;
-    uint ni = CeilQuot( n, 3 );
-    BitTable bt = cons2_BitTable (n, 0);
+  uint n = 1000;
+  uint ni = CeilQuot( n, 3 );
+  BitTable bt = cons2_BitTable (n, 0);
 
-    {:for (i ; ni)
-        Bit x;
-        x = set1_BitTable (bt, 3 * i);
-        Claim2( x ,==, 0 );
-    }
+  {:for (i ; ni)
+    Bit x;
+    x = set1_BitTable (bt, 3 * i);
+    Claim2( x ,==, 0 );
+  }
 
-    {:for (i ; n)
-        Bit x, y;
-        x = test_BitTable (bt, i);
-        y = (0 == (i % 3));
-        Claim2( x ,==, y );
-        x = set1_BitTable (bt, i);
-        Claim2( x ,==, y );
-    }
+  {:for (i ; n)
+    Bit x, y;
+    x = test_BitTable (bt, i);
+    y = (0 == (i % 3));
+    Claim2( x ,==, y );
+    x = set1_BitTable (bt, i);
+    Claim2( x ,==, y );
+  }
 
-    lose_BitTable (&bt);
+  {
+    Claim2( (1<<4) | (1<<3) ,==, BitMaskT(uint, 3, 2) );
+    Claim2( (1<<5) | (1<<4) | (1<<3) ,==, BitMaskT(uint, 3, 3) );
+    set_uint_BitTable(bt, 3, 3, 5);
+    Claim2( 5 ,==, get_uint_BitTable(bt, 3, 3) );
+    Claim2( 1 ,==, get_uint_BitTable(bt, 3, 2) );
+  }
+
+  {
+    const uint idx = NBits_uint - 2;
+    const uint x = 100;
+    set_uint_BitTable(bt, idx, 5, 100);
+    Claim2( x & 7        ,==, get_uint_BitTable(bt, idx  , 3) );
+    Claim2( (x >> 1) & 7 ,==, get_uint_BitTable(bt, idx+1, 3) );
+    Claim2( x & 15       ,==, get_uint_BitTable(bt, idx  , 4) );
+    Claim2( x & 31       ,==, get_uint_BitTable(bt, idx  , 5) );
+  }
+
+  lose_BitTable (&bt);
 }
 
 /** \test

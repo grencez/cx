@@ -18,9 +18,14 @@ typedef TableElT(Bit) BitTableEl;
     BitTableEl DeclBitTable_##bt[CeilQuot( n, NBits_BitTableEl )]; \
     BitTable bt = dflt3_BitTable( n, DeclBitTable_##bt, val )
 
+#define LowBitMaskT( T, n ) \
+  ((T) (((n)==0) ? 0 : ~(~(T)1 << ((n)-1))))
+
+#define BitMaskT( T, i, n ) \
+  ((T) (LowBitMaskT(T, n) << (i)))
+
 #define LowBits( x, nbits ) \
     ((x) & ~(((x) | ~(x)) << (nbits)))
-
 
 #define Bits4LH( b00, b01, b10, b11 ) \
   ((b00 << 0) | (b01 << 1) | (b10 << 2) | (b11 << 3))
@@ -271,6 +276,44 @@ qual_inline
 setb_BitTable (BitTable bt, ujint i, Bit b)
 {
     return (b ? set1_BitTable (bt, i) : set0_BitTable (bt, i));
+}
+
+/** Set a bit to one.**/
+qual_inline
+  void
+set_uint_BitTable (BitTable bt, const ujint i, const uint nbits, const uint z)
+{
+  uint off = 0;
+  while (off < nbits) {
+    DeclBitTableIdcs( p, q, i+off );
+    const BitTableEl x = bt.s[p];
+    const uint n = (q + (nbits - off) > NBits_BitTableEl)
+      ? NBits_BitTableEl - q
+      : nbits - off;
+    const uint mask = BitMaskT( uint, q, n );
+
+    bt.s[p] = (x & ~mask) | (((z >> off) << q) & mask);
+    off += n;
+  }
+}
+
+qual_inline
+  uint
+get_uint_BitTable (BitTable bt, const ujint i, const uint nbits)
+{
+  uint off = 0;
+  uint z = 0;
+  while (off < nbits) {
+    DeclBitTableIdcs( p, q, i+off );
+    const BitTableEl x = bt.s[p];
+    uint n = (q + (nbits - off) > NBits_BitTableEl)
+      ? NBits_BitTableEl - q
+      : nbits - off;
+
+    z |= ((x & BitMaskT( uint, q, n )) >> q) << off;
+    off += n;
+  }
+  return z;
 }
 
 qual_inline

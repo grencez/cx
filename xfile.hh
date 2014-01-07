@@ -62,6 +62,11 @@ public:
     allgood = allgood && good;
     return *this;
   }
+
+  bool skip(const char* pfx)
+  {
+    return skip_cstr_XFile(xf, pfx);
+  }
 };
 }
 

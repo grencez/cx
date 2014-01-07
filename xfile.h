@@ -166,5 +166,14 @@ init_XFile_olay_AlphaTab (XFile* xf, AlphaTab* ts)
   xf->buf.sz = ts->sz;
 }
 
+qual_inline
+  void
+init_XFile_olay_cstr (XFile* xf, char* s)
+{
+  init_XFile (xf);
+  xf->buf.s = (byte*) s;
+  xf->buf.sz = strlen(s)+1;
+}
+
 #endif
 

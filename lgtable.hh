@@ -101,6 +101,11 @@ public:
       a[a.takeidx()] = b[i];;
     return a;
   }
+
+  ujint index_of(const T* e) const
+  {
+    return idxelt_LgTable(&t, e);
+  }
 };
 
 template <class T>
