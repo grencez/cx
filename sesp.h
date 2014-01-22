@@ -247,6 +247,13 @@ cadr_of_Sesp (Sesp a)
 
 qual_inline
   Sesp
+cdar_of_Sesp (Sesp a)
+{
+  return cdr_of_Sesp (car_of_Sesp (a));
+}
+
+qual_inline
+  Sesp
 cddr_of_Sesp (Sesp a)
 {
   return cdr_of_Sesp (cdr_of_Sesp (a));
@@ -261,6 +268,13 @@ caddr_of_Sesp (Sesp a)
 
 qual_inline
   Sesp
+cddar_of_Sesp (Sesp a)
+{
+  return cdr_of_Sesp (cdar_of_Sesp (a));
+}
+
+qual_inline
+  Sesp
 cdddr_of_Sesp (Sesp a)
 {
   return cdr_of_Sesp (cddr_of_Sesp (a));
@@ -268,9 +282,28 @@ cdddr_of_Sesp (Sesp a)
 
 qual_inline
   Sesp
+caddar_of_Sesp (Sesp a)
+{
+  return car_of_Sesp (cddar_of_Sesp (a));
+}
+
+qual_inline
+  Sesp
 cadddr_of_Sesp (Sesp a)
 {
   return car_of_Sesp (cdddr_of_Sesp (a));
+}
+
+qual_inline
+  uint
+sz_of_Sesp (Sesp a)
+{
+  uint n = 0;
+  while (!nil_ck_Sesp (a)) {
+    a = cdr_of_Sesp (a);
+    n += 1;
+  }
+  return n;
 }
 
 qual_inline

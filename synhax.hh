@@ -80,5 +80,31 @@ decmod(uint i, uint by, uint n)
 }
 
 
+namespace Cx {
+template <typename T>
+class Mem {
+private:
+  T* e;
+public:
+  Mem() {}
+  Mem(T* _e) : e(_e) {}
+
+  Mem& operator=(T* _e)  { e = _e;  return *this; }
+
+  operator bool() const { return !!e; }
+
+  T* operator->()  { return e; }
+  const T* operator->() const  { return e; }
+
+  T& operator*()  { return *e; }
+  const T& operator*() const  { return *e; }
+
+  T* operator+()  { return e; }
+  const T* operator+() const  { return e; }
+
+  bool operator!()  { return !e; }
+};
+}
+
 #endif
 

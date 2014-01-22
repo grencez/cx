@@ -27,6 +27,13 @@ public:
     return &it->second;
   }
 
+  void ensure(const K& key, const V& val) {
+    V* v = this->lookup(key);
+    if (!v) {
+      (*this)[key] = val;
+    }
+  }
+
   ujint sz() const { return this->size(); }
 };
 
