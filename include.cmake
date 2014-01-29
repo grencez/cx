@@ -9,14 +9,13 @@ if (DEFINED CxPpPath)
   set (CxPpExe ${CxPpPath}/cx)
 endif ()
 
-set (CxDeps alphatab bstree xfile ofile fileb ospc rbtree sesp sxpn syscx)
+set (CxDeps alphatab bstree xfile ofile fileb ospc rbtree sesp sxpn syscx urandom)
 
 list (APPEND CxHFiles
 	associa.h
 	bittable.h
 	def.h
 	gmrand.h
-	urandom.h
 	lgtable.h
 	synhax.h
 	table.h

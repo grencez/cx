@@ -608,3 +608,48 @@ chdir_sysCx (const char* pathname)
     return (ret == 0);
 }
 
+  Bool
+randomize(void* p, uint size)
+{
+#ifdef POSIX_SOURCE
+  static byte buf[4096];
+  static const uint buf_size = sizeof(buf);
+  static uint static_off = sizeof(buf);
+  uint off = static_off;  //< Prevent race conditions.
+  ssize_t nbytes;
+
+  if (size == 0)  return 1;
+  if (size + off <= buf_size) {
+    memcpy(p, CastOff(void, buf ,+, off), size);
+    off += size;
+    static_off = off;
+    return 1;
+  }
+  if (off < buf_size) {
+    size -= buf_size - off;
+    memcpy(CastOff(void, p ,+, size),
+           CastOff(void, buf ,+, off),
+           buf_size - off);
+  }
+  off = 0;
+
+  {
+    fd_t urandom_fd = open("/dev/urandom", O_RDONLY);
+    if (urandom_fd < 0)
+      BailOut(0, "Failed to open /dev/urandom");
+
+    nbytes = read(urandom_fd, buf, buf_size);
+    nbytes += read(urandom_fd, p, size);
+    close(urandom_fd);
+  }
+
+  if (nbytes != (int)(buf_size+size))
+    BailOut(0, "Failed to read from /dev/urandom");
+
+  static_off = off;
+  return 1;
+#else
+  BailOut(0, "Not available in Windows yet");
+#endif
+}
+

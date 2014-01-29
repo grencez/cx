@@ -174,7 +174,13 @@ poset_cmp_lhs (PosetCmp cmp, const void* a, const void* b)
 
 #define sign_of(x)  ((x) < 0 ? -1 : (x) > 0 ? 1 : 0)
 
-/** Implemented in sys-cx.c **/
+/** Implemented in syscx.c **/
+Bool
+randomize(void* p, uint size);
+
+#define Randomize(x)  randomize((x), sizeof(*(x)))
+
+/** Implemented in syscx.c **/
 void
 dbglog_printf3 (const char* file,
                 const char* func,
@@ -189,6 +195,13 @@ dbglog_printf3 (const char* file,
 #define DBog5(s,a,b,c,d,e)  dbglog_printf3 (__FILE__,__FUNC__,__LINE__,s,a,b,c,d,e)
 #define DBog0(s)  DBog1("%s",s)
 #define DBog_ujint(x)  DBog2( "%s:%lu", #x, (ujint)(x) )
+
+#define BailOut( ret, msg ) \
+do \
+{ \
+  DBog0(msg); \
+  return (ret); \
+} while (0)
 
 void
 failout_sysCx (const char* msg);

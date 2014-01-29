@@ -17,18 +17,29 @@ class URandom
 {
 private:
   C::URandom urandom;
+  bool using_system_urandom;
 public:
   URandom()
+    : using_system_urandom(false)
   {
     init_URandom (&urandom);
   }
   URandom(uint pcidx, uint npcs)
+    : using_system_urandom(false)
   {
     init2_URandom (&urandom, pcidx, npcs);
   }
 
+  void use_system_urandom(bool b)
+  {
+    using_system_urandom = b;
+  }
+
   uint pick(uint n)
   {
+    if (using_system_urandom) {
+      return uint_SysURandom (n);
+    }
     return uint_URandom (&urandom, n);
   }
 
@@ -38,7 +49,7 @@ public:
     for (; n > 1; --n)
     {
       uint i = n-1;
-      uint j = uint_URandom (&urandom, n);
+      uint j = this->pick(n);
       SwapT( T, a[i], a[j] );
     }
   }

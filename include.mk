@@ -24,7 +24,7 @@ CxExe ?= $(BinPath)/cx
 
 CxBldPath ?= $(PfxBldPath)/cx
 
-CxDeps = alphatab bstree xfile ofile fileb ospc rbtree sesp sxpn syscx
+CxDeps = alphatab bstree xfile ofile fileb ospc rbtree sesp sxpn syscx urandom
 
 CxHFiles = \
 	$(CxDeps) \
@@ -32,7 +32,6 @@ CxHFiles = \
 	bittable \
 	def \
 	gmrand \
-	urandom \
 	lgtable \
 	synhax \
 	table
@@ -53,7 +52,7 @@ CxHHFiles := $(addprefix $(CxBldPath)/,$(CxHHFileDeps))
 
 CxObjs = $(addprefix $(CxBldPath)/,$(addsuffix .o,$(CxDeps)))
 
-CxStdObjs = $(addprefix $(CxBldPath)/,$(addsuffix .o,alphatab xfile ofile fileb syscx))
+CxStdObjs = $(addprefix $(CxBldPath)/,$(addsuffix .o,alphatab xfile ofile fileb syscx urandom))
 
 CxFlags =
 

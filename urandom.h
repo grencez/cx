@@ -70,6 +70,9 @@ shuffle_uints_URandom (URandom* urandom, uint* a, uint n)
   }
 }
 
+uint
+uint_SysURandom(uint n);
+
 #endif
 
 

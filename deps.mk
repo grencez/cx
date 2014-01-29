@@ -32,5 +32,7 @@ sxpn.h:fileb.h
 syscx.c:syscx.h
 syscx.c:fileb.h
 table.h:def.h
+urandom.c:urandom.h
+urandom.h:gmrand.h
 xfile.c:xfile.h
 xfile.h:alphatab.h
