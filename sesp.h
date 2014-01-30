@@ -240,6 +240,13 @@ cdr_of_Sesp (Sesp a)
 
 qual_inline
   Sesp
+caar_of_Sesp (Sesp a)
+{
+  return car_of_Sesp (car_of_Sesp (a));
+}
+
+qual_inline
+  Sesp
 cadr_of_Sesp (Sesp a)
 {
   return car_of_Sesp (cdr_of_Sesp (a));

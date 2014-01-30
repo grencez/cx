@@ -123,6 +123,11 @@ public:
     return *(const T*) elt_Table ((C::Table*)&t, i);
   }
 
+  ujint index_of(const T* e) const
+  {
+    return idxelt_Table(&t, e);
+  }
+
   bool elem_ck(const T& e) const
   {
     for (ujint i = 0; i < t.sz; ++i) {

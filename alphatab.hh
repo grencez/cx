@@ -97,6 +97,13 @@ public:
     return a;
   }
 
+  void push_delim(const char* pfx, const char* delim) {
+    if (this->empty_ck())
+      (*this) = pfx;
+    else
+      (*this) += delim;
+  }
+
   template <typename T>
   AlphaTab& operator<<(const T& x) {
     (*this) += x;
