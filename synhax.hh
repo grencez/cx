@@ -13,7 +13,7 @@ using std::string;
 using std::ostream;
 
 extern "C" {
-#include "cx/def.h"
+#include "def.h"
 }
 
 template <class T>
