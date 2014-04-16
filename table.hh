@@ -211,6 +211,14 @@ public:
   const T* end() const {
     return (T*) elt_Table ((C::Table*)&t, t.sz);
   }
+  template <class Itr>
+  void assign(Itr beg, Itr end)
+  {
+    this->clear();
+    for (Itr it = beg; it != end; ++it) {
+      this->push(*it);
+    }
+  }
   void reverse() {
     ujint n = this->sz() / 2;
     for (ujint i = 0; i < n; ++i)

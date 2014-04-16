@@ -121,6 +121,10 @@ public:
   {
     a.assign(this->begin(), this->end());
   }
+  void fill(Cx::Table<T>& a) const
+  {
+    a.assign(this->begin(), this->end());
+  }
 
   bool subseteq_ck(const Set<T>& b) const
   {
