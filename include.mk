@@ -19,6 +19,12 @@ SUFFIXES :=
 PfxBldPath ?= bld
 BldPathCXX := $(PfxBldPath)/$(BldPath)-cxx
 BldPath := $(PfxBldPath)/$(BldPath)
+BldPathList ?=
+BldPathList += $(CxBldPath) $(BldPath)
+
+ifdef BldPathCXX
+	BldPathList += $(BldPathCXX)
+endif
 
 CxExe ?= $(BinPath)/cx
 
@@ -235,18 +241,17 @@ $(BldPathCXX)/%.o: $(BldPathCXX)/%.cc $(CxHFiles) $(CxHHFiles)
 	$(CXX) -c $(CXXFLAGS) $< -o $@
 
 $(patsubst %.o,%.c,$(CxObjs)): | $(CxBldPath)
-$(CxHFiles): | $(CxBldPath) $(BldPath) $(BldPathCXX)
+$(CxHFiles): | $(BldPathList)
 $(ExeList): | $(BinPath)
 
+define PathRule
+$(1):
+	mkdir -p $$@
 
-$(CxBldPath):
-	mkdir -p $@
-$(BinPath):
-	mkdir -p $@
-$(BldPath):
-	mkdir -p $@
-$(BldPathCXX):
-	mkdir -p $@
+endef
+
+$(eval \
+	$(foreach path,$(BldPathList),$(call PathRule,$(path))))
 
 .PHONY: killcmake
 killcmake:
