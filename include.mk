@@ -206,6 +206,8 @@ $(CxBldPath)/%.h: $(CxPath)/%.h $(CxExe)
 	$(ExecCx) $(CxFlags) -x $< -o $@
 endif
 
+CxExe: | $(BinPath)
+
 .PRECIOUS: $(CxBldPath)/%.hh
 .PRECIOUS: $(CxBldPath)/%.h
 .PRECIOUS: $(CxBldPath)/%.c
@@ -251,7 +253,7 @@ $(1):
 endef
 
 $(eval \
-	$(foreach path,$(BldPathList),$(call PathRule,$(path))))
+	$(foreach path,$(BinPath) $(BldPathList),$(call PathRule,$(path))))
 
 .PHONY: killcmake
 killcmake:
