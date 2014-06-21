@@ -27,11 +27,12 @@ public:
     return &it->second;
   }
 
-  void ensure(const K& key, const V& val) {
+  V& ensure(const K& key, const V& val) {
     V* v = this->lookup(key);
     if (!v) {
-      (*this)[key] = val;
+      return (*this)[key] = val;
     }
+    return *v;
   }
 
   ujint sz() const { return this->size(); }

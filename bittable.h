@@ -71,6 +71,14 @@ lsb_ujint (ujint x)
     return (x & (~x + 1));
 }
 
+/** Least significant 1 bit.**/
+qual_inline
+  BitTableEl
+lsb_BitTableEl (BitTableEl x)
+{
+  return (x & (~x + 1));
+}
+
 /** Floor of the lg (log base 2) of some integer.
  * - 0..1 -> 0
  * - 2..3 -> 1
@@ -227,6 +235,15 @@ chk_BitTable (const BitTable bt, ujint i)
     return (0 != (bt.s[p] & (1 << q)));
 }
 
+/** Check if a bit is set (to one).**/
+qual_inline
+  Bit
+ck_BitTable (const BitTable bt, ujint i)
+{
+  DeclBitTableIdcs( p, q, i );
+  return (0 != (bt.s[p] & (1 << q)));
+}
+
 /** Set a bit to one.**/
 qual_inline
     Bit
@@ -361,6 +378,7 @@ op2_BitTable (BitTable* c, BitOp op, const BitTable a, const BitTable b)
     UFor( i, n )  c->s[i] = ~a.s[i] | b.s[i];
     break;
   case BitOp_IDEN0:
+    if (c->s != a.s)  memcpy (c->s, a.s, n * sizeof (BitTableEl));
     break;
   case BitOp_OR:
     UFor( i, n )  c->s[i] = a.s[i] | b.s[i];
@@ -419,31 +437,87 @@ all_BitTable (const BitTable bt)
             return 0;
 
     UFor( i, q )
-        if (!test_BitTable (bt, bt.sz - 1 - i))
+        if (!ck_BitTable (bt, bt.sz - 1 - i))
             return 0;
 
     return 1;
 }
 
-#undef DeclBitTableIdcs
-
 qual_inline
-    ujint
-next_BitTable (const BitTable bt, ujint idx)
+  Sign
+cmp_BitTableEl (const BitTableEl a, const BitTableEl b)
 {
-    while (++idx < bt.sz)
-        if (test_BitTable (bt, idx))
-            return idx;
-    return Max_ujint;
+  BitTableEl no_a, no_b;
+  if (a == b)  return 0;
+  no_a = (~a & b);
+  no_b = (~b & a);
+  if (no_a == 0)  return  1;
+  if (no_b == 0)  return -1;
+  return
+    (lsb_BitTableEl (no_a) < lsb_BitTableEl (no_b)) ? -1 : 1;
 }
 
 qual_inline
-    ujint
+  Sign
+cmp_BitTable (const BitTable a, const BitTable b)
+{
+  Sign sign;
+  const ujint n = (a.sz <= b.sz) ? a.sz : b.sz;
+  DeclBitTableIdcs( p, q, n );
+
+  for (ujint i = 0; i < p; ++i)
+  {
+    sign = cmp_BitTableEl (a.s[i], b.s[i]);
+    if (sign != 0)
+      return sign;
+  }
+
+  if (q > 0) {
+    sign = cmp_BitTableEl (LowBits(a.s[p], q), LowBits(b.s[p], q));
+    if (sign != 0)
+      return sign;
+  }
+  if (a.sz == b.sz)  return 0;
+  return ((a.sz < b.sz) ? -1 : 1);
+}
+#undef DeclBitTableIdcs
+
+qual_inline
+  ujint
+nextidx_BitTable (const BitTable bt, ujint idx)
+{
+  while (++idx < bt.sz)
+    if (ck_BitTable (bt, idx))
+      return idx;
+  return idx;
+}
+
+qual_inline
+  ujint
+begidx_BitTable (const BitTable bt)
+{
+  if (bt.sz == 0)  return Max_ujint;
+  if (ck_BitTable (bt, 0))  return 0;
+  return nextidx_BitTable (bt, 0);
+}
+
+qual_inline
+  ujint
+next_BitTable (const BitTable bt, ujint idx)
+{
+  while (++idx < bt.sz)
+    if (ck_BitTable (bt, idx))
+      return idx;
+  return Max_ujint;
+}
+
+qual_inline
+  ujint
 beg_BitTable (const BitTable bt)
 {
-    if (bt.sz == 0)  return Max_ujint;
-    if (test_BitTable (bt, 0))  return 0;
-    return next_BitTable (bt, 0);
+  if (bt.sz == 0)  return Max_ujint;
+  if (ck_BitTable (bt, 0))  return 0;
+  return next_BitTable (bt, 0);
 }
 
 qual_inline
@@ -451,9 +525,9 @@ qual_inline
 count_BitTable (const BitTable bt)
 {
     ujint n = 0;
-    for (ujint i = beg_BitTable (bt);
+    for (ujint i = begidx_BitTable (bt);
          i != Max_ujint;
-         i = next_BitTable (bt, i))
+         i = nextidx_BitTable (bt, i))
         ++n;
     return n;
 }

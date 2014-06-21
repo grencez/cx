@@ -44,7 +44,7 @@ CxHFiles = \
 
 CxHHFiles = \
 	alphatab map synhax set \
-	table lgtable \
+	table bittable lgtable \
 	urandom \
 	xfile ofile fileb
 
