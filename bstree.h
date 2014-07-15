@@ -3,9 +3,11 @@
  * Binary search tree.
  **/
 #ifndef BSTree_H_
+#ifndef __OPENCL_VERSION__
 #define BSTree_H_
 
 #include "def.h"
+#endif
 
 typedef struct BSTNode BSTNode;
 typedef struct BSTree BSTree;
@@ -19,9 +21,12 @@ struct BSTNode
 struct BSTree
 {
     BSTNode* sentinel;
+#ifndef __OPENCL_VERSION__
     PosetCmp cmp;
+#endif  /* #ifndef __OPENCL_VERSION__ */
 };
 
+#ifndef __OPENCL_VERSION__
 BSTree
 dflt2_BSTree (BSTNode* sentinel, PosetCmp cmp);
 void
@@ -42,6 +47,7 @@ BSTNode*
 setf_BSTree (BSTree* t, BSTNode* x);
 void
 remove_BSTNode (BSTNode* a);
+#endif  /* #ifndef __OPENCL_VERSION__ */
 
 void
 rotate_BSTNode (BSTNode* b, Bit side);

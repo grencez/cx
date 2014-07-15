@@ -4,7 +4,9 @@
  *
  * Included from def.h.
  **/
+#ifndef __OPENCL_VERSION__
 #include <assert.h>
+#endif
 
 #define Stringify(a) #a
 #define Concatify(a,b) a ## b
@@ -133,6 +135,7 @@ do { \
   b = SwapT_tmp; \
 } while (0)
 
+#ifndef __OPENCL_VERSION__
 typedef struct PosetCmp PosetCmp;
 struct PosetCmp
 {
@@ -205,6 +208,7 @@ do \
 
 void
 failout_sysCx (const char* msg);
+#endif
 #ifndef NDEBUG
 #define Claim( x )  assert(x)
 #else

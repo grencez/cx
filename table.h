@@ -4,10 +4,12 @@
  **/
 #ifndef Table_H_
 #define Table_H_
+#ifndef __OPENCL_VERSION__
 #include "def.h"
 
 #include <stdlib.h>
 #include <string.h>
+#endif  /* #ifndef __OPENCL_VERSION__ */
 
 typedef ujintlg TableLgSz;
 typedef unsigned short TableElSz;
@@ -139,6 +141,7 @@ init1_Table (Table* t, TableElSz elsz)
     (t).alloc_lgsz = Max_ujintlg; \
 } while (0)
 
+#ifndef __OPENCL_VERSION__
 qual_inline
     void
 lose_Table (Table* t)
@@ -151,6 +154,7 @@ lose_Table (Table* t)
     Table LoseTable_t = MakeCastTable( t ); \
     lose_Table (&LoseTable_t); \
 } while (0)
+#endif  /* #ifndef __OPENCL_VERSION__ */
 
 #define AllocszTable( t ) \
     ((t).alloc_lgsz == 0 ? 0 : (ujint)1 << ((t).alloc_lgsz - 1))
@@ -180,6 +184,7 @@ idxelt_Table (const Table* t, const void* el)
     (ujint) IdxEltZ( (t).s, el, sizeof(*(t).s) )
 
 
+#ifndef __OPENCL_VERSION__
 qual_inline
     void
 grow_Table (Table* t, ujint capac)
@@ -236,6 +241,7 @@ mpop_Table (Table* t, ujint capac)
     mpop_Table (&MPopTable_t, capac); \
     XferCastTable( t, MPopTable_t ); \
 } while (0)
+#endif  /* #ifndef __OPENCL_VERSION__ */
 
 
 qual_inline
@@ -255,6 +261,7 @@ elt_in_Table (Table* t, void* el)
 #define EltInTable( t, el ) \
     EltInZ( (t).s, (el), (t).sz, sizeof(*(t).s) )
 
+#ifndef __OPENCL_VERSION__
 qual_inline
     void*
 grow1_Table (Table* t)
@@ -411,6 +418,7 @@ flush_Table (Table* a)
 { \
   (a).sz = 0; \
 } while (0)
+#endif  /* #ifndef __OPENCL_VERSION__ */
 
 qual_inline
   void

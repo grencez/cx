@@ -2,6 +2,7 @@
  * \file bstree.c
  * Binary search tree.
  **/
+#ifndef __OPENCL_VERSION__
 #include "bstree.h"
 #include <assert.h>
 
@@ -296,4 +297,6 @@ rotate_BSTNode (BSTNode* b, Bit side)
     join_BSTNode (a, b, q);
     join_BSTNode (b, y, p);
 }
+
+#endif  /* #ifndef __OPENCL_VERSION__ */
 

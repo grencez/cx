@@ -54,6 +54,19 @@ pfxeq_cstr (const char* pfx, const char* s)
 }
 
 qual_inline
+  bool
+sfxeq_cstr (const char* s, const char* sfx)
+{
+  uint sz;
+  uint sfx_sz;
+  if (!s)  return false;
+  sz = strlen (s);
+  sfx_sz = strlen (sfx);
+  if (sz < sfx_sz)  return false;
+  return (0 == strncmp (&s[sz-sfx_sz], sfx, sfx_sz));
+}
+
+qual_inline
     AlphaTab
 dflt_AlphaTab ()
 {

@@ -4,9 +4,11 @@
  **/
 #ifndef DEF_H_
 #define DEF_H_
+#ifndef __OPENCL_VERSION__
 #include <float.h>
 #include <limits.h>
 #include <stddef.h>
+#endif  /* #ifndef __OPENCL_VERSION__ */
 
 typedef int Bit;
 //enum Trit { Nil = -1, Yes = 1, May = 0 };
@@ -25,7 +27,7 @@ typedef enum Trit Trit;
 typedef Sign (* PosetCmpFn) (const void*, const void*);
 
     /** Define bool.**/
-#ifndef __cplusplus
+#if !defined(__cplusplus) && !defined(__OPENCL_VERSION__)
 typedef char bool;
 #define true 1
 #define false 0
@@ -36,7 +38,9 @@ typedef unsigned char byte;
 #define NBits_byte 8
 #define Max_byte ((byte)0xFF)
 
+#if !defined(__OPENCL_VERSION__)
 typedef unsigned int uint;
+#endif  /* #ifndef __OPENCL_VERSION__ */
 #define Max_uint UINT_MAX
 #define NBits_uint (NBits_byte*sizeof(uint))
 
@@ -48,9 +52,11 @@ typedef byte ujintlg;
 #define Max_ujintlg  Max_byte
 #define MaxCk_ujintlg(x)  ((x) == Max_byte)
 
+#if !defined(__OPENCL_VERSION__)
 typedef struct uint2 uint2;
-typedef struct ujint2 ujint2;
 struct uint2 { uint s[2]; };
+#endif  /* #ifndef __OPENCL_VERSION__ */
+typedef struct ujint2 ujint2;
 struct ujint2 { ujint s[2]; };
 
 #ifndef uint32
@@ -124,7 +130,9 @@ typedef float real;
 #endif
 
 
+#ifndef __OPENCL_VERSION__
 #include "synhax.h"
+#endif
 
 #endif
 
