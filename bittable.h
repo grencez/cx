@@ -333,6 +333,21 @@ get_uint_BitTable (BitTable bt, const ujint i, const uint nbits)
   return z;
 }
 
+#define Do_BitOp_NIL(a,b)  (0)
+#define Do_BitOp_NOR(a,b)  (~(a) | (b))
+#define Do_BitOp_NOT1(a,b)  (~(b))
+#define Do_BitOp_NIMP(a,b)  ((a) & ~(b))
+#define Do_BitOp_NOT0(a,b)  (~(a))
+#define Do_BitOp_XOR(a,b)  ((a) ^ (b))
+#define Do_BitOp_NAND(a,b)  (~(a) & (b))
+#define Do_BitOp_AND(a,b)  ((a) & (b))
+#define Do_BitOp_XNOR(a,b)  (~(a) ^ (b))
+#define Do_BitOp_IDEN1(a,b)  (b)
+#define Do_BitOp_IMP(a,b)  (~(a) | (b))
+#define Do_BitOp_IDEN0(a,b)  (a)
+#define Do_BitOp_OR(a,b)  ((a) | (b))
+#define Do_BitOp_YES(a,b)  (1)
+
 qual_inline
   void
 op2_BitTable (BitTable* c, BitOp op, const BitTable a, const BitTable b)
@@ -343,46 +358,32 @@ op2_BitTable (BitTable* c, BitOp op, const BitTable a, const BitTable b)
   Claim2( a.sz ,==, b.sz );
   size_fo_BitTable (c, a.sz);
 
+#define DoCase( OP ) \
+  case BitOp_##OP: \
+    UFor( i, n )  c->s[i] = Do_BitOp_##OP( a.s[i], b.s[i] ); \
+    break
+
   switch (op)
   {
   case BitOp_NIL:
     wipe_BitTable (*c, 0);
     break;
-  case BitOp_NOR:
-    UFor( i, n )  c->s[i] = ~(a.s[i] | b.s[i]);
-    break;
-  case BitOp_NOT1:
-    UFor( i, n )  c->s[i] = ~b.s[i];
-    break;
-  case BitOp_NIMP:
-    UFor( i, n )  c->s[i] = a.s[i] & ~b.s[i];
-    break;
-  case BitOp_NOT0:
-    UFor( i, n )  c->s[i] = ~a.s[i];
-    break;
-  case BitOp_XOR:
-    UFor( i, n )  c->s[i] = a.s[i] ^ b.s[i];
-  case BitOp_NAND:
-    UFor( i, n )  c->s[i] = ~(a.s[i] & b.s[i]);
-    break;
-  case BitOp_AND:
-    UFor( i, n )  c->s[i] = a.s[i] & b.s[i];
-    break;
-  case BitOp_XNOR:
-    UFor( i, n )  c->s[i] = ~(a.s[i] ^ b.s[i]);
-    break;
+  DoCase( NOR );
+  DoCase( NOT1 );
+  DoCase( NIMP );
+  DoCase( NOT0 );
+  DoCase( XOR );
+  DoCase( NAND );
+  DoCase( AND );
+  DoCase( XNOR );
   case BitOp_IDEN1:
     if (c->s != b.s)  memcpy (c->s, b.s, n * sizeof (BitTableEl));
     break;
-  case BitOp_IMP:
-    UFor( i, n )  c->s[i] = ~a.s[i] | b.s[i];
-    break;
+  DoCase( IMP );
   case BitOp_IDEN0:
     if (c->s != a.s)  memcpy (c->s, a.s, n * sizeof (BitTableEl));
     break;
-  case BitOp_OR:
-    UFor( i, n )  c->s[i] = a.s[i] | b.s[i];
-    break;
+  DoCase( OR );
   case BitOp_YES:
     wipe_BitTable (a, 1);
     break;
@@ -390,39 +391,83 @@ op2_BitTable (BitTable* c, BitOp op, const BitTable a, const BitTable b)
     Claim(0);
     break;
   }
+
+#undef DoCase
 }
 
 qual_inline
   void
 op_BitTable (BitTable a, BitOp op, const BitTable b)
 {
+  Claim2( a.sz ,==, b.sz );
+  op2_BitTable (&a, op, a, b);
+}
+
+qual_inline
+  Bit
+fold_map2_BitTable (BitOp fold_op, BitOp map_op, const BitTable a, const BitTable b)
+{
   ujint i;
-  const ujint n = CeilQuot( a.sz, NBits_BitTableEl );
+  DeclBitTableIdcs( n, q, a.sz );
+  BitTableEl conj = 0;
+  BitTableEl disj = 0;
+  conj = ~conj;
 
   Claim2( a.sz ,==, b.sz );
-  switch (op)
+
+#define DoCase( OP ) \
+  case BitOp_##OP: \
+    UFor( i, n ) \
+    { \
+      BitTableEl c = Do_BitOp_##OP( a.s[i], b.s[i] ); \
+      conj &= c; \
+      disj |= c; \
+    } \
+    if (q != 0) \
+    { \
+      BitTableEl c = Do_BitOp_##OP( a.s[n], b.s[n] ); \
+      conj &= BitMaskT(BitTableEl, q, NBits_BitTableEl) | c; \
+      disj |= LowBits(c, q); \
+    } \
+    break
+
+  switch (map_op)
   {
   case BitOp_NIL:
-    wipe_BitTable (a, 0);
+    conj = 0;
     break;
-  case BitOp_NOT1:
-    UFor( i, n )  a.s[i] = ~b.s[i];
-    break;
-  case BitOp_NOT0:
-    UFor( i, n )  a.s[i] = ~a.s[i];
-    break;
-  case BitOp_IDEN1:
-    if (a.s != b.s)  memcpy (a.s, b.s, n * sizeof (BitTableEl));
-    break;
-  case BitOp_IDEN0:
-    break;
+  DoCase( NOR );
+  DoCase( NOT1 );
+  DoCase( NIMP );
+  DoCase( NOT0 );
+  DoCase( XOR );
+  DoCase( NAND );
+  DoCase( AND );
+  DoCase( XNOR );
+  DoCase( IDEN1 );
+  DoCase( IMP );
+  DoCase( IDEN0 );
+  DoCase( OR );
   case BitOp_YES:
-    wipe_BitTable (a, 1);
+    disj = ~disj;
     break;
-  default:
-    op2_BitTable (&a, op, a, b);
+  case NBitOps:
+    Claim(0);
     break;
   }
+#undef DoCase
+
+  switch (fold_op)
+  {
+  case BitOp_AND:
+    return ~conj == 0 ? 1 : 0;
+  case BitOp_OR:
+    return  disj == 0 ? 0 : 1;
+  default:
+    Claim(0);
+    break;
+  }
+  return 0;
 }
 
 qual_inline
@@ -526,7 +571,7 @@ count_BitTable (const BitTable bt)
 {
     ujint n = 0;
     for (ujint i = begidx_BitTable (bt);
-         i != Max_ujint;
+         i < bt.sz;
          i = nextidx_BitTable (bt, i))
         ++n;
     return n;

@@ -147,6 +147,10 @@ public:
     new (e) T(x);
     return *e;
   }
+  Table<T>& operator<<(const T& x) {
+    this->push(x);
+    return *this;
+  }
   void mpop(ujint n) {
     for (ujint i = this->sz() - n; i < this->sz(); ++i)
       (*this)[i].~T();
