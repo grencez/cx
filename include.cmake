@@ -9,6 +9,9 @@ if (DEFINED CxPpPath)
   set (CxPpExe ${CxPpPath}/cx)
 endif ()
 
+#set (CMAKE_CXX_COMPILER g++)
+#list (APPEND CMAKE_CXX_FLAGS "-std=c++11")
+
 set (CxDeps alphatab bstree xfile ofile fileb ospc rbtree sesp sxpn syscx urandom)
 
 list (APPEND CxHFiles
@@ -23,7 +26,7 @@ list (APPEND CxHFiles
 
 list (APPEND CxHHFiles
   alphatab.hh map.hh synhax.hh set.hh
-  table.hh lgtable.hh
+  table.hh bittable.hh lgtable.hh
   urandom.hh
   xfile.hh ofile.hh fileb.hh
   )
@@ -93,7 +96,7 @@ endfunction ()
 function (cx_cxx_source file)
   add_custom_command (
     OUTPUT ${CxBldPath}/${file}
-    COMMAND cp ${CxPath}/${file} ${CxBldPath}/${file}
+    COMMAND ${CMAKE_COMMAND} -E copy ${CxPath}/${file} ${CxBldPath}/${file}
     DEPENDS ${CxPath}/${file})
   set_source_files_properties (${CxBldPath}/${file} PROPERTIES GENERATED TRUE)
 endfunction ()
@@ -109,7 +112,7 @@ endfunction ()
 function (bld_cxx_source file)
   add_custom_command (
     OUTPUT ${BldPathCXX}/${file}
-    COMMAND cp ${CMAKE_CURRENT_SOURCE_DIR}/${file} ${BldPathCXX}/${file}
+    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/${file} ${BldPathCXX}/${file}
     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${file})
   set_source_files_properties (${BldPathCXX}/${file} PROPERTIES GENERATED TRUE)
 endfunction ()
@@ -172,9 +175,11 @@ file (MAKE_DIRECTORY ${CxBldPath})
 file (MAKE_DIRECTORY ${BldPath})
 file (MAKE_DIRECTORY ${BldPathCXX})
 
+add_custom_target (GenSources SOURCES ${FullCFiles} ${FullHFiles} ${FullCCFiles} ${FullHHFiles})
 
 add_library (CxLib STATIC ${CxFullCFiles})
 set_target_properties (CxLib PROPERTIES OUTPUT_NAME "cx")
+add_dependencies(CxLib GenSources)
 
 function (addbinexe f)
   set (src_files)
@@ -190,6 +195,7 @@ function (addbinexe f)
   endforeach ()
 
   add_executable (${f} ${src_files})
+  add_dependencies(${f} GenSources)
   target_link_libraries (${f} CxLib)
 endfunction ()
 

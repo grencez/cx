@@ -21,6 +21,12 @@ include (${CxPath}/include.cmake)
 
 addbinexe (test test.c)
 set_target_properties (test PROPERTIES
-    OUTPUT_NAME test
-    RUNTIME_OUTPUT_DIRECTORY .)
+  OUTPUT_NAME test
+  RUNTIME_OUTPUT_DIRECTORY .)
+
+add_custom_target (pp
+  DEPENDS cx
+  COMMAND ${CMAKE_COMMAND} -E copy_directory ${CxBldPath} ${CxPpPath})
+
+
 
