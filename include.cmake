@@ -1,7 +1,6 @@
 
 set (PfxBldPath ${CMAKE_CURRENT_BINARY_DIR}/bld)
 set (BldPath ${PfxBldPath}/${BldPath})
-set (BldPathCXX ${BldPath}-cxx)
 
 set (CxBldPath ${PfxBldPath}/cx)
 
@@ -37,8 +36,16 @@ foreach (d ${CxDeps})
 endforeach ()
 
 if (UNIX)
+  foreach (flags_var_to_scrub
+      CMAKE_CXX_FLAGS_RELWITHDEBINFO
+      CMAKE_C_FLAGS_RELWITHDEBINFO)
+    string (REGEX REPLACE "(^| )[/-]D *NDEBUG($| )" " "
+      "${flags_var_to_scrub}" "${${flags_var_to_scrub}}")
+  endforeach ()
+
   if (NOT CMAKE_BUILD_TYPE)
-    set (CMAKE_BUILD_TYPE DEBUG)
+    #set (CMAKE_BUILD_TYPE DEBUG)
+    set (CMAKE_BUILD_TYPE RelWithDebInfo)
   else ()
   endif ()
   #set (CMAKE_C_FLAGS "-Wall -Wextra -Werror -ansi -pedantic")
@@ -111,10 +118,10 @@ endfunction ()
 
 function (bld_cxx_source file)
   add_custom_command (
-    OUTPUT ${BldPathCXX}/${file}
-    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/${file} ${BldPathCXX}/${file}
+    OUTPUT ${BldPath}/${file}
+    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/${file} ${BldPath}/${file}
     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${file})
-  set_source_files_properties (${BldPathCXX}/${file} PROPERTIES GENERATED TRUE)
+  set_source_files_properties (${BldPath}/${file} PROPERTIES GENERATED TRUE)
 endfunction ()
 
 foreach (f ${CxHFiles})
@@ -146,12 +153,12 @@ endforeach ()
 
 foreach (f ${HHFiles})
   bld_cxx_source (${f})
-  list (APPEND FullHHFiles ${BldPathCXX}/${f})
+  list (APPEND FullHHFiles ${BldPath}/${f})
 endforeach ()
 
 foreach (f ${CCFiles})
   bld_cxx_source (${f})
-  list (APPEND FullCCFiles ${BldPathCXX}/${f})
+  list (APPEND FullCCFiles ${BldPath}/${f})
 endforeach ()
 
 set_property (SOURCE ${CxFullCFiles}
@@ -168,12 +175,11 @@ set_property (SOURCE ${FullCCFiles}
 
 include_directories (${PfxBldPath})
 include_directories (${BldPath})
-include_directories (${BldPathCXX})
+include_directories (${BldPath})
 
 file (MAKE_DIRECTORY ${PfxBldPath})
 file (MAKE_DIRECTORY ${CxBldPath})
 file (MAKE_DIRECTORY ${BldPath})
-file (MAKE_DIRECTORY ${BldPathCXX})
 
 add_custom_target (GenSources SOURCES ${FullCFiles} ${FullHFiles} ${FullCCFiles} ${FullHHFiles})
 
@@ -185,13 +191,7 @@ function (addbinexe f)
   set (src_files)
   foreach (src_file ${ARGN})
     get_filename_component(ext ${src_file} EXT)
-    if (ext STREQUAL .cc)
-      list (APPEND src_files ${BldPathCXX}/${src_file})
-    elseif (ext STREQUAL .leg.cc)
-      list (APPEND src_files ${BldPathCXX}/${src_file})
-    else ()
-      list (APPEND src_files ${BldPath}/${src_file})
-    endif ()
+    list (APPEND src_files ${BldPath}/${src_file})
   endforeach ()
 
   add_executable (${f} ${src_files})
