@@ -161,36 +161,34 @@ foreach (f ${CCFiles})
   list (APPEND FullCCFiles ${BldPath}/${f})
 endforeach ()
 
-set_property (SOURCE ${CxFullCFiles}
-  APPEND PROPERTY OBJECT_DEPENDS ${CxFullHFiles})
 if (DEFINED CxPpPath)
   set_property (SOURCE ${CxBldPath}/cx.c
     APPEND PROPERTY OBJECT_DEPENDS ${CxFullHFiles})
 endif ()
-set_property (SOURCE ${FullCFiles}
-  APPEND PROPERTY OBJECT_DEPENDS ${CxFullHFiles} ${FullHFiles})
-set_property (SOURCE ${FullCCFiles}
-  APPEND PROPERTY OBJECT_DEPENDS ${CxFullHFiles} ${CxFullHHFiles} ${FullHFiles} ${FullHHFiles})
 
 
 include_directories (${PfxBldPath})
-include_directories (${BldPath})
-include_directories (${BldPath})
 
 file (MAKE_DIRECTORY ${PfxBldPath})
 file (MAKE_DIRECTORY ${CxBldPath})
 file (MAKE_DIRECTORY ${BldPath})
 
-add_custom_target (GenSources SOURCES ${FullCFiles} ${FullHFiles} ${FullCCFiles} ${FullHHFiles})
+add_custom_target (GenSources SOURCES ${FullCFiles} ${FullHFiles} ${FullCCFiles} ${FullHHFiles} ${CxFullHFiles} ${CxFullHHFiles})
 
 add_library (CxLib STATIC ${CxFullCFiles})
 set_target_properties (CxLib PROPERTIES OUTPUT_NAME "cx")
 add_dependencies(CxLib GenSources)
 
+function (cat_parenthesized dst f)
+  file(READ ${f} tmp)
+  string(REPLACE "\n" ";" tmp "${tmp}")
+  string(REGEX REPLACE "[^;\\(]*\\( *([^\\) ]*) *\\) *" "\\1" tmp "${tmp}")
+  set(${dst} ${tmp} PARENT_SCOPE)
+endfunction ()
+
 function (addbinexe f)
   set (src_files)
   foreach (src_file ${ARGN})
-    get_filename_component(ext ${src_file} EXT)
     list (APPEND src_files ${BldPath}/${src_file})
   endforeach ()
 

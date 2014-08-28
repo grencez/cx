@@ -12,6 +12,7 @@
 #include "cx/rbtree.h"
 #include "cx/sxpn.h"
 #include "cx/table.h"
+#include "testcxx.h"
 
 #include <assert.h>
 #include <stdlib.h>
@@ -761,11 +762,58 @@ testfn_exec ()
     Claim2( status ,==, atoi (argv[2]) );
 }
 
-int main (int argc, char** argv)
+
+static void testfn_TestOrder();
+static void testfn_All();
+
+typedef struct TestInfo TestInfo;
+struct TestInfo
 {
-  int argi =
-    (init_sysCx (&argc, &argv),
-     1);
+  const char* name;
+  void (*fn) ();
+};
+
+static int CmpTestInfo(const void* a, const void* b)
+{
+  return strcmp(((TestInfo*)a)->name, ((TestInfo*)b)->name);
+}
+
+#define W(testname)  ,{ Stringify(testname), testfn_##testname }
+static const TestInfo AllTests[] = {
+  { "", testfn_All }
+#include "testlist.h"
+};
+#undef W
+
+void testfn_TestOrder()
+{
+  for (uint i = 1; i < ArraySz(AllTests); ++i)
+    Claim2( 0 ,>, CmpTestInfo(&AllTests[i-1], &AllTests[i]) );
+}
+
+void testfn_All()
+{
+  for (uint i = 1; i < ArraySz(AllTests); ++i)
+    AllTests[i].fn();
+}
+
+static void Test(const char testname[])
+{
+  TestInfo key;
+  key.name = testname;
+  key.fn = 0;
+  {
+    const TestInfo* t = (TestInfo*) bsearch
+      (&key, AllTests, ArraySz(AllTests), sizeof(AllTests[0]), CmpTestInfo);
+    Claim( t );
+    t->fn();
+  }
+}
+
+
+int main(int argc, char** argv)
+{
+  int argi = (init_sysCx (&argc, &argv), 1);
 
   // Special test as child process.
   {:if (eql_cstr (argv[argi], "echo"))
@@ -791,20 +839,18 @@ int main (int argc, char** argv)
     return atoi (argv[argi+1]);
   }
 
-  testfn_Table ();
-  testfn_BitTable ();
-  testfn_cache_BitTable ();
-  testfn_LgTable ();
-  testfn_stress_LgTable ();
-  testfn_Cons ();
-  testfn_skipws_FileB ();
-  testfn_RBTree ();
-  testfn_Associa ();
-  testfn_OSPc ();
-  testfn_exec ();
+  if (argi == argc) {
+    testfn_All();
+  }
+  else {
+    while (argi < argc) {
+      Test(argv[argi++]);
+    }
+  }
 
   oput_testsep (0);
   lose_sysCx ();
   return 0;
 }
+
 
