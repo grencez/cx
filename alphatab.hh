@@ -33,67 +33,77 @@ public:
     t = dflt_AlphaTab ();
     copy_AlphaTab (&t, &b.t);
   }
-  const AlphaTab& operator=(const AlphaTab& b) {
-    copy_AlphaTab (&t, &b.t);
+  const AlphaTab& operator=(const C::AlphaTab& b) {
+    copy_AlphaTab (&t, &b);
     return *this;
+  }
+  const AlphaTab& operator=(const AlphaTab& b) {
+    return (*this = b.t);
   }
   ~AlphaTab() {
     lose_AlphaTab (&t);
   }
 
+  ujint sz() const {
+    return t.sz;
+  }
   bool operator!() const {
     return (t.sz == 0);
   }
 
-  const AlphaTab& operator+=(const AlphaTab& b) {
-    cat_AlphaTab (&t, &b.t);
+  AlphaTab& operator<<(const C::AlphaTab& b) {
+    cat_AlphaTab (&t, &b);
     return *this;
+  }
+
+  AlphaTab& operator<<(const AlphaTab& b) {
+    return (*this << b.t);
   }
   AlphaTab operator+(const AlphaTab& b) const {
     AlphaTab a( *this );
-    a += b;
+    a << b;
     return a;
   }
 
-  const AlphaTab& operator+=(uint x) {
+  AlphaTab& operator<<(uint x) {
     cat_uint_AlphaTab (&t, x);
     return *this;
   }
   const AlphaTab& operator=(uint x) {
     copy_cstr_AlphaTab (&t, "");
-    return (*this) += x;
+    return (*this) << x;
   }
   AlphaTab operator+(uint x) const {
     AlphaTab a( *this );
-    a += x;
+    a << x;
     return a;
   }
 
-  const AlphaTab& operator+=(ujint x) {
+  AlphaTab& operator<<(ujint x) {
     cat_ujint_AlphaTab (&t, x);
     return *this;
   }
   const AlphaTab& operator=(ujint x) {
     copy_cstr_AlphaTab (&t, "");
-    return (*this) += x;
+    return (*this) << x;
   }
   AlphaTab operator+(ujint x) const {
     AlphaTab a( *this );
-    a += x;
+    a << x;
     return a;
   }
 
-  const AlphaTab& operator+=(int x) {
+  AlphaTab& operator<<(int x) {
     cat_int_AlphaTab (&t, x);
     return *this;
   }
   const AlphaTab& operator=(int x) {
     copy_cstr_AlphaTab (&t, "");
-    return (*this) += x;
+    return (*this) << x;
   }
   AlphaTab operator+(int x) const {
     AlphaTab a( *this );
-    a += x;
+    a << x;
     return a;
   }
 
@@ -101,13 +111,12 @@ public:
     if (this->empty_ck())
       (*this) = pfx;
     else
-      (*this) += delim;
+      (*this) << delim;
   }
 
   template <typename T>
-  AlphaTab& operator<<(const T& x) {
-    (*this) += x;
-    return *this;
+  const AlphaTab& operator+=(const T& x) {
+    return (*this << x);
   }
 
   bool operator==(const AlphaTab& b) const {
@@ -139,11 +148,22 @@ public:
   }
 
   friend class OFile;
+  friend C::AlphaTab& operator<<(C::AlphaTab& a, const Cx::AlphaTab& b);
 };
 
 inline
+C::AlphaTab& operator<<(C::AlphaTab& a, const Cx::AlphaTab& b)
+{
+  const C::AlphaTab tmp = dflt2_AlphaTab (b.cstr(), b.sz());
+  cat_AlphaTab (&a, &tmp);
+  return a;
+}
+
+inline
 std::ostream& operator<<(ostream& out, const AlphaTab& a) {
-  return out << a.cstr();
+  if (a.sz() > 0)
+    out.write(a.cstr(), a.sz()-1);
+  return out;
 }
 
 typedef AlphaTab String;

@@ -628,4 +628,38 @@ xgetn_byte_XFileB (XFileB* xfb, byte* a, ujint n)
   return true;
 }
 
+  AlphaTab
+textfile_AlphaTab (const char* pathname, const char* filename)
+{
+  const bool use_stdin = !pathname && !filename;
+  XFileB* xfileb;
+  XFileB xfileb_on_stack;
+  AlphaTab text = dflt_AlphaTab ();
+  if (use_stdin) {
+    xfileb = stdin_XFileB ();
+  }
+  else {
+    xfileb = &xfileb_on_stack;
+    init_XFileB (xfileb);
+    if (!open_FileB (&xfileb->fb, pathname, filename)) {
+      lose_XFileB (xfileb);
+      return text;
+    }
+  }
+
+  if (!xget_XFileB (xfileb)) {
+    lose_XFileB (xfileb);
+    return text;
+  }
+
+  init_AlphaTab_move_XFile (&text, &xfileb->xf);
+
+  if (use_stdin) {
+    close_XFileB (xfileb);
+  }
+  else {
+    lose_XFileB (xfileb);
+  }
+  return text;
+}
 

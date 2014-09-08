@@ -90,13 +90,20 @@ XFile* stdin_XFile ();
 
 qual_inline
   void
-init_XFile (XFile* xf)
+init_data_XFile (XFile* xf)
 {
   InitTable( xf->buf );
   xf->buf.s = (byte*) get_empty_cstr ();
   xf->buf.sz = 1;
   xf->off = 0;
   xf->flushsz = 0;
+}
+
+qual_inline
+  void
+init_XFile (XFile* xf)
+{
+  init_data_XFile (xf);
   xf->vt = 0;
   xf->ctx = 0;
 }
@@ -155,6 +162,16 @@ AlphaTab_XFile (XFile* xf, ujint off)
   t.s = (char*) &xf->buf.s[off];
   t.sz = (xf->off - off) / sizeof(char);
   return t;
+}
+
+qual_inline
+  void
+init_AlphaTab_move_XFile (AlphaTab* t, XFile* xf)
+{
+  *t = AlphaTab_XFile (xf, 0);
+  t->alloc_lgsz = xf->buf.alloc_lgsz;
+  init_data_XFile (xf);
+  PackTable( *t );
 }
 
 qual_inline

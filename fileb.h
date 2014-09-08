@@ -85,6 +85,9 @@ oputn_byte_OFileB (OFileB* f, const byte* a, ujint n);
 bool
 xgetn_byte_XFileB (XFileB* xfb, byte* a, ujint n);
 
+AlphaTab
+textfile_AlphaTab (const char* pathname, const char* filename);
+
 qual_inline
   bool
 nullt_FileB (const FileB* f)
@@ -98,7 +101,6 @@ byline_FileB (const FileB* f)
 {
   return f->byline;
 }
-
 
 
 /* Implemented in syscx.c */

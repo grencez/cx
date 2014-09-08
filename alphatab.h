@@ -92,6 +92,16 @@ dflt1_AlphaTab (const char* s)
 }
 
 qual_inline
+  AlphaTab
+dflt2_AlphaTab (const char* s, ujint sz)
+{
+  AlphaTab t = dflt_AlphaTab ();
+  t.s = (char*) s;
+  t.sz = sz;
+  return t;
+}
+
+qual_inline
 void lose_AlphaTab (AlphaTab* ts) { LoseTable( *ts ); }
 
 qual_inline
