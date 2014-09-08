@@ -48,11 +48,13 @@ if (UNIX)
     set (CMAKE_BUILD_TYPE RelWithDebInfo)
   else ()
   endif ()
-  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -ansi -pedantic")
-  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -ansi -pedantic")
-  #set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -Werror -ansi -pedantic")
+  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra")
+  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
+  set (DEFAULT_COMPILE_FLAGS "-ansi -pedantic")
+  #set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -Werror")
 else ()
   set (CMAKE_C_FLAGS "/W4 /MP")
+  set (DEFAULT_COMPILE_FLAGS "")
   # Disable warning: 'fopen' unsafe, use fopen_s instead
   add_definitions ("-D_CRT_SECURE_NO_WARNINGS")
   # Other warnings disabled in def.h via #pragmas.
@@ -71,7 +73,8 @@ if (DEFINED CxPpPath)
   add_executable (cx ${CxBldPath}/cx.c ${CxFullCFiles})
   set_target_properties (cx PROPERTIES
     OUTPUT_NAME cx
-    RUNTIME_OUTPUT_DIRECTORY ${BinPath})
+    RUNTIME_OUTPUT_DIRECTORY ${BinPath}
+    COMPILE_FLAGS ${DEFAULT_COMPILE_FLAGS})
 
   list (APPEND CxPpSources ${CxPpPath}/cx.c)
   foreach (f ${CxCFiles})
@@ -80,7 +83,8 @@ if (DEFINED CxPpPath)
   add_executable (CxPpExe ${CxPpSources})
   set_target_properties (CxPpExe PROPERTIES
     OUTPUT_NAME cx
-    RUNTIME_OUTPUT_DIRECTORY ${CxPpPath})
+    RUNTIME_OUTPUT_DIRECTORY ${CxPpPath}
+    COMPILE_FLAGS ${DEFAULT_COMPILE_FLAGS})
 else ()
   add_executable (cx IMPORTED)
   set_property (TARGET cx
@@ -178,6 +182,7 @@ add_custom_target (GenSources SOURCES ${FullCFiles} ${FullHFiles} ${FullCCFiles}
 
 add_library (CxLib STATIC ${CxFullCFiles})
 set_target_properties (CxLib PROPERTIES OUTPUT_NAME "cx")
+set_target_properties (CxLib PROPERTIES COMPILE_FLAGS ${DEFAULT_COMPILE_FLAGS})
 add_dependencies(CxLib GenSources)
 
 function (cat_parenthesized dst f)
@@ -195,6 +200,8 @@ function (addbinexe f)
 
   add_executable (${f} ${src_files})
   add_dependencies(${f} GenSources)
+  set_target_properties (${f} PROPERTIES
+    COMPILE_FLAGS ${DEFAULT_COMPILE_FLAGS})
   target_link_libraries (${f} CxLib)
 endfunction ()
 
