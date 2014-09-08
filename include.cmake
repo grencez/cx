@@ -9,7 +9,7 @@ if (DEFINED CxPpPath)
 endif ()
 
 #set (CMAKE_CXX_COMPILER g++)
-#list (APPEND CMAKE_CXX_FLAGS "-std=c++11")
+#set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 set (CxDeps alphatab bstree xfile ofile fileb ospc rbtree sesp sxpn syscx urandom)
 
