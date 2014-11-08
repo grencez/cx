@@ -140,6 +140,7 @@ public:
 
 };
 
+inline
   ujint
 sz_of (const BitTable& t)
 {
