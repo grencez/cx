@@ -112,6 +112,14 @@ public:
     for (ujint i = old_sz; i < capac; ++i)
       new (&(*this)[i]) T();
   }
+  void ensize(ujint capac) {
+    ujint old_sz = this->sz();
+    for (ujint i = capac; i < old_sz; ++i)
+      (*this)[i].~T();
+    ensize_Table (&t, capac);
+    for (ujint i = old_sz; i < capac; ++i)
+      new (&(*this)[i]) T();
+  }
   void clear() {
     this->resize(0);
   }
@@ -151,10 +159,15 @@ public:
     this->push(x);
     return *this;
   }
-  void mpop(ujint n) {
+  void mpop(ujint n = 1) {
     for (ujint i = this->sz() - n; i < this->sz(); ++i)
       (*this)[i].~T();
     mpop_Table (&t, n);
+  }
+  void cpop(uint n = 1) {
+    for (ujint i = this->sz() - n; i < this->sz(); ++i)
+      (*this)[i].~T();
+    cpop_Table (&t, n);
   }
 
   T& top() {

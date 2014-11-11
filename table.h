@@ -244,6 +244,19 @@ mpop_Table (Table* t, ujint capac)
 #endif  /* #ifndef __OPENCL_VERSION__ */
 
 
+/**! Pop table without deallocation.**/
+qual_inline
+  void
+cpop_Table (Table* t, ujint n)
+{
+  t->sz -= n;
+}
+#define CPopTable( a, n )  do \
+{ \
+  (a).sz -= (n); \
+} while (0)
+
+
 qual_inline
     void*
 top_Table (Table* t)
