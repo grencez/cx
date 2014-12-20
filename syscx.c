@@ -205,7 +205,13 @@ dbglog_printf3 (const char* file,
   int err = errno;
   OFile* of = stderr_OFile ();
 
-  printf_OFile (of, "%s(%u) %s: ", file, line, func);
+  while (true) {
+    const char* tmp = strstr (file, "bld/");
+    if (!tmp)  break;
+    file = &tmp[4];
+  }
+
+  printf_OFile (of, "./%s(%u) %s: ", file, line, func);
 
   va_start (args, fmt);
   vprintf_OFile (of, fmt, args);

@@ -91,6 +91,12 @@ else ()
     PROPERTY IMPORTED_LOCATION ${BinPath}/cx)
 endif ()
 
+function (set_bld_cfile_properties file)
+  #set (nice_filepath)
+  #string(REPLACE "${PfxBldPath}/" "" nice_filepath "${file}")
+  set_source_files_properties (${file} PROPERTIES
+    GENERATED TRUE)
+endfunction ()
 
 function (cx_source file)
   if (DEFINED CxPpPath)
@@ -102,7 +108,7 @@ function (cx_source file)
     OUTPUT ${CxBldPath}/${file}
     COMMAND ${exe} -x ${CxPath}/${file} -o ${CxBldPath}/${file}
     DEPENDS ${CxPath}/${file})
-  set_source_files_properties (${CxBldPath}/${file} PROPERTIES GENERATED TRUE)
+  set_bld_cfile_properties (${CxBldPath}/${file})
 endfunction ()
 
 function (cx_cxx_source file)
@@ -110,7 +116,7 @@ function (cx_cxx_source file)
     OUTPUT ${CxBldPath}/${file}
     COMMAND ${CMAKE_COMMAND} -E copy ${CxPath}/${file} ${CxBldPath}/${file}
     DEPENDS ${CxPath}/${file})
-  set_source_files_properties (${CxBldPath}/${file} PROPERTIES GENERATED TRUE)
+  set_bld_cfile_properties (${CxBldPath}/${file})
 endfunction ()
 
 function (bld_source file)
@@ -118,7 +124,7 @@ function (bld_source file)
     OUTPUT ${BldPath}/${file}
     COMMAND cx -x ${CMAKE_CURRENT_SOURCE_DIR}/${file} -o ${BldPath}/${file}
     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${file})
-  set_source_files_properties (${BldPath}/${file} PROPERTIES GENERATED TRUE)
+  set_bld_cfile_properties (${BldPath}/${file})
 endfunction ()
 
 function (bld_cxx_source file)
@@ -126,7 +132,7 @@ function (bld_cxx_source file)
     OUTPUT ${BldPath}/${file}
     COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/${file} ${BldPath}/${file}
     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${file})
-  set_source_files_properties (${BldPath}/${file} PROPERTIES GENERATED TRUE)
+  set_bld_cfile_properties (${BldPath}/${file})
 endfunction ()
 
 foreach (f ${CxHFiles})
