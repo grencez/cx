@@ -231,7 +231,7 @@ do { \
 } while (0)
 
 #define DoLegit(good, msg) \
-  for (good = good ? -1 : 0; (good < 0); good = good ? 1 : (DBog0(msg), 0))
+  for (good = good ? -1 : 0; (good < 0); good = good ? 1 : (msg ? (DBog0(msg), 0) : 0))
 
 /** Wrap this in an if statement.
  * if (LegitCk( status == 0, invariant, "last_call()"))
