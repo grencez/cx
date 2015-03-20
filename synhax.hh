@@ -86,7 +86,7 @@ class Mem {
 private:
   T* e;
 public:
-  Mem() {}
+  Mem() : e(0) {}
   Mem(T* _e) : e(_e) {}
 
   Mem& operator=(T* _e)  { e = _e;  return *this; }
