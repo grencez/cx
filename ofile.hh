@@ -53,6 +53,11 @@ public:
     oput_ujint_OFile (of, x);
     return *this;
   }
+  OFile& operator<<(real x)
+  {
+    oput_real_OFile(of, x);
+    return *this;
+  }
   OFile& operator<<(char c)
   {
     oput_char_OFile (of, c);
