@@ -120,6 +120,24 @@ cat_AlphaTab (AlphaTab* a, const AlphaTab* b)
 }
 
 qual_inline
+  void
+cat_char_AlphaTab (AlphaTab* a, char c)
+{
+  if (a->sz > 0)  -- a->sz;
+  GrowTable( *a, 2 );
+  a->s[a->sz-2] = c;
+  a->s[a->sz-1] = 0;
+}
+
+qual_inline
+  void
+cat_cstr_AlphaTab (AlphaTab* t, const char* s)
+{
+  DecloStack1( AlphaTab, b, dflt1_AlphaTab (s) );
+  cat_AlphaTab (t, b);
+}
+
+qual_inline
     void
 tac_AlphaTab (AlphaTab* a, const AlphaTab* b)
 {
@@ -132,6 +150,14 @@ tac_AlphaTab (AlphaTab* a, const AlphaTab* b)
     if (a->sz > n)
         memmove (&a->s[n], a->s, (a->sz-n)*sizeof(char));
     RepliT( char, a->s, b->s, n );
+}
+
+qual_inline
+  void
+tac_cstr_AlphaTab (AlphaTab* a, const char* s)
+{
+  DecloStack1( AlphaTab, b, dflt1_AlphaTab (s) );
+  tac_AlphaTab (a, b);
 }
 
 qual_inline
@@ -159,22 +185,6 @@ qual_inline
 cstr_AlphaTab (AlphaTab* ts)
 {
   return cstr_of_AlphaTab (ts);
-}
-
-qual_inline
-    void
-cat_cstr_AlphaTab (AlphaTab* t, const char* s)
-{
-    DecloStack1( AlphaTab, b, dflt1_AlphaTab (s) );
-    cat_AlphaTab (t, b);
-}
-
-qual_inline
-    void
-tac_cstr_AlphaTab (AlphaTab* a, const char* s)
-{
-    DecloStack1( AlphaTab, b, dflt1_AlphaTab (s) );
-    tac_AlphaTab (a, b);
 }
 
 qual_inline

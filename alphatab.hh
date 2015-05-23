@@ -51,6 +51,16 @@ public:
     return (t.sz == 0);
   }
 
+  AlphaTab& operator<<(char c) {
+    cat_char_AlphaTab (&t, c);
+    return *this;
+  }
+
+  AlphaTab& operator<<(const char* s) {
+    cat_cstr_AlphaTab (&t, s);
+    return *this;
+  }
+
   AlphaTab& operator<<(const C::AlphaTab& b) {
     cat_AlphaTab (&t, &b);
     return *this;
