@@ -11,7 +11,10 @@ endif ()
 #set (CMAKE_CXX_COMPILER g++)
 #set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
-set (CxDeps alphatab bstree xfile ofile fileb ospc rbtree sesp sxpn syscx urandom)
+set (CxDeps alphatab bstree
+  xfile ofile fileb
+  ospc rbtree
+  sesp sxpn syscx urandom)
 
 list (APPEND CxHFiles
 	associa.h
@@ -28,6 +31,11 @@ list (APPEND CxHHFiles
   table.hh bittable.hh lgtable.hh
   urandom.hh
   xfile.hh ofile.hh fileb.hh
+  mpidissem.hh kautz.hh
+  )
+
+list (APPEND CxCCFiles
+  mpidissem.cc kautz.cc
   )
 
 foreach (d ${CxDeps})
@@ -145,6 +153,11 @@ foreach (f ${CxHHFiles})
   list (APPEND CxFullHHFiles ${CxBldPath}/${f})
 endforeach ()
 
+foreach (f ${CxCCFiles})
+  cx_cxx_source (${f})
+  list (APPEND CxFullCCFiles ${CxBldPath}/${f})
+endforeach ()
+
 if (DEFINED CxPpPath)
   cx_source (cx.c)
 endif ()
@@ -184,7 +197,8 @@ file (MAKE_DIRECTORY ${PfxBldPath})
 file (MAKE_DIRECTORY ${CxBldPath})
 file (MAKE_DIRECTORY ${BldPath})
 
-add_custom_target (GenSources SOURCES ${FullCFiles} ${FullHFiles} ${FullCCFiles} ${FullHHFiles} ${CxFullHFiles} ${CxFullHHFiles})
+add_custom_target (GenSources SOURCES ${FullCFiles} ${FullHFiles} ${FullCCFiles} ${FullHHFiles}
+  ${CxFullHFiles} ${CxFullCCFiles} ${CxFullHHFiles})
 
 add_library (CxLib STATIC ${CxFullCFiles})
 set_target_properties (CxLib PROPERTIES OUTPUT_NAME "cx")
@@ -198,10 +212,30 @@ function (cat_parenthesized dst f)
   set(${dst} ${tmp} PARENT_SCOPE)
 endfunction ()
 
+function (pfxeq dst pfx s)
+  string(LENGTH ${pfx} len_pfx)
+  string(LENGTH ${s} len_s)
+  if (len_pfx GREATER len_s)
+    set(${dst} FALSE PARENT_SCOPE)
+  else ()
+    string(SUBSTRING ${s} 0 ${len_pfx} s)
+    if (pfx STREQUAL s)
+      set(${dst} TRUE PARENT_SCOPE)
+    else ()
+      set(${dst} FALSE PARENT_SCOPE)
+    endif ()
+  endif ()
+endfunction ()
+
 function (addbinexe f)
   set (src_files)
   foreach (src_file ${ARGN})
-    list (APPEND src_files ${BldPath}/${src_file})
+    pfxeq(path_is_set ${PfxBldPath} ${src_file})
+    if (path_is_set)
+      list (APPEND src_files ${src_file})
+    else ()
+      list (APPEND src_files ${BldPath}/${src_file})
+    endif ()
   endforeach ()
 
   add_executable (${f} ${src_files})

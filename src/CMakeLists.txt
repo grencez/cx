@@ -13,8 +13,10 @@ set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
 project (cx)
 
 set (CxPath ${CMAKE_CURRENT_SOURCE_DIR})
-set (CxPpPath ${CMAKE_CURRENT_SOURCE_DIR}/../cx-pp)
-set (BinPath ${CMAKE_CURRENT_SOURCE_DIR}/../../bin)
+set (CxPpPath ${CMAKE_CURRENT_SOURCE_DIR}/../../cx-pp)
+if (NOT DEFINED BinPath)
+  set (BinPath ${CMAKE_CURRENT_SOURCE_DIR}/../bin)
+endif ()
 set (BldPath cx-new)
 
 list (APPEND CFiles test.c)
@@ -27,7 +29,7 @@ include (${CxPath}/include.cmake)
 addbinexe (test_exe test.c testcxx.cc)
 set_target_properties (test_exe PROPERTIES
   OUTPUT_NAME test
-  RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+  RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 
 add_custom_target (pp
   DEPENDS cx
