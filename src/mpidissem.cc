@@ -88,18 +88,19 @@ MpiDissem::xtestlite(Tag& tag, Cx::Table<uint>& msg)
         this->x_payload(i).sz() > 0)
     {
       Cx::Table<uint>& payload = this->x_payload(i);
-
       tag = payload.top();
+
       payload.cpop();
       const uint n = payload.top();
-      payload.cpop();
 
       msg.flush();
       msg.ensize(n);
       for (uint j = 0; j < n; ++j) {
-        msg[j] = payload.top();
         payload.cpop();
+        msg[j] = payload.top();
       }
+      // Use the last pop to resize in memory.
+      payload.mpop();
 
       if (payload.sz() == 0) {
         MPI_Irecv(this->x_paysize(i), 2, MPI_UNSIGNED,
