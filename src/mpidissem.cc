@@ -5,7 +5,7 @@
 
 namespace Cx {
 
-MpiDissem::MpiDissem(int _comm_tag, MPI_Comm _comm)
+MpiDissem::MpiDissem(int _comm_tag, MPI_Comm _comm, uint degree)
   : done(false)
   , term(false)
   , comm_tag(_comm_tag)
@@ -21,7 +21,6 @@ MpiDissem::MpiDissem(int _comm_tag, MPI_Comm _comm)
     NPcs = _NPcs;
   }
 
-  const uint degree = 4;
   if (NPcs <= degree) {
     for (uint i = 0; i < NPcs; ++i)  if (i != PcIdx)  hood.push(i);
     x_degree = hood.sz();
@@ -40,6 +39,38 @@ MpiDissem::MpiDissem(int _comm_tag, MPI_Comm _comm)
   done_flags.grow(this->xo_sz(), 0);
   next_o_payloads.grow(this->o_sz());
   indices.grow(this->xo_sz(), -1);
+
+  for (uint i = 0; i < this->x_sz(); ++i) {
+    MPI_Irecv(this->x_paysize(i), 2, MPI_UNSIGNED,
+              this->x_hood(i), this->comm_tag, this->comm,
+              this->x_request(i));
+  }
+}
+
+  void
+MpiDissem::finish()
+{
+  Cx::Table<uint> msg;
+  this->done_fo();
+
+  MpiDissem::Tag tag = 0;
+  while (this->xwait(tag, msg)) {
+    // Nothing.
+  }
+}
+
+  void
+MpiDissem::reset()
+{
+  this->finish();
+  for (uint i = 0; i < this->xo_sz(); ++i) {
+    payloads[i].clear();
+    requests[i] = MPI_REQUEST_NULL;
+    done_flags[i] = 0;
+  }
+  for (uint i = 0; i < this->o_sz(); ++i) {
+    next_o_payloads[i].clear();
+  }
 
   for (uint i = 0; i < this->x_sz(); ++i) {
     MPI_Irecv(this->x_paysize(i), 2, MPI_UNSIGNED,
@@ -180,7 +211,23 @@ MpiDissem::handle_send(uint i)
   if (this->o_done_flag(i))
     return;
 
-  if (this->next_o_payloads[i].sz() > 0) {
+  if (this->done) {
+    this->o_payload(i).clear();
+    this->next_o_payloads[i].clear();
+    this->o_paysize(i)[0] = 0;
+    this->o_paysize(i)[1] = this->term ? 1 : 0;
+#if 0
+    if (this->term)
+      DBog2("TERM SEND %u -> %d", PcIdx, o_hood(i));
+    else
+      DBog2("DONE SEND %u -> %d", PcIdx, o_hood(i));
+#endif
+    MPI_Isend(this->o_paysize(i), 2, MPI_UNSIGNED,
+              this->o_hood(i), this->comm_tag, this->comm,
+              this->o_request(i));
+    this->o_done_flag(i) = 1;
+  }
+  else if (this->next_o_payloads[i].sz() > 0) {
     // Initialize payloads.
     uint paysize = next_o_payloads[i].sz();
     this->o_paysize(i)[0] = paysize;
@@ -197,20 +244,6 @@ MpiDissem::handle_send(uint i)
     MPI_Isend(&this->o_payload(i)[0], paysize, MPI_UNSIGNED,
               this->o_hood(i), this->comm_tag, this->comm,
               this->o_request(i));
-  }
-  else if (this->done) {
-    this->o_paysize(i)[0] = 0;
-    this->o_paysize(i)[1] = this->term ? 1 : 0;
-#if 0
-    if (this->term)
-      DBog2("TERM SEND %u -> %d", PcIdx, o_hood(i));
-    else
-      DBog2("DONE SEND %u -> %d", PcIdx, o_hood(i));
-#endif
-    MPI_Isend(this->o_paysize(i), 2, MPI_UNSIGNED,
-              this->o_hood(i), this->comm_tag, this->comm,
-              this->o_request(i));
-    this->o_done_flag(i) = 1;
   }
 }
 

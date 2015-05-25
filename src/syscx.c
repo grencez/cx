@@ -171,27 +171,38 @@ lose_sysCx ()
     void
 failout_sysCx (const char* msg)
 {
-    if (msg)
+  if (msg)
+  {
+    int err = errno;
+    /* Use literal stderr just in case we have memory problems.*/
+    FILE* f = stderr;
+
+    /* Flush these so the next message is last.*/
+    flush_OFileB (stdout_OFileB ());
+    flush_OFileB (stderr_OFileB ());
+
+    fprintf (f, "FAILOUT: %s\n", exename_of_sysCx ());
+
+#ifdef POSIX_SOURCE
     {
-        int err = errno;
-        /* Use literal stderr just in case we have memory problems.*/
-        FILE* f = stderr;
-
-        /* Flush these so the next message is last.*/
-        flush_OFileB (stdout_OFileB ());
-        flush_OFileB (stderr_OFileB ());
-
-        fprintf (f, "FAILOUT: %s\n", exename_of_sysCx ());
-        if (msg[0])
-            fprintf (f, "^^^ Reason: %s\n", msg);
-        if (err != 0)
-            fprintf (f, "^^^ errno:%d %s\n", err, strerror (err));
+      char hostname[128];
+      uint n = ArraySz(hostname);
+      gethostname(hostname, n);
+      hostname[n-1] = 0;
+      fprintf (f, "^^^ Host: %s\n", hostname);
     }
-    lose_sysCx ();
-    if (false)
-      abort();
-    else
-      exit(1);
+#endif
+
+    if (msg[0])
+      fprintf (f, "^^^ Reason: %s\n", msg);
+    if (err != 0)
+      fprintf (f, "^^^ errno:%d %s\n", err, strerror (err));
+  }
+  lose_sysCx ();
+  if (false)
+    abort();
+  else
+    exit(1);
 }
 
     void

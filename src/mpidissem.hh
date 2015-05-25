@@ -29,7 +29,10 @@ public:
   uint PcIdx;
 
 public:
-  MpiDissem(int _comm_tag, MPI_Comm _comm);
+  MpiDissem(int _comm_tag, MPI_Comm _comm, uint degree=4);
+
+  void finish();
+  void reset();
 
   uint x_sz() const { return x_degree; }
   uint o_sz() const { return o_degree; }
@@ -70,6 +73,7 @@ public:
 
   void push(Tag tag, const Cx::Table<uint>& msg)
   {
+    if (this->done)  return;
     for (uint i = 0; i < this->o_sz(); ++i) {
       this->next_o_payloads[i].push(tag);
       this->next_o_payloads[i].push(msg.sz());
