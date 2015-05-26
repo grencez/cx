@@ -138,8 +138,7 @@ MpiDissem::xtest(Tag& tag, Cx::Table<uint>& msg)
     }
   }
   if (some_recv) {
-    this->xtestlite(tag, msg);
-    return true;
+    return this->xtestlite(tag, msg);
   }
   return false;
 }
@@ -207,9 +206,7 @@ MpiDissem::handle_recv(uint i)
   void
 MpiDissem::handle_send(uint i)
 {
-  if (*this->o_request(i) != MPI_REQUEST_NULL)
-    return;
-  if (this->o_done_flag(i))
+  if (!this->o_ready(i))
     return;
 
   if (this->done) {

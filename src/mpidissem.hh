@@ -14,7 +14,11 @@ private:
   bool term;
   uint x_degree;
   uint o_degree;
-  int comm_tag;
+public:
+  uint PcIdx;
+  typedef uint Tag;
+  Tag comm_tag;
+private:
   MPI_Comm comm;
   Cx::Table<uint> hood;
   Cx::Table< uint > paysizes;
@@ -24,9 +28,6 @@ private:
   Cx::Table<Bool> done_flags;
   Cx::Table< Cx::Table<uint> > next_o_payloads;
   Cx::Table< int > indices;
-public:
-  typedef uint Tag;
-  uint PcIdx;
 
 public:
   MpiDissem(int _comm_tag, MPI_Comm _comm, uint degree=4);
@@ -65,22 +66,30 @@ private:
   void handle_send(uint i);
 
 public:
+  bool o_ready(uint i) {
+    return !this->o_done_flag(i) && (*this->o_request(i) == MPI_REQUEST_NULL);
+  }
+
   void maysend();
 
   void terminate();
   void done_fo();
   bool done_ck();
 
+  void pushto(uint i, Tag tag, const Cx::Table<uint>& msg)
+  {
+    if (this->done)  return;
+    this->next_o_payloads[i].push(tag);
+    this->next_o_payloads[i].push(msg.sz());
+    for (uint j = 0; j < msg.sz(); ++j)
+      this->next_o_payloads[i].push(msg[j]);
+  }
+
   void push(Tag tag, const Cx::Table<uint>& msg)
   {
     if (this->done)  return;
-    for (uint i = 0; i < this->o_sz(); ++i) {
-      this->next_o_payloads[i].push(tag);
-      this->next_o_payloads[i].push(msg.sz());
-      for (uint j = 0; j < msg.sz(); ++j) {
-        this->next_o_payloads[i].push(msg[j]);
-      }
-    }
+    for (uint i = 0; i < this->o_sz(); ++i)
+      this->pushto(i, tag, msg);
   }
 };
 }

@@ -31,11 +31,11 @@ list (APPEND CxHHFiles
   table.hh bittable.hh lgtable.hh
   urandom.hh
   xfile.hh ofile.hh fileb.hh
-  mpidissem.hh kautz.hh
+  mpidissem.hh kautz.hh mpiloop.hh
   )
 
 list (APPEND CxCCFiles
-  mpidissem.cc kautz.cc
+  mpidissem.cc kautz.cc mpiloop.cc
   )
 
 foreach (d ${CxDeps})
