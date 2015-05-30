@@ -230,8 +230,21 @@ do { \
   } \
 } while (0)
 
-#define DoLegit(good, msg) \
-  for (good = good ? -1 : 0; (good < 0); good = good ? 1 : (msg ? (DBog0(msg), 0) : 0))
+
+#define DeclLegit(good) Sign good = 1; Sign* const DoLegit_vbl = &good
+
+#define DoLegit3(p, good, msg) \
+  for (good = good ? -1 : 0; \
+       good < 0; \
+       good = (p) ? 1 : (msg ? (DBog0(msg), 0) : (assert(0), 0)))
+
+#define DoLegit2(good,msg)  DoLegit3( good, good, msg )
+#define DoLegitP(p,msg)  DoLegit3( p, *DoLegit_vbl, msg )
+#define DoLegit1(msg)  DoLegitP( *DoLegit_vbl, msg )
+#define DoLegit(msg)  DoLegit1( msg )
+#define DoLegitLine(msg)  DoLegit1( msg )  *DoLegit_vbl =
+#define DoLegitLineP(p,msg)  DoLegitP( p, msg )  p =
+
 
 /** Wrap this in an if statement.
  * if (LegitCk( status == 0, invariant, "last_call()"))
