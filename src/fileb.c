@@ -294,12 +294,13 @@ set_FILE_FileB (FileB* fb, FILE* file)
 xget_XFileB (XFileB* xfb)
 {
   XFile* const xf = &xfb->xf;
-  bool good = true;
+  DeclLegit( good );
   long ret = -1;
 
-  good = !!xfb->fb.f;
+  DoLegitLine( "" )
+    !!xfb->fb.f;
 #ifndef _MSC_VER
-  if (good)
+  DoLegit( 0 )
     ret = fseek (xfb->fb.f, 0, SEEK_END);
 #endif
 
@@ -313,14 +314,15 @@ xget_XFileB (XFileB* xfb)
   {
     size_t sz = 0;
 
-    if (LegitCk( ret == 0, good, "fseek()" ))
+    DoLegitP( ret >= 0, "ftell()" )
       ret = ftell (xfb->fb.f);
-    if (LegitCk( ret >= 0, good, "ftell()" ))
-    {
+
+    DoLegitP( ret == 0, "fseek()" ) {
       sz = ret;
       ret = fseek (xfb->fb.f, 0, SEEK_SET);
     }
-    if (LegitCk(ret == 0, good, "fseek()" ))
+
+    DoLegitP( ret == (long)sz, "fread()" )
     {
       GrowTable( xf->buf, sz );
 
@@ -331,8 +333,6 @@ xget_XFileB (XFileB* xfb)
       if (ret >= 0)
         xf->buf.s[xf->off + ret] = '\0';
     }
-    if (LegitCk( ret == (long)sz, good, "fread()" ))
-    {}
   }
 
   if (good)

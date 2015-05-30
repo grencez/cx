@@ -245,17 +245,3 @@ do { \
 #define DoLegitLine(msg)  DoLegit1( msg )  *DoLegit_vbl =
 #define DoLegitLineP(p,msg)  DoLegitP( p, msg )  p =
 
-
-/** Wrap this in an if statement.
- * if (LegitCk( status == 0, invariant, "last_call()"))
- * { ... }
- */
-#define LegitCk(cond, inv, msg) \
-  ((inv) && !(cond))) { \
-    inv = false; \
-    if (msg) { \
-      DBog2( "(%s => !(%s))", msg, #cond ); \
-    } \
-  } \
-  else if ((inv)
-

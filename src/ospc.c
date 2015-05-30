@@ -53,15 +53,17 @@ spawn_OSPc (OSPc* ospc)
 {
   fd_t xfd[2] = { -1, -1 };
   fd_t ofd[2] = { -1, -1 };
-  bool good = true;
+  DeclLegit( good );
   DeclTable( cstr, argv );
   uint nfrees = 0;
 
   if (ospc->of) {
-    if (LegitCk(pipe_sysCx (xfd), good, "" )) {}
+    DoLegitLine( "pipe()" )
+      pipe_sysCx (xfd);
   }
   if (ospc->xf) {
-    if (LegitCk(pipe_sysCx (ofd), good, "" )) {}
+    DoLegitLine( "pipe()" )
+      pipe_sysCx (ofd);
   }
 
   if (good)
@@ -96,10 +98,12 @@ spawn_OSPc (OSPc* ospc)
     }
 
     PushTable( argv, 0 );
-
-    ospc->pid = spawnvp_sysCx (argv.s);
   }
-  if (LegitCk(ospc->pid >= 0, good, "spawn_sysCx()" ))
+
+  DoLegitP( ospc->pid >= 0, "spawn" )
+    ospc->pid = spawnvp_sysCx (argv.s);
+
+  DoLegit( 0 )
   {
     /* The old switcharoo. Your input is my output and vice-versa.*/
     if (ospc->of)
