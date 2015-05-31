@@ -998,6 +998,11 @@ quickforloop_AST (Cons** ast_p, ASTree* t)
         c = cdr_of_AST (c);
     }
 
+    if (!iden) {
+      DBog0( "No identifier for the loop!" );
+      return;
+    }
+
     /* (parens (; i) ...)
      * -->
      * (parens (; unsigned int i = 0) ...)

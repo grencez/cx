@@ -46,7 +46,7 @@ ensure_BSTree (BSTree* t, BSTNode* x);
 BSTNode*
 setf_BSTree (BSTree* t, BSTNode* x);
 void
-remove_BSTNode (BSTNode* a);
+remove_BSTNode (BSTNode* y);
 #endif  /* #ifndef __OPENCL_VERSION__ */
 
 void

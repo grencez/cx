@@ -147,138 +147,130 @@ setf_RBTree (RBTree* t, RBTNode* x)
     return CastUp( RBTNode, bst, y );
 }
 
+/**
+ * This function is called with {y} removed from the tree,
+ * but {y->joint} points to a node whose {side} is one level
+ * short on black nodes.
+ **/
 static void
 fixup_remove (RBTNode* y, RBTree* t, Bit side)
 {
-    if (y->red)
+  if (y->red)
+  {
+    y->red = 0;
+    return;
+  }
+
+  while (!root (t, y))
+  {
+    RBTNode* b = joint (y);
+    RBTNode* a = split (b, !side);
+    RBTNode* w = split (a, !side);
+    RBTNode* x = split (a, side);
+
+    /* Case 1.                         (done)
+     *
+     *      b*             b*            x*
+     *      / \            / \           / \
+     *    a#   #'y  -->  x+   #y  -->  a#   #b
+     *    / \            / \           /|   |\
+     *  w*   +x        a#   #2       w* #1 2# #y
+     *       / \       / \
+     *     1#   #2   w*   #1
+     */
+    if (x && x->red)
     {
-        y->red = 0;
-        return;
+      rotate (a, !side);
+      rotate (b, side);
+      if (b->red)  b->red = 0;
+      else         x->red = 0;
+      break;
     }
 
-    while (!root (t, y))
+    /* Case 2.           (done)
+     *
+     *      b+             a#
+     *      / \            / \
+     *    a#   #'y  -->  w*   +b
+     *    / \                / \
+     *  w*   #x            x#   #y
+     */
+    if (b->red)
     {
-        RBTNode* b = joint (y);
-        RBTNode* a = split (b, !side);
-        RBTNode* w = 0;
-        RBTNode* x = 0;
-
-        if (a)
-        {
-            w = split (a, !side);
-            x = split (a, side);
-        }
-
-        /* Case 1.                        (done)
-         *
-         *      b*             b*           x*
-         *      / \            / \          / \
-         *    a#   #'y  =>   x+   #y  =>  a#   #b
-         *    / \            / \          /|   |\
-         *  w*   +x        a#   #2      w* #1 2# #y
-         *       / \       / \
-         *     1#   #2   w*   #1
-         */
-        if (x && x->red)
-        {
-            rotate (a, !side);
-            rotate (b, side);
-            if (b->red)  b->red = 0;
-            else         x->red = 0;
-            break;
-        }
-
-        /* Case 2.          (done)
-         *
-         *      b+            a#
-         *      / \           / \
-         *    a#   #'y  =>  w*   +b
-         *    / \               / \
-         *  w*   #x           x#   #y
-         */
-        if (b->red)
-        {
-            rotate (b, side);
-            break;
-        }
-
-        /* Case 3.        (continue, match case 1 or 2)
-         *
-         *      b#            a#
-         *      / \           / \
-         *    a+   #'y  =>  w#   +b
-         *    / \               / \
-         *  w#   #x           x#   #'y
-         */
-        if (a && a->red)
-        {
-            rotate (b, side);
-            a->red = 0;
-            b->red = 1;
-            continue;  /* Match case 1 or 2.*/
-        }
-
-        /* Case 4.          (done)
-         *
-         *      b#            a#
-         *      / \           / \
-         *    a#   #'y  =>  w#   #b
-         *    / \               / \
-         *  w+   *x           x*   #y
-         */
-        if (w && w->red)
-        {
-            rotate (b, side);
-            w->red = 0;
-            break;
-        }
-
-        /* Case 5.       (continue)
-         *
-         *      b#          b'#
-         *      / \          / \
-         *    a#   #'y =>  a+   #y
-         *    / \          / \
-         *  w#   #x      w#   #x
-         */
-        a->red = 1;
-        y = b;
-        side = side_of_BSTNode (&y->bst);
+      rotate (b, side);
+      break;
     }
+
+    /* Case 3.         (continue, match case 1 or 2)
+     *
+     *      b#             a#
+     *      / \            / \
+     *    a+   #'y  -->  w#   +b
+     *    / \                / \
+     *  w#   #x            x#   #'y
+     */
+    if (a->red)
+    {
+      rotate (b, side);
+      a->red = 0;
+      b->red = 1;
+      continue;  /* Match case 1 or 2.*/
+    }
+
+    /* Case 4.           (done)
+     *
+     *      b#             a#
+     *      / \            / \
+     *    a#   #'y  -->  w#   #b
+     *    / \                / \
+     *  w+   *x            x*   #y
+     */
+    if (w && w->red)
+    {
+      rotate (b, side);
+      w->red = 0;
+      break;
+    }
+
+    /* Case 5.         (continue)
+     *
+     *      b#            b'#
+     *      / \            / \
+     *    a#   #'y  -->  a+   #y
+     *    / \            / \
+     *  w#   #x        w#   #x
+     */
+    a->red = 1;
+    y = b;
+    side = side_of_BSTNode (&y->bst);
+  }
 }
 
-    void
+  void
 remove_RBTree (RBTree* t, RBTNode* y)
 {
-    RBTNode* x = joint (y);
-    Bit side = side_of_BSTNode (&y->bst);
-    Bit red;
-    remove_BSTNode (&y->bst);
-    x = split (x, side);
-    if (!x)
-    {
-        red = y->red;
-    }
-    else
-    {
-        red = x->red;
-        x->red = y->red;
-    }
-    if (red)  return;
+  RBTNode* b = joint (y);
+  RBTNode* z;
+  Bit side = side_of_BSTNode (&y->bst);
+  remove_BSTNode (&y->bst);
+  z = split (b, side);
+  if (z) {
+    /* Recolor the node that replaced {y}.*/
+    SwapT( uint, y->red, z->red );
+  }
 
-    if (y->bst.split[0])
-    {
-        fixup_remove (split (y, 0), t, 0);
-    }
-    else if (y->bst.split[1])
-    {
-        fixup_remove (split (y, 1), t, 1);
-    }
-    else
-    {
-        /* Put /y/ as a leaf in the tree to simplify fixup.*/
-        y->red = 0;
-        fixup_remove (y, t, !y->bst.joint->split[1]);
-    }
+  /* If the removed color is red, then it is still a red-black tree.*/
+  if (y->red)  return;
+
+  if (y->bst.split[0]) {
+    fixup_remove (split (y, 0), t, 0);
+  }
+  else if (y->bst.split[1]) {
+    fixup_remove (split (y, 1), t, 1);
+  }
+  else {
+    /* Assume {y} is a leaf in the tree to simplify fixup.*/
+    fixup_remove (y, t, !y->bst.joint->split[1]);
+  }
 }
 

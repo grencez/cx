@@ -209,18 +209,30 @@ do \
 void
 failout_sysCx (const char* msg);
 #endif
-#ifndef NDEBUG
+
+#if !defined(NDEBUG)
+#define Given( x )  assert(x)
 #define Claim( x )  assert(x)
-#else
+#elif defined(TestClaim)
 #define Claim( x )  do \
 { \
-    if (!(x)) \
-    { \
-        DBog1( "%s failed.", #x ); \
-        failout_sysCx (""); \
-    } \
+  if (!(x)) \
+  { \
+    DBog1( "%s failed.", #x ); \
+    failout_sysCx (""); \
+  } \
 } while (0)
+#define Given( x )  Claim(x)
+#else  /*v defined(NDEBUG) v*/
+#ifdef _MSC_VER
+# define assume(x) __assume(x)
+#else
+# define assume(x) do { if (!(x)) __builtin_unreachable(); } while (0)
 #endif
+#define Given( x )  assume(x)
+#define Claim( x )  assert(x)
+#endif
+
 #define Claim2( a ,op, b )  Claim((a) op (b))
 
 #define Claim2_uint( a, op, b ) \

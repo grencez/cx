@@ -172,115 +172,114 @@ setf_BSTree (BSTree* t, BSTNode* x)
     return y;
 }
 
-/** Remove a given node from the tree.
+/** Remove a given node {y} from the tree.
  *
- * /a/ will hold information about what had to be moved,
+ * {y} will hold information about what had to be moved,
  * which is used by the red-black tree removal.
- *
- * Let /y/ be the node which will simply slide into place to replace /a/
- * or has a split member which will replace /a/.
- *
- * /a->joint/ will hold /y/ unless /y/ simply replaced /a/
- * without changing its split, in which case /a-joint/ is not changed.
- *
- * /a->split/ will hold the split of the resulting /a->joint/
- * which changed depth.
+ * {y->joint} will hold {b} in the diagrams below.
+ * {y->split} will hold the new split of {b} that changed depth.
  **/
-    void
-remove_BSTNode (BSTNode* a)
+  void
+remove_BSTNode (BSTNode* y)
 {
-    Bit side_a = side_of_BSTNode (a);
-    Bit side, oside;
-    BSTNode* x;
-    BSTNode* y;
+  Bit side_y = side_of_BSTNode (y);
+  Bit side;
+#define oside (!side)
+  BSTNode* b;
+  BSTNode* x;
 
-    /*  a          y
-     *   \        / \
-     *    y   => *   *
-     *   / \
-     *  *   *
-     *
-     * /y/ can be Nil when /i == 0/.
-     */
-    {:for (i ; 2)
-        oside = (Bit) i;
-        if (!a->split[oside])
-        {
-            side = !oside;
-            y = a->split[side];
-            join_BSTNode (a->joint, y, side_a);
-                /* a->joint = a->joint; */
-            a->split[side_a] = y;
-            a->split[!side_a] = 0;
-            return;
-        }
-    }
-
-    /*   a          y
-     *  / \        / \
-     *     y   =>     *
-     *      \
-     *       *
-     */
-    {:for (i ; 2)
-        side = (Bit) i;
-        oside = !side;
-        y = a->split[side];
-
-        if (!y->split[oside])
-        {
-            join_BSTNode (a->joint, y, side_a);
-            join_BSTNode (y, a->split[oside], oside);
-            a->joint = y;
-            a->split[side] = y->split[side];
-            a->split[oside] = 0;
-            return;
-        }
-    }
-
-    /* Roughly this...
-     * /x/ descends as far as it can in one direction.
-     * /y/ follows one step behind.
-     *     a            x
-     *    / \          / \
-     *  1*   y    => 1*   y
-     *      / \          / \
-     *     x   *3      2*   *3
-     *      \
-     *       *2
-     */
-    side = 1;  /* Arbitrary side.*/
-    oside = !side;
-    y = a->split[side];
-    x = y->split[oside];
-    do
+  /* This is the only case that leaves {y->joint} unchanged.
+   * {x} can be Nil.
+   **** OLD ********* NEW *** AUX ***
+   *     b             b       b
+   *    / \           / \      |
+   *  0*   y'  -->  0*   *x    y
+   *      /                     \
+   *    x*                       *x
+   */
+  {:for (i ; 2)
+    side = (Bit) i;
+    if (!y->split[oside])
     {
-        y = x;
-        x = y->split[oside];
-    } while (x);
-    x = y;
-    y = x->joint;
+      x = y->split[side];
+      join_BSTNode (y->joint, x, side_y);
+      /* b = y->joint; */
+      /* y->joint = b; */
+      y->split[side_y] = x;
+      y->split[!side_y] = 0;
+      return;
+    }
+  }
 
-    Claim2( oside ,==, side_of_BSTNode (x) );
-    join_BSTNode (y, x->split[side], oside);
+  /* We know {1} exists.
+   ****** OLD ******** NEW ***** AUX ***
+   *       y'           b         b
+   *      / \          / \        |
+   *     b   1  -->  0*   1       y
+   *    /                        /
+   *  0*                       0*
+   */
+  {:for (i ; 2)
+    side = (Bit) i;
+    b = y->split[side];
 
-    x->joint = a->joint;
-    x->joint->split[side_a] = x;
-    join_BSTNode (x, a->split[0], 0);
-    join_BSTNode (x, a->split[1], 1);
+    if (!b->split[oside])
+    {
+      join_BSTNode (y->joint, b, side_y);
+      join_BSTNode (b, y->split[oside], oside);
+      y->joint = b;
+      y->split[side] = b->split[side];
+      y->split[oside] = 0;
+      return;
+    }
+  }
 
-    a->joint = y;
-    a->split[side] = 0;
-    a->split[oside] = y->split[oside];
+  /* We know both {0} and {3} exist.
+   * {x} descends from {0} or {3} to be closest in value to {y}.
+   * {b} follows one step behind {x}.
+   **** OLD ********* NEW **** AUX ***
+   *     y'            x        b
+   *    / \           / \       |
+   *   0   3         0   3      y
+   *   .\.     -->   .\.         \
+   *     b             b          *2
+   *    / \           / \
+   *  1*   x        1*   *2
+   *      /
+   *    2*
+   */
+  side = 0;  /* Arbitrary side.*/
+  b = y->split[side];
+  x = b->split[oside];
+  do
+  {
+    b = x;
+    x = b->split[oside];
+  } while (x);
+  x = b;
+  b = x->joint;
+
+  Claim2( oside ,==, side_of_BSTNode (x) );
+  join_BSTNode (b, x->split[side], oside);
+
+  x->joint = y->joint;
+  x->joint->split[side_y] = x;
+  join_BSTNode (x, y->split[0], 0);
+  join_BSTNode (x, y->split[1], 1);
+
+  y->joint = b;
+  y->split[side] = 0;
+  y->split[oside] = b->split[oside];
+#undef oside
 }
 
 /** Do a tree rotation,
  *
- *       b          a
- *      / \        / \
- *     a   *z => x*   b
- *    / \            / \
- *  x*   *y        y*   *z
+ *       b             a
+ *      / \           / \
+ *     a   *z  -->  x*   b
+ *    / \               / \
+ *  x*   *y           y*   *z
  *
  * When /side/ is 1, opposite direction when 0.
  * (/b/ always starts as /a/'s joint)

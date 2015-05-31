@@ -3,6 +3,8 @@
  * Tests for cx.
  * Be sure to run this through valgrind sometimes, it should not leak!
  **/
+#define TestClaim
+
 #include "cx/syscx.h"
 #include "cx/associa.h"
 #include "cx/bittable.h"
