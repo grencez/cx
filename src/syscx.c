@@ -331,6 +331,18 @@ pipe_sysCx (fd_t* fds)
     return (ret == 0);
 }
 
+  fd_t
+dup_sysCx (fd_t fd)
+{
+  int ret = -1;
+#ifdef POSIX_SOURCE
+  ret = dup (fd);
+#else
+  ret = _dup (fd);
+#endif
+  return ret;
+}
+
     bool
 dup2_sysCx (fd_t oldfd, fd_t newfd)
 {
