@@ -7,7 +7,29 @@
 \usepackage{graphicx}
 \usepackage{mathtools}
 \usepackage{hyperref}
-\usepackage{paralist}
+\usepackage{xspace}
+\usepackage{aliascnt}
+
+\newcommand{\lfalse}{\textbf{false}\xspace}
+\newcommand{\ltrue}{\textbf{true}\xspace}
+\newcommand{\Int}{\mathbb{Z}}
+\newcommand{\IntMod}[1]{\Int_{#1}}
+\newcommand{\unique}{\exists!}
+\newcommand{\defeq}{\mathrel{\mathop:}=}
+\newcommand{\acteq}{\longrightarrow}
+\newcommand{\actto}{\longmapsto}
+\renewcommand{\mod}{{}\textnormal{\texttt{\;mod\;}}{}}
+\newcommand{\modop}[1]{\textnormal{\texttt{\;mod\;}}#1}
+
+\newcommand{\textiff}{\textit{iff}\xspace}
+\newcommand{\quicksec}[1]{\noindent{\bf #1.}\;}
+\newcommand{\funcname}[1]{\textsc{#1}}
+\newcommand{\funcall}[2]{\funcname{#1}(#2)}
+\newcommand{\vbl}[1]{\textnormal{\textit{#1}}}
+\newcommand{\ttvbl}[1]{\texttt{#1}}
+\newcommand{\ttaref}[2]{\ttvbl{#1[}#2\ttvbl{]}}
+\newcommand{\ttmemloc}[1]{\texttt{\&#1}}
+\newcommand{\mathmemloc}[1]{\ensuremath{\texttt{\&}#1}}
 
 \DeclarePairedDelimiter{\abs}{\lvert}{\rvert}
 \DeclarePairedDelimiter{\ceil}{\lceil}{\rceil}
@@ -15,31 +37,56 @@
 \DeclarePairedDelimiter{\avect}{\langle}{\rangle}
 \DeclarePairedDelimiter{\aset}{\allowbreak\lbrace}{\rbrace}
 
+\newcommand{\lxor}{\veebar}
 \newcommand{\true}{\top}
 \newcommand{\fals}{\bot}
-\newcommand{\acteq}{\longrightarrow}
-\newcommand{\Nat}{\mathbb{N}}
-\newcommand{\Int}{\mathbb{Z}}
-\newcommand{\unique}{\exists!}
-\newcommand{\defeq}{:=}
+\newcommand{\ket}[1]{\lvert #1\rangle}
+%\newcommand{\Nat}{\mathbb{N}}
+\newcommand{\WildSym}{\texttt{X}\xspace}
 \newcommand{\transpose}{^ \top }
 \newcommand{\queseq}{\overset{?}{=}}
 %\newcommand{\transpose}{^ \intercal }
 \newcommand{\pipe}{\,|\,}
-\newcommand{\vbl}[1]{\ensuremath{\mathit{#1}}}
-\newcommand{\cvbl}[1]{\ensuremath{\mathtt{#1}}}
-\newcommand{\oodot}{.}
 \newcommand{\detop}[1]{\det(#1)}
 %\newcommand{\vect}[1]{\boldsymbol{\vbl{#1}}}
 \newcommand{\vect}[1]{{\overrightarrow{#1}}}
-\newcommand{\slfrac}[2]{\left.#1\middle/#2\right.}
+%\newcommand{\slfrac}[2]{\left.#1\middle/#2\right.}
+\newcommand{\slfrac}[2]{#1/#2}
 %\newcommand{\vect}[1]{{\vv{#1}}}
-\newcommand{\modop}[1]{\mbox{ mod }#1}
-\newcommand{\mathsc}[1]{\text{\normalfont\scshape#1}}
-\newcommand{\quicksec}[1]{{\bf #1.}\;}
-\newcommand{\fmlang}[1]{\textrm{#1}}
+\newcommand{\fmlang}[1]{\textnormal{\textrm{#1}}}
+\providecommand{\expten}[1]{\ensuremath{\times 10^{#1}}}
 
-\newcommand{\TODO}[1]{\textcolor{red}{\bf TODO:} #1}
+
+\def\imagetop#1{\vtop{\null\hbox{#1}}}
+\newcommand{\TODO}[1]{\noindent\textcolor{red}{{\bf TODO:} #1}}
+\newcommand{\NOTE}[1]{\noindent\textcolor{red}{{\bf NOTE:} #1}}
+\newcommand{\QUES}[1]{\noindent\textcolor{red}{{\bf ???:} #1}}
+
+\mathchardef\breakingcomma\mathcode`\,
+{\catcode`,=\active
+ \gdef,{\breakingcomma\discretionary{}{}{}}
+}
+\newcommand{\mathlist}[1]{\mathcode`\,=\string"8000 #1}
+
+\newcommand{\quickcol}[2]{%
+\begin{tabular}{@{}#1@{}}#2\end{tabular}}
+
+\makeatletter
+\@ifclassloaded{beamer}{
+%%%%%%% BEG In beamer
+\usetheme{Warsaw}
+\setbeamertemplate{headline}{}
+\setbeamertemplate{bibliography item}[text]
+\setbeamertemplate{navigation symbols}{%
+ \begin{tabular}{r}%
+ \insertframenavigationsymbol \\
+ {\scriptsize \color{gray} \insertframenumber{}/\inserttotalframenumber{}}
+ \end{tabular}%
+}
+%%%%%%% END In beamer
+}{
+%%%%%%% BEG Not in beamer
+\usepackage{paralist}
 
 \newenvironment{itemize*}%
 {\begin{compactitem}}%
@@ -49,22 +96,78 @@
 {\begin{compactenum}}%
 {\end{compactenum}}
 
+\@ifundefined{ifusesection}{%
+ \newif\ifusesection %
+ \usesectiontrue %
+}{}
 
-\newcounter{exercisecnt}
-\def\theexercisecnt{\arabic{exercisecnt}}
-\newenvironment{exercise}
-{\hrulefill
- 
- \refstepcounter{exercisecnt}
- {\bf Exercise \theexercisecnt.}}
-{
+\ifusesection
+ \newtheorem{theorem}{Theorem}[section]
+\else
+ \newtheorem{theorem}{Theorem}
+\fi
 
- \hrulefill}
+\def\sectionautorefname{Section}
+%\def\subsectionautorefname{Subsection}
+\def\subsectionautorefname{Section}
+\def\subsubsectionautorefname{Section}
+\def\chapterautorefname{Chapter}
 
-\newcounter{exercisepartcnt}[exercisecnt]
-\def\theexercisepartcnt{\theexercisecnt.\alph{exercisepartcnt}}
-\newenvironment{exercisepart}
-{\refstepcounter{exercisepartcnt}
- {\bf Exercise \theexercisepartcnt.}}
-{}
+% counter for numbering, and make them work with \autoref.
+\newcommand{\mynewtheorem}[2]{
+ \newaliascnt{#1}{theorem}
+ \newtheorem{#1}[#1]{#2}
+ \aliascntresetthe{#1}
+ % maybe we will squish some autoref defaults, but who cares?
+ \expandafter\def\csname #1autorefname\endcsname{#2}
+}
+\mynewtheorem{lemma}{Lemma}
+\mynewtheorem{corollary}{Corollary}
+\mynewtheorem{example}{Example}
+\theoremstyle{definition}
+\mynewtheorem{problem}{Problem}
+\mynewtheorem{definition}{Definition}
+%\theoremstyle{remark}
+\mynewtheorem{remark}{Remark}
+\mynewtheorem{observation}{Observation}
+
+%%% hyperref link stuff
+\hypersetup{
+ pdfborderstyle={/S/U/W 0.5}
+}
+%%%%%%% END Not in beamer
+}
+\makeatother
+
+\newcounter{exercise}
+\def\theexercise{\arabic{exercise}}
+\newenvironment{exercise}[1][]%
+{\allowbreak\begin{samepage}\vspace*{2em}\hrule%
+ \refstepcounter{exercise}
+ {\bf Exercise \theexercise.}\ifx\newenvironment#1\newenvironment\else\space(#1)\fi\\}
+{\vspace*{0.5em}\hrule\end{samepage}\vspace*{1em}}
+
+
+\newcounter{exercisepart}[exercise]
+\def\theexercisepart{\theexercise.\alph{exercisepart}}
+\newenvironment{exercisepart}[1][]%
+{\allowbreak\begin{samepage}\refstepcounter{exercisepart}
+ {\bf Exercise \theexercisepart.}\ifx\newenvironment#1\newenvironment\else\space(#1)\fi\space}
+{\end{samepage}
+
+}
+
+\def\exerciseautorefname{Exercise}
+\def\exercisepartautorefname{Exercise}
+
+\usepackage{algorithm}
+\usepackage{algorithmic}
+
+\providecommand\algorithmname{Algorithm}
+
+\newcommand{\algorithmicoutput}{\textbf{Output:}}
+\newcommand{\OUTPUT}{\item[\algorithmicoutput]}
+
+\newcommand{\LET}{\STATE \textbf{let}\xspace}
+
 

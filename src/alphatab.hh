@@ -44,6 +44,11 @@ public:
     lose_AlphaTab (&t);
   }
 
+  void moveq(const C::AlphaTab& b) {
+    lose_AlphaTab (&t);
+    t = b;
+  }
+
   ujint sz() const {
     return t.sz;
   }
