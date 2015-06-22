@@ -26,6 +26,10 @@ list (APPEND CCFiles testcxx.cc)
 
 include (${CxPath}/include.cmake)
 
+add_executable (file2array file2array.c)
+set_target_properties (file2array  PROPERTIES
+  RUNTIME_OUTPUT_DIRECTORY ${BinPath})
+
 addbinexe (test_exe test.c testcxx.cc)
 set_target_properties (test_exe PROPERTIES
   OUTPUT_NAME test
