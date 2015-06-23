@@ -51,9 +51,9 @@ getlined_XFile (XFile* xf, const char* delim);
 void
 skipds_XFile (XFile* xf, const char* delims);
 char*
-nextds_XFile (XFile* in, char* ret_match, const char* delims);
+tods_XFile (XFile* xfile, const char* delims);
 char*
-tods_XFile (XFile* xf, const char* delims);
+nextds_XFile (XFile* xfile, char* ret_match, const char* delims);
 char*
 nextok_XFile (XFile* xf, char* ret_match, const char* delims);
 void
@@ -68,7 +68,7 @@ bool
 skip_cstr_XFile (XFile* xf, const char* pfx);
 
 void
-olay_txt_XFile (XFile* olay, XFile* xf, uint off);
+olay_txt_XFile (XFile* olay, XFile* xf, ujint off);
 bool
 getlined_olay_XFile (XFile* olay, XFile* xf, const char* delim);
 bool
@@ -110,7 +110,7 @@ init_XFile (XFile* xf)
 
 qual_inline
   void
-olay_XFile (XFile* olay, XFile* xf, uint off)
+olay_XFile (XFile* olay, XFile* xf, ujint off)
 {
   init_XFile (olay);
   olay->buf.s = &xf->buf.s[off];
@@ -141,18 +141,23 @@ ccstr_of_XFile (const XFile* xf)
 
 qual_inline
   char*
-cstr1_XFile (XFile* f, ujint off)
+cstr1_of_XFile (XFile* f, ujint off)
 { return (char*) &f->buf.s[off]; }
 
 qual_inline
   char*
 cstr_of_XFile (XFile* xf)
-{ return cstr1_XFile (xf, xf->off); }
+{ return cstr1_of_XFile (xf, xf->off); }
+
+qual_inline
+  char*
+cstr1_XFile (XFile* f, ujint off)
+{ return cstr1_of_XFile (f, off); }
 
 qual_inline
   char*
 cstr_XFile (XFile* xf)
-{ return cstr1_XFile (xf, xf->off); }
+{ return cstr1_of_XFile (xf, xf->off); }
 
 qual_inline
   AlphaTab

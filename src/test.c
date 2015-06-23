@@ -419,19 +419,18 @@ testfn_skipws_FileB ()
        s = getline_XFile (xf))
   {
     XFile olay[1];
-    olay_XFile (olay, xf, IdxEltTable( xf->buf, s ));
+    olay_txt_XFile (olay, xf, IdxEltTable( xf->buf, s ));
 
     for (s = nextok_XFile (olay, 0, 0);
          s;
          s = nextok_XFile (olay, 0, 0))
     {
-      int cmp_ret;
-      Claim2(idx ,<, ArraySz( expect_text ));
-      cmp_ret = strcmp(expect_text[idx], s);
-      Claim2( 0 ,==, cmp_ret );
-      ++ idx;
       oput_cstr_OFile (of, s);
       oput_char_OFile (of, '\n');
+      flush_OFile (of);
+      Claim2(idx ,<, ArraySz( expect_text ));
+      Claim( eq_cstr (expect_text[idx], s) );
+      ++ idx;
     }
   }
 

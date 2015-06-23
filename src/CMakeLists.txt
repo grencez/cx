@@ -6,6 +6,12 @@
 #   cmake -G "NMake Makefiles"
 #   nmake
 
+#SET(CMAKE_CXX_FLAGS_DEBUG "-g3")
+#SET(CMAKE_C_FLAGS_DEBUG "-g3")
+#set (CMAKE_BUILD_TYPE DEBUG)
+#set (CMAKE_BUILD_TYPE RELEASE)
+#set (CMAKE_BUILD_TYPE RelWithDebInfo)
+
 cmake_minimum_required (VERSION 2.8)
 set(CMAKE_DISABLE_SOURCE_CHANGES ON)
 set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)

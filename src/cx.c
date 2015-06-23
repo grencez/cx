@@ -145,6 +145,7 @@ struct ASTree
 struct CxExecOpt
 {
   bool cplusplus;
+  bool del_quote_include;
   Associa del_pragmas;
 };
 
@@ -152,6 +153,7 @@ struct CxExecOpt
 init_CxExecOpt (CxExecOpt* opt)
 {
   opt->cplusplus = false;
+  opt->del_quote_include = false;
   InitSet( const char*, opt->del_pragmas, (PosetCmpFn) cmp_cstr_loc );
 }
 
@@ -586,20 +588,27 @@ check_delete_directive (AlphaTab* txt, CxExecOpt* exec_opt)
   char matched = '\0';
   char delims[1+ArraySz( WhiteSpaceChars )];
   char* s;
-  bool delete_it;
+  bool delete_it = false;
 
   init_XFile_olay_AlphaTab (olay, txt);
-  if (!skip_cstr_XFile (olay, "pragma"))
-    return false;
 
   delims[0] = '\\';
   strcpy (&delims[1], WhiteSpaceChars);
-  s = nextok_XFile (olay, &matched, delims);
-  if (!s)  return false;
 
-  delete_it = !!lookup_Associa (&exec_opt->del_pragmas, &s);
-  replace_delim_XFile (olay, matched);
+  if (skip_cstr_XFile (olay, "include")) {
+    s = tods_XFile (olay, "\"");
+    if (exec_opt->del_quote_include) {
+      delete_it = (s[0] == '"');
+    }
+  }
+  else if (skip_cstr_XFile (olay, "pragma")) {
+    s = nextok_XFile (olay, &matched, delims);
+    if (!s)  return false;
+    replace_delim_XFile (olay, matched);
+    delete_it = !!lookup_Associa (&exec_opt->del_pragmas, &s);
+  }
 
+  // If deleting, then replace text with newlines.
   if (delete_it) {
     uint nlines = 1 + count_newlines (cstr_of_AlphaTab (txt));
     flush_AlphaTab (txt);
@@ -1423,6 +1432,11 @@ copy_cplusplus (XFile* xf, OFile* of, CxExecOpt* exec_opt)
       }
       flush_AlphaTab (txt);
     }
+    else if (exec_opt->del_quote_include &&
+             pfxeq_cstr ("#include", s) &&
+             strchr (s, '"')) {
+      oput_char_OFile (of, '\n');
+    }
     else {
       oput_cstr_OFile (of, s);
       oput_char_OFile (of, '\n');
@@ -1469,7 +1483,8 @@ main (int argc, char** argv)
       }
       of = &ofb->of;
     }
-    else if (eq_cstr (arg, "-c++"))
+    else if (eq_cstr (arg, "-c++") ||
+             eq_cstr (arg, "-shallow"))
     {
       exec_opt->cplusplus = true;
     }
@@ -1479,6 +1494,10 @@ main (int argc, char** argv)
       if (!pragmaname)
         failout_sysCx ("-no-pragma requires an argument.");
       ensure_Associa (&exec_opt->del_pragmas, &pragmaname);
+    }
+    else if (eq_cstr (arg, "-no-quote-includes"))
+    {
+      exec_opt->del_quote_include = true;
     }
     else
     {

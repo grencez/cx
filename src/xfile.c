@@ -144,64 +144,93 @@ skipds_XFile (XFile* xf, const char* delims)
     mayflush_XFile (xf, May);
 }
 
+/**
+ * Get text up to the next delimiter (or NUL) without modifying the stream
+ * position or content.
+ *
+ * \param delims Delimiters to check against.
+ *   For default whitespace delimiters, simply pass NULL.
+ *   For only NUL delimiter, pass an empty string.
+ *   To skip NUL delimiters, prepend the string with "!!".
+ *   A string of "!!" exactly will use whitespace charaters without NUL.
+ * \return A pointer to the next delimiter or the NUL at the end
+ *   of this buffer if no such delimiter can be found in the stream.
+ *   The returned pointer will never be NULL itself.
+ **/
   char*
-nextds_XFile (XFile* in, char* ret_match, const char* delims)
+tods_XFile (XFile* xfile, const char* delims)
 {
-  uint ret_off;
-  char* s;
-  if (!delims)  delims = WhiteSpaceChars;
-  mayflush_XFile (in, May);
-  ret_off = in->off;
-  Claim2( ret_off ,<, in->buf.sz );
-  s = (char*) &in->buf.s[ret_off];
-  s = &s[strcspn (s, delims)];
+  ujint off;
+  const bool skip_nul = pfxeq_cstr ("!!", delims);
+  // Fix up {delims} to not be NULL in any case,
+  // and skip over the "!!" if it exists.
+  if (skip_nul && delims[2])
+    delims = &delims[2];
+  else if (!delims || skip_nul)
+    delims = WhiteSpaceChars;
 
-  while (!s[0])
+  mayflush_XFile (xfile, May);
+  off = xfile->off;
+  Claim2( off ,<, xfile->buf.sz );
+  Claim( !xfile->buf.s[xfile->buf.sz-1] );
+
+  while (off+1 < xfile->buf.sz ||
+         xget_chunk_XFile (xfile))
   {
-    uint off = in->buf.sz - 1;
-    if (!xget_chunk_XFile (in))  break;
-    s = (char*) &in->buf.s[off];
-    s = &s[strcspn (s, delims)];
-  }
+    // Recompute {s} pointer after file read!
+    char* s = cstr1_of_XFile (xfile, off);
+    off += (delims[0]  ?  strcspn (s, delims)  :  strlen (s));
+    if (off+1 == xfile->buf.sz)  continue;
 
+    s = cstr1_of_XFile (xfile, off);
+    if (s[0] || !skip_nul)  return s;
+    off += 1;
+  }
+  return cstr1_of_XFile (xfile, xfile->buf.sz-1);
+}
+
+/**
+ * Read text up to the next delimiter and replace it with a NUL.
+ *
+ * The stream position is moved past the next delimiter.
+ *
+ * \param delims See tods_XFile() description.
+ * \return The text starting at the current stream offset.
+ *
+ * \sa nextok_XFile()
+ **/
+  char*
+nextds_XFile (XFile* xfile, char* ret_match, const char* delims)
+{
+  char* s = tods_XFile(xfile, delims);
+  const ujint ret_off = xfile->off;
+
+  xfile->off = IdxElt( xfile->buf.s, s );
   if (ret_match)  *ret_match = s[0];
-  if (s[0])
-  {
-    //Claim2( IdxElt( in->buf.s, s ) ,<, in->buf.sz );
-    s[0] = 0;
-    in->off = IdxElt( in->buf.s, s );
-    if (in->off + 1 < in->buf.sz)
-      in->off += 1;
-    Claim2( in->off ,<, in->buf.sz );
+
+  if (xfile->off+1 < xfile->buf.sz) {
+    // Nullify and step over the delimiter.
+    s[0] = '\0';
+    xfile->off += 1;
   }
-  else
-  {
-    in->off = in->buf.sz - 1;
+  else {
+    Claim2( xfile->off ,<, xfile->buf.sz);
   }
 
-  Claim( (ret_off + 1 != in->buf.sz) || !in->buf.s[ret_off]);
-  return (ret_off + 1 == in->buf.sz) ? 0 : (char*) &in->buf.s[ret_off];
+  if (ret_off < xfile->off)
+    return cstr1_of_XFile (xfile, ret_off);
+
+  Claim2( ret_off ,==, xfile->off );
+  return 0;
 }
 
-    char*
-tods_XFile (XFile* xf, const char* delims)
-{
-    char c;
-    ujint dsoff;
-    ujint off;
-    off = xf->off;
-    nextds_XFile (xf, &c, delims);
 
-    dsoff = xf->off;
-    if (c)
-    {
-        -- dsoff;
-        xf->buf.s[dsoff] = c;
-    }
-    xf->off = off;
-    return (char*) &xf->buf.s[dsoff];
-}
-
+/**
+ * Read the next token.
+ *
+ * \param xf Input stream whose position will shifted be past the next token.
+ * \return The next token. Will be NULL if no such token exists.
+ **/
     char*
 nextok_XFile (XFile* xf, char* ret_match, const char* delims)
 {
@@ -213,6 +242,7 @@ nextok_XFile (XFile* xf, char* ret_match, const char* delims)
 replace_delim_XFile (XFile* xf, char delim)
 {
   char* s = cstr_of_XFile (xf);
+  if (!delim)  return;
   Claim2( xf->off ,>, 0 );
   s[-1] = delim;
 }
@@ -310,14 +340,16 @@ skip_cstr_XFile (XFile* xf, const char* pfx)
 }
 
   void
-olay_txt_XFile (XFile* olay, XFile* xf, uint off)
+olay_txt_XFile (XFile* olay, XFile* xf, ujint off)
 {
+  const ujint end = (xf->off + 1 < xf->buf.sz  ?  xf->off  :  xf->buf.sz);
+  Claim2( off ,<, end );
+
   init_XFile (olay);
   olay->buf.s = &xf->buf.s[off];
-  if (xf->off + 1 == xf->buf.sz)
-    olay->buf.sz = xf->buf.sz - off;
-  else
-    olay->buf.sz = xf->off - off;
+  olay->buf.sz = end - off;
+
+  Claim( !olay->buf.s[olay->buf.sz-1] );
 }
 
   bool
