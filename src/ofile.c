@@ -157,8 +157,9 @@ oputn_char_OFile (OFile* of, const char* a, ujint n)
 {
   VTCall( of->vt, (void),oputn_char_fn,(of, a, n); return );
   GrowTable( of->buf, n );
-  memcpy (&of->buf.s[of->off], a, (n+1)*sizeof(char));
+  memcpy (&of->buf.s[of->off], a, n*sizeof(char));
   of->off += n;
+  of->buf.s[of->off] = 0;
   mayflush_OFile (of);
 }
 

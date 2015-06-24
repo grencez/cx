@@ -22,8 +22,8 @@ From the top-level directory, translate C code by:
 Besides the C-to-C translator, there are some miscellaneous things that loosely fit with the idea of a useful library.
 
 * **Standalone** tool that helps embed file contents in C code.
- * [file2array.c](src/file2array.c)
- * Example: `file2array -o shaders.h phong.vert phong.frag diffuse.vert diffuse.frag` and then include shaders.h within a function.
+ * [cembed.c](src/cembed.c)
+ * Example: `cembed -o shaders.h phong.vert phong.frag diffuse.vert diffuse.frag` and then include shaders.h within a function.
 * MPI dissemination scheme using Kautz graphs.
  * [mpidissem.cc](src/mpidissem.cc) and [mpidissem.hh](src/mpidissem.hh)
 * LaTeX macros and preamble.

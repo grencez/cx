@@ -99,6 +99,8 @@ else ()
     PROPERTY IMPORTED_LOCATION ${BinPath}/cx)
 endif ()
 
+set(CxExe cx)
+
 function (set_bld_cfile_properties file)
   #set (nice_filepath)
   #string(REPLACE "${PfxBldPath}/" "" nice_filepath "${file}")

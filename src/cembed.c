@@ -3,7 +3,7 @@
  * Embed file contents into C code.
  *
  * Usage example:
- *   file2array -o shaders.h phong.vert phong.frag diffuse.vert diffuse.frag
+ *   cembed -o shaders.h phong.vert phong.frag diffuse.vert diffuse.frag
  *
  * Then you can #include "shaders.h" from within some function
  * and use following (static const) variables:
