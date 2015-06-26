@@ -1,12 +1,19 @@
 
+if (NOT DEFINED CxPath)
+  set (CxPath ${CxTopPath}/src)
+elseif (NOT DEFINED CxTopPath)
+  set (CxTopPath ${CxPath}/..)
+endif ()
+
+if (NOT DEFINED CxBinPath)
+  set (CxBinPath ${CxTopPath}/bin)
+endif ()
+
 set (PfxBldPath ${CMAKE_CURRENT_BINARY_DIR}/bld)
 set (BldPath ${PfxBldPath}/${BldPath})
 
 set (CxBldPath ${PfxBldPath}/cx)
 
-if (DEFINED CxPpPath)
-  set (CxPpExe ${CxPpPath}/cx)
-endif ()
 
 #set (CMAKE_CXX_COMPILER g++)
 #set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
@@ -81,25 +88,26 @@ if (DEFINED CxPpPath)
   add_executable (cx ${CxBldPath}/cx.c ${CxFullCFiles})
   set_target_properties (cx PROPERTIES
     OUTPUT_NAME cx
-    RUNTIME_OUTPUT_DIRECTORY ${BinPath}
+    RUNTIME_OUTPUT_DIRECTORY ${CxBinPath}
     COMPILE_FLAGS ${DEFAULT_COMPILE_FLAGS})
 
   list (APPEND CxPpSources ${CxPpPath}/cx.c)
   foreach (f ${CxCFiles})
     list (APPEND CxPpSources ${CxPpPath}/${f})
   endforeach ()
-  add_executable (CxPpExe ${CxPpSources})
-  set_target_properties (CxPpExe PROPERTIES
-    OUTPUT_NAME cx
-    RUNTIME_OUTPUT_DIRECTORY ${CxPpPath}
+  add_executable (cxpp ${CxPpSources})
+  set_target_properties (cxpp PROPERTIES
+    OUTPUT_NAME cxpp
+    RUNTIME_OUTPUT_DIRECTORY ${CxBinPath}
     COMPILE_FLAGS ${DEFAULT_COMPILE_FLAGS})
 else ()
   add_executable (cx IMPORTED)
   set_property (TARGET cx
-    PROPERTY IMPORTED_LOCATION ${BinPath}/cx)
+    PROPERTY IMPORTED_LOCATION ${CxBinPath}/cx)
+  add_executable (cembed IMPORTED)
+  set_property (TARGET cembed
+    PROPERTY IMPORTED_LOCATION ${CxBinPath}/cembed)
 endif ()
-
-set(CxExe cx)
 
 function (set_bld_cfile_properties file)
   #set (nice_filepath)
@@ -110,7 +118,7 @@ endfunction ()
 
 function (cx_source file)
   if (DEFINED CxPpPath)
-    set (exe CxPpExe)
+    set (exe cxpp)
   else ()
     set (exe cx)
   endif ()

@@ -19,9 +19,11 @@ set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
 project (cx)
 
 set (CxPath ${CMAKE_CURRENT_SOURCE_DIR})
-set (CxPpPath ${CMAKE_CURRENT_SOURCE_DIR}/../../cx-pp)
+set (CxTopPath ${CxPath}/..)
+
+set (CxPpPath ${CxTopPath}/../cx-pp)
 if (NOT DEFINED BinPath)
-  set (BinPath ${CMAKE_CURRENT_SOURCE_DIR}/../bin)
+  set (BinPath ${CxTopPath}/bin)
 endif ()
 set (BldPath cx-new)
 

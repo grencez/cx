@@ -181,7 +181,8 @@ poset_cmp_lhs (PosetCmp cmp, const void* a, const void* b)
 Bool
 randomize(void* p, uint size);
 
-#define Randomize(x)  randomize((x), sizeof(*(x)))
+#define Randomize(x)  randomize(&(x), sizeof(x))
+#define Zeroize(x)  memset(&(x), 0, sizeof(x))
 
 /** Implemented in syscx.c **/
 void
