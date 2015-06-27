@@ -112,19 +112,16 @@ mktmppath_sysCx (AlphaTab* path);
 
 qual_inline
   void
-olay_OFile (XFile* olay, OFile* of, uint off)
+olay_txt_OFile (XFile* olay, OFile* ofile, ujint off)
 {
+  XFile xfile[1];
   init_XFile (olay);
-  olay->buf.s = &of->buf.s[off];
-  olay->buf.sz = of->off - off;
+  init_XFile (xfile);
+  xfile->buf = ofile->buf;
+  xfile->off = ofile->off;
+  olay_txt_XFile (olay, xfile, off);
 }
 
-qual_inline
-  void
-init_XFile_olay_OFile (XFile* olay, OFile* of)
-{
-  olay_OFile (olay, of, 0);
-}
 
 #endif
 
