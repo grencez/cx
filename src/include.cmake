@@ -215,6 +215,10 @@ set_target_properties (CxLib PROPERTIES OUTPUT_NAME "cx")
 set_target_properties (CxLib PROPERTIES COMPILE_FLAGS ${DEFAULT_COMPILE_FLAGS})
 add_dependencies(CxLib GenSources)
 
+# Call with
+#   cat_parenthesized (mylist, filename)
+# to set {mylist} to contain the content between parentheses
+# on lines in the given file.
 function (cat_parenthesized dst f)
   file(READ ${f} tmp)
   string(REPLACE "\n" ";" tmp "${tmp}")

@@ -22,14 +22,14 @@
 typedef unsigned int uint;
 typedef unsigned char byte;
 
-#define BailOut(msg) \
+#define BailOut(ret, msg) \
   do { \
     fprintf (err, "%s\n", msg); \
     fprintf (err, "Usage: %s -o out.h in1 [... inN]\n", argv[0]); \
-    return 1; \
+    return ret; \
   } while (0)
 
-int main (int argc, char** argv)
+int main (int argc, const char** argv)
 {
   int argi = 1;
   const char nfilessym[] = "nfiles";
@@ -44,13 +44,13 @@ int main (int argc, char** argv)
 
   if (argi < argc) {
     if (0 != strcmp(argv[argi], "-o")) {
-      BailOut("Please use the -o flag to be explicit about the output file.");
+      BailOut(1, "Please use the -o flag to be explicit about the output file.");
     }
     argi += 1;
   }
 
   if (argi+1 >= argc) {
-    BailOut("Need at least one output and input file.");
+    BailOut(1, "Need at least one output and input file.");
   }
 
   out = fopen (argv[argi], "wb");

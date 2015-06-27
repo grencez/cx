@@ -23,7 +23,11 @@ Besides the C-to-C translator, there are some miscellaneous things that loosely 
 
 * **Standalone** tool that helps embed file contents in C code.
  * [cembed.c](src/cembed.c)
- * Example: `cembed -o shaders.h phong.vert phong.frag diffuse.vert diffuse.frag` and then include shaders.h within a function.
+ * Example: `cembed -o shaders.h phong.vert phong.frag diffuse.vert diffuse.frag` and then include `shaders.h` within a function.
+* **Standalone** tool that creates a C switch statement for strings.
+ * [cswitch.c](src/cswitch.c)
+ * Example: `cswitch strvbl -x fnlist.txt -case-pfx 'fn = testfn_' -o switch.c` and then include the `switch.c` within a function to have a switch statement that matches `strvbl` to a line of `fnlist.txt`.
+If a match is found, it assigns `fn` to a function whose name starts with `testfn_` and ends with the matched string.
 * MPI dissemination scheme using Kautz graphs.
  * [mpidissem.cc](src/mpidissem.cc) and [mpidissem.hh](src/mpidissem.hh)
 * LaTeX macros and preamble.
