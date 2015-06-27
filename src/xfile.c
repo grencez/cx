@@ -110,9 +110,8 @@ getlined_XFile (XFile* xf, const char* delim)
 
   if (s)
   {
-    s[0] = '\0';
+    memset(s, 0, delim_sz * sizeof(char));
     s = &s[delim_sz];
-    s[-1] = '\0';
     xf->off = IdxElt( xf->buf.s, s );
     Claim2( xf->off ,<, xf->buf.sz );
   }
