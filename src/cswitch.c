@@ -3,7 +3,6 @@
  * Make a switch statement on strings.
  *
  * Usage example:
- *   grep -o -e 'testfn_[^ (]*' mytests.c | sed -e 's/testfn_//' > fnlist.txt
  *   cswitch strvbl -x fnlist.txt -case-pfx 'fn = testfn_' -o switch.c
  *
  * Then you can #include "switch.c" from within a function to effectvely
@@ -14,15 +13,15 @@
  *     ...
  *     case "lineNtxt": fn = testfn_lineNtxt; break;
  *   }
+ *
+ * Hint: The fnlist.txt file might be generated like:
+ *   grep -o -e 'testfn_[^ (]*' mytests.c | sed -e 's/^testfn_//' > fnlist.txt
  **/
 
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-/** Get size of an array (allocated on the stack in your current scope).**/
-#define ArraySz( a )  (sizeof(a) / sizeof(*a))
 
 static
 int eq_cstr (const char* a, const char* b)
@@ -39,6 +38,7 @@ int cmp_cstr_ptr (const void* a, const void* b)
     return ret; \
   } while (0)
 
+/** Read the full text of a file.**/
 static
   char*
 read_text_file(const char* filename)
@@ -87,6 +87,7 @@ read_text_file(const char* filename)
   return text;
 }
 
+/** Break up lines of text.**/
 static
   const char**
 sep_text_lines(char* text, size_t* ret_nlines)
@@ -117,6 +118,7 @@ sep_text_lines(char* text, size_t* ret_nlines)
   return lines;
 }
 
+/** Write an escaped character in some reasonable way.**/
 static
   void
 write_escaped_char (FILE* out, char c)
@@ -171,6 +173,10 @@ write_end_switch (FILE* out, size_t depth)
   else            fputc ('\n', out);
 }
 
+/** Write a file containing a switch statement.
+ *
+ * \return Nonzero when successful.
+ **/
 static
   int
 write_switch_file (const char* ofilename,
@@ -253,6 +259,7 @@ write_switch_file (const char* ofilename,
   return 1;
 }
 
+/** Execute me now!**/
   int
 main(int argc, const char** argv)
 {

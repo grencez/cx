@@ -107,6 +107,9 @@ else ()
   add_executable (cembed IMPORTED)
   set_property (TARGET cembed
     PROPERTY IMPORTED_LOCATION ${CxBinPath}/cembed)
+  add_executable (cswitch IMPORTED)
+  set_property (TARGET cswitch
+    PROPERTY IMPORTED_LOCATION ${CxBinPath}/cswitch)
 endif ()
 
 function (set_bld_cfile_properties file)
