@@ -178,10 +178,12 @@ poset_cmp_lhs (PosetCmp cmp, const void* a, const void* b)
 #define sign_of(x)  ((x) < 0 ? -1 : (x) > 0 ? 1 : 0)
 
 /** Implemented in syscx.c **/
-Bool
-randomize(void* p, uint size);
+#define Default_RandomMod(n)  randommod_sysCx (n)
+#define Default_Randomize(x)  randomize_sysCx (&(x), sizeof(x))
 
-#define Randomize(x)  randomize(&(x), sizeof(x))
+#define RandomMod(n)  Default_RandomMod(n)
+#define Randomize(x)  Default_Randomize(x)
+
 #define Zeroize(x)  memset(&(x), 0, sizeof(x))
 
 /** Implemented in syscx.c **/

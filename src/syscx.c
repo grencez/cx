@@ -638,7 +638,7 @@ chdir_sysCx (const char* pathname)
 }
 
   Bool
-randomize(void* p, uint size)
+randomize_sysCx(void* p, uint size)
 {
 #ifdef POSIX_SOURCE
   static byte buf[4096];

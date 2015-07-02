@@ -38,7 +38,7 @@ public:
   uint pick(uint n)
   {
     if (using_system_urandom) {
-      return uint_SysURandom (n);
+      return randommod_sysCx (n);
     }
     return uint_URandom (&urandom, n);
   }

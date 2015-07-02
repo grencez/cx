@@ -123,6 +123,11 @@ public:
   void clear() {
     this->resize(0);
   }
+  void wipe(const T& x) {
+    for (ujint i = 0; i < this->sz(); ++i) {
+      (*this)[i] = x;
+    }
+  }
 
   T& operator[](ujint i) {
     return *(T*) elt_Table (&t, i);
@@ -130,6 +135,9 @@ public:
   const T& operator[](ujint i) const {
     return *(const T*) elt_Table ((C::Table*)&t, i);
   }
+
+  T* operator+() { return (T*) t.s; }
+  const T* operator+() const { return (const T*) t.s; }
 
   ujint index_of(const T* e) const
   {

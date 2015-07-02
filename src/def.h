@@ -8,6 +8,7 @@
 #include <float.h>
 #include <limits.h>
 #include <stddef.h>
+#include <stdint.h>
 #endif  /* #ifndef __OPENCL_VERSION__ */
 
 typedef int Bit;
@@ -60,7 +61,8 @@ typedef struct ujint2 ujint2;
 struct ujint2 { ujint s[2]; };
 
 #ifndef uint32
-#define uint32 uint
+/* #define uint32 uint */
+#define uint32 uint32_t
 #endif
 #ifndef Max_uint32
 #define Max_uint32 (0xFFFFFFFFu)

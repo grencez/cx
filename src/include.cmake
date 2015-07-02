@@ -27,7 +27,7 @@ list (APPEND CxHFiles
 	associa.h
 	bittable.h
 	def.h
-	gmrand.h
+	rng.h
 	lgtable.h
 	synhax.h
 	table.h
