@@ -6,6 +6,27 @@
 #define uint32_hash uint32_hash_ThomasWang
 
   void
+init2_seeded_URandom (URandom* urandom, uint pcidx, uint npcs)
+{
+  (void) npcs;
+  init_WELL512 (urandom);
+  /* init_GMRand (urandom); */
+  urandom->salt = uint32_hash(pcidx);
+}
+
+  void
+init3_URandom (URandom* urandom, uint pcidx, uint npcs, uint seed)
+{
+  (void) npcs;
+  for (uint i = 0; i < ArraySz(urandom->state); ++i) {
+    uint32 x = seed + i + ArraySz(urandom->state) * pcidx;
+    urandom->state[i] = uint32_hash(x);
+  }
+
+  init2_seeded_URandom (urandom, pcidx, npcs);
+}
+
+  void
 init2_URandom (URandom* urandom, uint pcidx, uint npcs)
 {
   (void) npcs;
@@ -15,9 +36,13 @@ init2_URandom (URandom* urandom, uint pcidx, uint npcs)
   }
 
   Randomize( urandom->state );
-  init_WELL512 (urandom);
-  /* init_GMRand (urandom); */
-  urandom->salt = uint32_hash(pcidx);
+  init2_seeded_URandom (urandom, pcidx, npcs);
+}
+
+  void
+init1_URandom (URandom* urandom, uint seed)
+{
+  init3_URandom (urandom, 0, 1, seed);
 }
 
   uint32

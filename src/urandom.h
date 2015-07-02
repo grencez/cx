@@ -12,6 +12,12 @@ struct URandom {
 };
 
 void
+init2_seeded_URandom (URandom* urandom, uint pcidx, uint npcs);
+void
+init3_URandom (URandom* urandom, uint pcidx, uint npcs, uint seed);
+void
+init1_URandom (URandom* urandom, uint seed);
+void
 init2_URandom (URandom* urandom, uint pcidx, uint npcs);
 uint32
 uint32_URandom (URandom* urandom);
