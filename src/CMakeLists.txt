@@ -27,7 +27,7 @@ if (NOT DEFINED BinPath)
 endif ()
 set (BldPath cx-new)
 
-list (APPEND CFiles test.c)
+list (APPEND CFiles test.c rngtest.c)
 list (APPEND HFiles testcxx.h)
 
 list (APPEND CCFiles testcxx.cc)
@@ -60,6 +60,10 @@ set_target_properties (test_exe PROPERTIES
   OUTPUT_NAME test
   RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 add_dependencies(test_exe TestSwitchSources)
+
+addbinexe (rngtest rngtest.c)
+set_target_properties (rngtest PROPERTIES
+  RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 
 add_custom_target (pp
   DEPENDS cx

@@ -2,26 +2,36 @@
 #include "rng.h"
 #include "bittable.h"
 
+
+#define uint32_hash uint32_hash_ThomasWang
+
   void
 init2_URandom (URandom* urandom, uint pcidx, uint npcs)
 {
   (void) npcs;
   for (uint i = 0; i < ArraySz(urandom->state); ++i) {
     uint32 x = i + ArraySz(urandom->state) * pcidx;
-    urandom->state[i] = uint32_hash_ThomasWang (x);
+    urandom->state[i] = uint32_hash(x);
   }
 
-  urandom->state[0] = pcidx; // Meh, maybe this helps.
   Randomize( urandom->state );
   init_WELL512 (urandom);
-  urandom->salt = uint32_hash_ThomasWang (pcidx);
+  /* init_GMRand (urandom); */
+  urandom->salt = uint32_hash(pcidx);
 }
 
   uint32
 uint32_URandom (URandom* urandom)
 {
   uint32 x = uint32_WELL512 (urandom);
+  /* uint32 x = uint32_GMRand (urandom); */
   return (x ^ urandom->salt);
+}
+
+  Bit
+bit_URandom (URandom* urandom)
+{
+  return (Bit) (uint32_URandom (urandom) >> 31);
 }
 
 /** Generate a uint in {0,...,n-1}.**/
@@ -32,7 +42,7 @@ uint_URandom (URandom* urandom, uint n)
   uint x = uint32_URandom (urandom);
   return (uint) (n * (x * 2.328306e-10));
 #else
-  /* Probably screws with the randomness.*/
+  /* May screw with the randomness.*/
   const uint32 q = (Max_uint32 / n);
   const uint32 m = Max_uint32 - (Max_uint32 % n);
   uint32 x;

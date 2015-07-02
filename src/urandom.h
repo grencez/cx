@@ -15,10 +15,10 @@ void
 init2_URandom (URandom* urandom, uint pcidx, uint npcs);
 uint32
 uint32_URandom (URandom* urandom);
-uint
-uint_URandom (URandom* urandom, uint n);
 Bit
 bit_URandom (URandom* urandom);
+uint
+uint_URandom (URandom* urandom, uint n);
 void
 shuffle_uints_URandom (URandom* urandom, uint* a, uint n);
 

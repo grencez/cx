@@ -7,14 +7,13 @@
 #include "urandom.h"
 
 /* #include <stdint.h> */
-#if 0
-/** Need mask for some things on 64-bit machines.
- * Otherwise, overflowing sums are not guaranteed to be truncated.
+
+/** If our uint32 type is more than 32 bits, then this mask
+ * should be applied to ensure overflowing sums are truncated.
+ * But uint32_t should be 32 bits.
  **/
 #define MASK32(x)  (Max_uint32 & (x))
-#else
-#define MASK32(x)  (x)
-#endif
+#define MASK16(x)  (Max_uint16 & (x))
 
 
 
@@ -89,7 +88,9 @@ init_WELL512 (URandom* ctx)
 }
 
 
-/** Multiply-With-Carry
+/** KISS RNG.
+ *
+ * Multiply-With-Carry combined with some others.
  *
  * http://www.cse.yorku.ca/~oz/marsaglia-rng.html
  **/
@@ -97,13 +98,32 @@ qual_inline
   uint32_t
 uint32_GMRand (URandom* ctx)
 {
-#define k0 ctx->state[0]
-#define k1 ctx->state[1]
-#define z  ctx->state[2]
-#define w  ctx->state[3]
-  z = MASK32( k0 * (z & 65535) + (z >> 16) );
-  w = MASK32( k1 * (w & 65535) + (w >> 16) );
-  return MASK32( (z << 16) + (w & 65535) );
+#define k0  36969
+#define k1  18000
+#define z  ctx->state[0]
+#define w  ctx->state[1]
+#define jsr  ctx->state[2]
+#define jcong  ctx->state[3]
+
+  z = k0 * MASK16(z) + (z >> 16);
+  w = k1 * MASK16(w) + (w >> 16);
+#define MWC  ((z << 16) + w)
+
+  jsr ^= (jsr << 17);
+  jsr ^= (jsr >> 13);
+  jsr ^= (jsr << 5);
+#define SHR3  jsr
+
+  jcong = 69069 * jcong + 1234567;
+#define CONG  jcong
+
+#define KISS  ((MWC ^ CONG) + SHR3)
+  return KISS;
+
+#undef MWC
+#undef SHR3
+#undef CONG
+#undef KISS
 }
 
 /** Initialization.**/
@@ -111,8 +131,8 @@ qual_inline
   void
 init_GMRand (URandom* ctx)
 {
-  /* You may replace the two constants 36969 and 18000 by any
-   * pair of distinct constants from this list.
+  /* Instead of 36969 and 18000 for the constants {k0} and {k1},
+   * you may use any  pair of distinct constants from this list.
    * (or any other 16-bit constants k for which both k*2^16-1
    * and k*2^15-1 are prime)
    */
@@ -128,16 +148,17 @@ init_GMRand (URandom* ctx)
     27960, 28320, 28380, 28689, 28710, 28794, 28854, 28959, 28980, 29013,
     29379, 29889, 30135, 30345, 30459, 30714, 30903, 30963, 31059, 31083
   };
-  //const uint n = ArraySz( ks );
+  const uint n = ArraySz( ks );
 #endif
+  (void) ctx;
 
-  z = 362436069;
-  w = 521288629;
-  k0 = 36969;
-  k1 = 18000;
+  /* Random seeds used to set {z}, {w}, {jsr}, and {jcong}.*/
+
 #undef k0
 #undef k1
 #undef z
 #undef w
+#undef jsr
+#undef jcong
 }
 

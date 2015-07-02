@@ -65,8 +65,13 @@ struct ujint2 { ujint s[2]; };
 #define uint32 uint32_t
 #endif
 #ifndef Max_uint32
-#define Max_uint32 (0xFFFFFFFFu)
+#define Max_uint32 ((uint32)0xFFFFFFFFu)
 #endif
+
+#ifndef Max_uint16
+#define Max_uint16 (65535u)
+#endif
+
 
 #if 0
 typedef double real;
