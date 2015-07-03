@@ -12,7 +12,7 @@
 
 int main(int argc, char** argv)
 {
-  int argi = (init_sysCx (&argc, &argv), 1);
+  int argi = init_sysCx (&argc, &argv);
   DeclTableT( URandom, URandom );
   DeclTable( URandom, urandoms );
   uint32_t buf[2048];

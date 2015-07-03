@@ -154,12 +154,10 @@ public:
     return t.s;
   }
   bool null_ck() const {
-    return (t.sz == 0);
+    return null_ck_AlphaTab (&t);
   }
   bool empty_ck() const {
-    if (null_ck())
-      return true;
-    return (t.s[0] == '\0');
+    return empty_ck_AlphaTab (&t);
   }
 
   friend class OFile;

@@ -4,6 +4,8 @@ CXX_FlatSet
 CXX_LgTable
 CXX_Table
 Cons
+dirname
+pathname
 LgTable
 OSPc
 RBTree

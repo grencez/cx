@@ -306,18 +306,24 @@ synhax_grow1_Table (void* ps, void* s, ujint* sz,
 
 
 qual_inline
-    void
-size_Table (Table* t, ujint capac)
+  void
+resize_Table (Table* t, ujint capac)
 {
-    if (t->sz <= capac)  grow_Table (t, capac - t->sz);
-    else                 mpop_Table (t, t->sz - capac);
+  if (t->sz <= capac)  grow_Table (t, capac - t->sz);
+  else                 mpop_Table (t, t->sz - capac);
 }
-#define SizeTable( t, capac )  do \
+#define ResizeTable( t, capac )  do \
 { \
-    Table SizeTable_t = MakeCastTable( t ); \
-    size_Table (&SizeTable_t, capac); \
-    XferCastTable( t, SizeTable_t ); \
+  Table ReizeTable_t = MakeCastTable( t ); \
+  resize_Table (&ReizeTable_t, capac); \
+  XferCastTable( t, ReizeTable_t ); \
 } while (0)
+
+qual_inline
+  void
+size_Table (Table* t, ujint capac)
+{ resize_Table (t, capac); }
+#define SizeTable( t, capac )  ResizeTable(t, capac)
 
     /** Never downsize.**/
 qual_inline
@@ -365,11 +371,11 @@ pack_Table (Table* t)
 } while (0)
 
 qual_inline
-    void
+  void
 affy_Table (Table* t, ujint capac)
 {
-    t->alloc_lgsz = NBits_ujint - 1;
-    t->s = (byte*) realloc (t->s, t->elsz * capac);
+  t->alloc_lgsz = NBits_ujint - 1;
+  t->s = realloc (t->s, t->elsz * capac);
 }
 #define AffyTable( t, capac )  do \
 { \

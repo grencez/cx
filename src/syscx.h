@@ -8,7 +8,7 @@ static const char MagicArgv1_sysCx[] = "--opts://sysCx";
 
 const char*
 exename_of_sysCx ();
-void
+int
 init_sysCx (int* pargc, char*** pargv);
 void
 push_losefn_sysCx (void (*f) ());

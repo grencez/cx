@@ -138,6 +138,15 @@ cat_cstr_AlphaTab (AlphaTab* t, const char* s)
 }
 
 qual_inline
+  void
+cat1_cstr_AlphaTab (AlphaTab* t, const char* s, ujint sz)
+{
+  const AlphaTab b = dflt2_AlphaTab (s, sz);
+  cat_AlphaTab (t, &b);
+}
+
+
+qual_inline
     void
 tac_AlphaTab (AlphaTab* a, const AlphaTab* b)
 {
@@ -179,6 +188,11 @@ cstr_of_AlphaTab (AlphaTab* ts)
     PushTable( *ts, '\0' );
   return ts->s;
 }
+
+qual_inline
+  const char*
+ccstr_of_AlphaTab (const AlphaTab* ts)
+{ return ts->s; }
 
 qual_inline
   char*
@@ -232,6 +246,37 @@ flush_AlphaTab (AlphaTab* a)
     a->sz = 1;
     a->s[0] = '\0';
   }
+}
+
+qual_inline
+  Bool
+null_ck_AlphaTab (const AlphaTab* a)
+{
+  return (a->sz == 0);
+}
+
+qual_inline
+  Bool
+empty_ck_AlphaTab (const AlphaTab* a)
+{
+  return (null_ck_AlphaTab (a) || (a->s[0] == '\0'));
+}
+
+qual_inline
+  void
+assign2_AlphaTab (AlphaTab* dst, const AlphaTab* src, ujint beg, ujint end)
+{
+  const ujint sz = (end - beg) + OneIf(beg==end || src->s[end-1]!='\0');
+  if (dst != src) {
+    ResizeTable( *dst, sz );
+    RepliT( char, dst->s, &src->s[beg], sz-1 );
+  }
+  else {
+    if (beg != 0)
+      memmove (dst->s, &src->s[beg], (sz-1)*sizeof(char));
+    ResizeTable( *dst, sz );
+  }
+  dst->s[sz-1] = '\0';
 }
 
 char*

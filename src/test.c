@@ -763,6 +763,90 @@ testfn_exec ()
     Claim2( status ,==, atoi (argv[2]) );
 }
 
+static
+  void
+testfn_pathname ()
+{
+  typedef struct TestCase TestCase;
+  struct TestCase {
+    const char* opt_dir;
+    const char* filename;
+    const char* expect;
+  };
+  const TestCase tests[] =
+  {  { "my/path", "/oh/no/abs/file.txt", "/oh/no/abs/file.txt" }
+    ,{ "my/path", "oh/no/abs/file.txt", "my/path/oh/no/abs/file.txt" }
+    ,{ 0, "path/to/file.txt", "path/to/file.txt" }
+    ,{ 0, "file.txt", "file.txt" }
+    ,{ "", "file.txt", "file.txt" }
+    ,{ "path", "file.txt", "path/file.txt" }
+    ,{ "path/", "file.txt", "path/file.txt" }
+    ,{ "/", "path/to/file.txt", "/path/to/file.txt" }
+    ,{ "/path", "to/file.txt", "/path/to/file.txt" }
+    ,{ "/path/", "to/file.txt", "/path/to/file.txt" }
+  };
+
+  for (i ; ArraySz( tests )) {
+    const TestCase testcase = tests[i];
+    AlphaTab result = dflt_AlphaTab ();
+    uint sepidx =
+      pathname2_AlphaTab (&result, testcase.opt_dir, testcase.filename);
+
+    if (!eq_cstr (result.s, testcase.expect) ) {
+      fprintf (stderr, "opt_dir: %s  filename: %s  expect: %s  result: %s\n",
+               testcase.opt_dir ? "(NULL)" : testcase.opt_dir,
+               testcase.filename,
+               testcase.expect,
+               result.s);
+      Claim( 0 );
+    }
+
+    if (sepidx != 0 && '/' != result.s[sepidx-1]) {
+      result.s[sepidx-1] = '\0';
+      fprintf (stderr, "dir:%s  file:%s\n",
+               result.s,
+               &result.s[sepidx]);
+      Claim2( '/' ,==, result.s[sepidx-1] );
+    }
+
+    lose_AlphaTab (&result);
+  }
+}
+
+static
+  void
+testfn_dirname ()
+{
+  typedef struct TestCase TestCase;
+  struct TestCase {
+    const char* input;
+    const char* expect;
+  };
+  const TestCase tests[] =
+  {  { "path/to/file", "./path/to/" }
+    ,{ "./path/to/file", "./path/to/" }
+    ,{ "/path/to/file", "/path/to/" }
+    ,{ "/", "/" }
+    ,{ "./", "./" }
+    ,{ "", "./" }
+  };
+
+  for (i ; ArraySz( tests )) {
+    const TestCase testcase = tests[i];
+    AlphaTab path = dflt1_AlphaTab (testcase.input);
+    AlphaTab result = dflt_AlphaTab ();
+
+    dirname_AlphaTab (&result, &path);
+    if (!eq_cstr (result.s, testcase.expect) ) {
+      fprintf (stderr, "input: %s  expect: %s  result: %s\n",
+               testcase.input,
+               testcase.expect,
+               result.s);
+      Claim( 0 );
+    }
+    lose_AlphaTab (&result);
+  }
+}
 
 static
   void
@@ -794,7 +878,7 @@ Test(const char testname[])
 
 int main(int argc, char** argv)
 {
-  int argi = (init_sysCx (&argc, &argv), 1);
+  int argi = init_sysCx (&argc, &argv);
 
   // Special test as child process.
   {:if (eql_cstr (argv[argi], "echo"))

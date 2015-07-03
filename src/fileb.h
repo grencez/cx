@@ -65,6 +65,10 @@ void
 setfmt_XFileB (XFileB* xfb, FileB_Format fmt);
 void
 setfmt_OFileB (OFileB* ofb, FileB_Format fmt);
+void
+dirname_AlphaTab (AlphaTab* dirname, const AlphaTab* path);
+uint
+pathname2_AlphaTab (AlphaTab* pathname, const char* opt_dir, const char* filename);
 bool
 open_FileB (FileB* f, const char* pathname, const char* filename);
 bool

@@ -135,6 +135,10 @@ do { \
   b = SwapT_tmp; \
 } while (0)
 
+
+/** Explicitly convert true to 1 and false to 0.**/
+#define OneIf( expr )  ((expr) ? 1 : 0)
+
 #ifndef __OPENCL_VERSION__
 typedef struct PosetCmp PosetCmp;
 struct PosetCmp

@@ -223,13 +223,22 @@ setfmt_OFileB (OFileB* ofb, FileB_Format fmt)
 }
 
 static
-    uint
-pathname_sz (const char* path)
+  uint
+dirname_sz (const char* path)
 {
-    const char* s;
-    s = strrchr (path, '/');
-    if (!s)  return 0;
-    return 1 + IdxElt( path, s );
+  const char* prev;
+  const char* s;
+
+  if (!path)  return 0;
+
+  prev = path;
+  s = strchr (path, '/');
+  while (s) {
+    prev = &s[1];
+    s = strchr (prev, '/');
+  }
+
+  return IdxElt( path, prev );
 }
 
 static
@@ -239,39 +248,80 @@ absolute_path (const char* path)
     return path[0] == '/';
 }
 
-    bool
+  void
+dirname_AlphaTab (AlphaTab* dirname, const AlphaTab* path)
+{
+  const uint pflen = dirname_sz (ccstr_of_AlphaTab (path));
+  const Bool add_rel =
+    ((pflen == 0)
+     || (path->s[0] != '/' && path->s[0] != '.'));
+
+  if (dirname != path) {
+    if (add_rel)
+      copy_cstr_AlphaTab (dirname, "./");
+    else
+      flush_AlphaTab (dirname);
+    cat1_cstr_AlphaTab (dirname, path->s, pflen);
+  }
+  else {
+    dirname->s[pflen] = '\0';
+    dirname->sz = pflen+1;
+    if (add_rel)
+      tac_cstr_AlphaTab (dirname, "./");
+  }
+}
+
+/** Construct a path relative to a directory.
+ *
+ * \param pathname  Return value.
+ * \param opt_dir  Optional directory name that the file is relative to.
+ * \param file  Relative or absolute path to a file/directory.
+ *
+ * \sa assign2_AlphaTab()
+ *
+ * \return Index where the file basename starts.
+ **/
+  uint
+pathname2_AlphaTab (AlphaTab* pathname, const char* opt_dir, const char* filename)
+{
+  char* s = strrchr (filename, '/');
+  const uint pflen = (s ? IdxElt( filename, s ) + 1 : 0);
+  const uint flen = strlen (filename) - pflen;
+  uint plen = (opt_dir ? strlen (opt_dir) : 0);
+
+  if (pflen > 0 && absolute_path (filename))
+    plen = 0;
+
+  SizeTable( *pathname, plen+1+pflen+flen+1 );
+
+  s = pathname->s;
+  if (plen > 0)
+  {
+    if (opt_dir[plen-1] == '/')
+      plen -= 1;
+    memcpy (s, opt_dir, plen*sizeof(char));
+    s = &s[plen];
+    s[0] = '/';
+    s = &s[1];
+    plen += 1;
+  }
+  memcpy (s, filename, (pflen+flen+1)*sizeof(char));
+
+  plen += pflen;
+  return plen;
+}
+
+  bool
 open_FileB (FileB* f, const char* pathname, const char* filename)
 {
-    uint pflen = pathname_sz (filename);
-    uint flen = strlen (filename) - pflen;
-    uint plen = (pathname ? strlen (pathname) : 0);
-    char* s;
+  uint sepidx = pathname2_AlphaTab (&f->pathname, pathname, filename);
 
-    SizeTable( f->filename, flen+1 );
-    memcpy (f->filename.s, &filename[pflen], (flen+1)*sizeof(char));
+  f->f = fopen (f->pathname.s, (f->sink ? "wb" : "rb"));
 
-    if (pflen > 0 && absolute_path (filename))
-        plen = 0;
+  assign2_AlphaTab (&f->filename, &f->pathname, sepidx, f->pathname.sz);
+  assign2_AlphaTab (&f->pathname, &f->pathname, 0, sepidx);
 
-    SizeTable( f->pathname, plen+1+pflen+flen+1 );
-
-    s = f->pathname.s;
-    if (plen > 0)
-    {
-        memcpy (s, pathname, plen*sizeof(char));
-        s = &s[plen];
-        s[0] = '/';
-        s = &s[1];
-    }
-    memcpy (s, filename, (pflen+flen+1)*sizeof(char));
-
-    f->f = fopen (f->pathname.s, (f->sink ? "wb" : "rb"));
-
-    plen += pflen;
-    f->pathname.s[plen] = 0;
-    SizeTable( f->pathname, plen+1 );
-
-    return !!f->f;
+  return !!f->f;
 }
 
   bool

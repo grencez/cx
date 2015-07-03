@@ -124,15 +124,21 @@ parse_args_sysCx (int* pargc, char*** pargv)
         execvp_sysCx (argv);
 }
 
-    void
+/** Initialize the system.
+ *
+ * \return The number one.
+ * \sa lose_sysCx()
+ **/
+  int
 init_sysCx (int* pargc, char*** pargv)
 {
-    stderr_OFileB ();
-    parse_args_sysCx (pargc, pargv);
+  stderr_OFileB ();
+  parse_args_sysCx (pargc, pargv);
 
-    stdin_XFileB ();
-    stdout_OFileB ();
-    signal (SIGSEGV, signal_hook_sysCx);
+  stdin_XFileB ();
+  stdout_OFileB ();
+  signal (SIGSEGV, signal_hook_sysCx);
+  return 1;
 }
 
     void
