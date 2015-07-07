@@ -44,6 +44,9 @@ dflt_OSPc ()
   return p;
 }
 
+qual_inline
+void init_OSPc (OSPc* ospc) { *ospc = dflt_OSPc (); }
+
 bool
 close_OSPc (OSPc* ospc);
 void

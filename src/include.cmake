@@ -110,6 +110,9 @@ else ()
   add_executable (cswitch IMPORTED)
   set_property (TARGET cswitch
     PROPERTY IMPORTED_LOCATION ${CxBinPath}/cswitch)
+  add_executable (comparispawn IMPORTED)
+  set_property (TARGET comparispawn
+    PROPERTY IMPORTED_LOCATION ${CxBinPath}/comparispawn)
 endif ()
 
 function (set_bld_cfile_properties file)

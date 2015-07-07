@@ -27,20 +27,19 @@ if (NOT DEFINED BinPath)
 endif ()
 set (BldPath cx-new)
 
-list (APPEND CFiles test.c rngtest.c)
+list (APPEND CFiles test.c rngtest.c comparispawn.c)
 list (APPEND HFiles testcxx.h)
 
 list (APPEND CCFiles testcxx.cc)
 
 include (${CxPath}/include.cmake)
 
+
+set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${BinPath})
+
 add_executable (cembed cembed.c)
-set_target_properties (cembed PROPERTIES
-  RUNTIME_OUTPUT_DIRECTORY ${BinPath})
 
 add_executable (cswitch cswitch.c)
-set_target_properties (cswitch PROPERTIES
-  RUNTIME_OUTPUT_DIRECTORY ${BinPath})
 
 
 file (MAKE_DIRECTORY ${BldPath}/test-dep)
@@ -65,10 +64,12 @@ addbinexe (rngtest rngtest.c)
 set_target_properties (rngtest PROPERTIES
   RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 
+addbinexe (comparispawn comparispawn.c)
+
+
 add_custom_target (pp
   DEPENDS cx
   COMMAND ${CMAKE_COMMAND} -E copy_directory ${CxBldPath} ${CxPpPath})
-
 
 enable_testing ()
 
