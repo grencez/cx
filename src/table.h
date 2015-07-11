@@ -95,6 +95,8 @@ dflt1_Table (TableElSz elsz)
 #define DeclTable( S, table ) \
     TableT_##S table = { 0, 0, 0 }
 
+#define DeclZTable( S, table ) \
+    TableT_##S table = { (S*)Static00, 1, 0 }
 
 #define MakeCastTable( t ) \
     dflt4_Table ((t).s, (t).sz, sizeof(*(t).s), (t).alloc_lgsz)
@@ -133,6 +135,26 @@ init1_Table (Table* t, TableElSz elsz)
     (t).s = 0; \
     (t).sz = 0; \
     (t).alloc_lgsz = 0; \
+} while (0)
+
+
+/** Make table of size 1 starting with a null value.
+ * Make sure that you don't write to this and that
+ * the element size is not larger than a pointer.
+ **/
+qual_inline
+  void
+init_z_Table (Table* t, TableElSz elsz)
+{
+  init1_Table (t, elsz);
+  t->s = (void*) Static00;
+  t->sz = 1;
+}
+#define InitZTable( t )  do \
+{ \
+  (t).alloc_lgsz = 0; \
+  *((byte**) &(t).s) = (byte*) Static00; \
+  (t).sz = 1; \
 } while (0)
 
 #define InitFixTable( t )  do \
@@ -374,8 +396,17 @@ qual_inline
   void
 affy_Table (Table* t, ujint capac)
 {
-  t->alloc_lgsz = NBits_ujint - 1;
-  t->s = realloc (t->s, t->elsz * capac);
+  if (t->alloc_lgsz > 0) {
+    t->s = realloc (t->s, t->elsz * capac);
+    t->alloc_lgsz = NBits_ujint - 1;
+  }
+  else if (t->sz < capac) {
+    const void* s = t->s;
+    t->s = malloc (t->elsz * capac);
+    if (t->sz > 0)
+      memcpy (t->s, s, t->elsz * t->sz);
+    t->alloc_lgsz = NBits_ujint - 1;
+  }
 }
 #define AffyTable( t, capac )  do \
 { \
@@ -426,6 +457,13 @@ copy_const_Table (Table* a, const ConstTable* b)
     copy_const_Table (&CopyTable_a, &CopyTable_b); \
     XferCastTable( a, CopyTable_a ); \
 } while (0)
+
+/** Clear the table and free most of its memory.**/
+qual_inline
+  void
+clear_Table (Table* a)
+{ mpop_Table (a, a->sz); }
+#define ClearTable( a )  MPopTable( a, (a).sz )
 
 qual_inline
   void

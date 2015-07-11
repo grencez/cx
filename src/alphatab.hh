@@ -22,15 +22,17 @@ class AlphaTab
 private:
   C::AlphaTab t;
 public:
-  AlphaTab() {
-    t = dflt_AlphaTab ();
-  }
-  AlphaTab(const char* s) {
-    t = cons1_AlphaTab (s);
-  }
+  AlphaTab()
+    : t( dflt_AlphaTab () )
+  {}
 
-  AlphaTab(const AlphaTab& b) {
-    t = dflt_AlphaTab ();
+  AlphaTab(const char* s)
+    : t( cons1_AlphaTab (s) )
+  {}
+
+  AlphaTab(const AlphaTab& b)
+    : t( dflt_AlphaTab () )
+  {
     copy_AlphaTab (&t, &b.t);
   }
   const AlphaTab& operator=(const C::AlphaTab& b) {
@@ -49,11 +51,14 @@ public:
     t = b;
   }
 
+  void clear() { clear_AlphaTab (&t); }
+  void flush() { flush_AlphaTab (&t); }
+
   ujint sz() const {
     return t.sz;
   }
   bool operator!() const {
-    return (t.sz == 0);
+    return null_ck_AlphaTab (&t);
   }
 
   AlphaTab& operator<<(char c) {
@@ -85,7 +90,7 @@ public:
     return *this;
   }
   const AlphaTab& operator=(uint x) {
-    copy_cstr_AlphaTab (&t, "");
+    clear_AlphaTab (&t);
     return (*this) << x;
   }
   AlphaTab operator+(uint x) const {
@@ -99,7 +104,7 @@ public:
     return *this;
   }
   const AlphaTab& operator=(ujint x) {
-    copy_cstr_AlphaTab (&t, "");
+    clear_AlphaTab (&t);
     return (*this) << x;
   }
   AlphaTab operator+(ujint x) const {
@@ -113,7 +118,7 @@ public:
     return *this;
   }
   const AlphaTab& operator=(int x) {
-    copy_cstr_AlphaTab (&t, "");
+    clear_AlphaTab (&t);
     return (*this) << x;
   }
   AlphaTab operator+(int x) const {
@@ -145,13 +150,13 @@ public:
   }
 
   const char* ccstr() const {
-    return t.s;
+    return ccstr_of_AlphaTab (&t);
   }
   const char* cstr() const {
-    return this->ccstr();
+    return ccstr_of_AlphaTab (&t);
   }
   char* cstr() {
-    return t.s;
+    return cstr_AlphaTab (&t);
   }
   bool null_ck() const {
     return null_ck_AlphaTab (&t);

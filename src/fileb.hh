@@ -36,6 +36,25 @@ public:
     return this->open ("", filename);
   }
 
+  /** Open a user-specified file, defaulting to stdout if the file is "-".
+   *
+   * \return The output file that must be used.
+   *   It is wise to construct a Cx::OFile object with this.
+   **/
+  C::OFile* uopen(const String& dirname, const String& filename) {
+    if (filename == "-") {
+      return stdout_OFile ();
+    }
+    if (this->open(dirname, filename)) {
+      return &ofb.of;
+    }
+    return 0;
+  }
+
+  C::OFile* uopen(const String& filename) {
+    return this->uopen("", filename);
+  }
+
 private:
   OFileB(const OFileB&);
   OFileB& operator=(const OFileB&);
@@ -62,6 +81,25 @@ public:
   }
   bool open(const String& filename) {
     return this->open ("", filename);
+  }
+
+  /** Open a user-specified file, defaulting to stdout if the file is "-".
+   *
+   * \return The output file that must be used.
+   *   It is wise to construct a Cx::XFile object with this.
+   **/
+  C::XFile* uopen(const String& dirname, const String& filename) {
+    if (filename == "-") {
+      return stdin_XFile ();
+    }
+    if (this->open(dirname, filename)) {
+      return &xfb.xf;
+    }
+    return 0;
+  }
+
+  C::XFile* uopen(const String& filename) {
+    return this->uopen("", filename);
   }
 
 private:

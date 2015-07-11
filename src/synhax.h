@@ -137,7 +137,7 @@ do { \
 
 
 /** Explicitly convert true to 1 and false to 0.**/
-#define OneIf( expr )  ((expr) ? 1 : 0)
+#define OneIf( expr )  (!(expr) ? 0 : 1)
 
 #ifndef __OPENCL_VERSION__
 typedef struct PosetCmp PosetCmp;
@@ -189,6 +189,15 @@ poset_cmp_lhs (PosetCmp cmp, const void* a, const void* b)
 #define Randomize(x)  Default_Randomize(x)
 
 #define Zeroize(x)  memset(&(x), 0, sizeof(x))
+
+/** Use this as a pointer to zero values without having to allocate memory.
+ *
+ * Don't write to this memory. It will segfault on some systems.
+ **/
+static const size_t Static00[] = {0,0};
+
+/** Assign {a} as {b} iff they are not already equal.**/
+#define Ensure0( a )  do { if (a)  a = 0; } while (0)
 
 /** Implemented in syscx.c **/
 void
@@ -255,7 +264,7 @@ do { \
 #define DoLegit3(p, good, msg) \
   for (good = good ? -1 : 0; \
        good < 0; \
-       good = (p) ? 1 : (msg ? (DBog0(msg), 0) : (assert(0), 0)))
+       good = !!(p) ? 1 : (msg ? (DBog0(msg), 0) : (assert(0), 0)))
 
 #define DoLegit2(good,msg)  DoLegit3( good, good, msg )
 #define DoLegitP(p,msg)  DoLegit3( p, *DoLegit_vbl, msg )

@@ -78,9 +78,7 @@ qual_inline
   void
 init_OFile (OFile* of)
 {
-  InitTable( of->buf );
-  of->buf.s = (byte*) get_empty_cstr ();
-  of->buf.sz = 1;
+  InitZTable( of->buf );
   of->off = 0;
   of->flushsz = 0;
   of->vt = 0;

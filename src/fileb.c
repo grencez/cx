@@ -6,7 +6,6 @@
 
 #include <assert.h>
 #include <errno.h>
-#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -101,7 +100,7 @@ close_XFileB (XFileB* f)
 {
   close_FileB (&f->fb);
   f->xf.off = 0;
-  f->xf.buf.s[0] = 0;
+  Ensure0( f->xf.buf.s[0] );
   f->xf.buf.sz = 1;
 }
 
@@ -111,7 +110,7 @@ close_OFileB (OFileB* f)
   flush_OFileB (f);
   close_FileB (&f->fb);
   f->of.off = 0;
-  f->of.buf.s[0] = 0;
+  Ensure0( f->of.buf.s[0] );
   f->of.buf.sz = 1;
 }
 
@@ -292,18 +291,17 @@ pathname2_AlphaTab (AlphaTab* pathname, const char* opt_dir, const char* filenam
   if (pflen > 0 && absolute_path (filename))
     plen = 0;
 
-  SizeTable( *pathname, plen+1+pflen+flen+1 );
+  if (plen > 0 && opt_dir[plen-1] != '/')
+    plen += 1;
+
+  ResizeTable( *pathname, plen+pflen+flen+1 );
 
   s = pathname->s;
   if (plen > 0)
   {
-    if (opt_dir[plen-1] == '/')
-      plen -= 1;
-    memcpy (s, opt_dir, plen*sizeof(char));
+    memcpy (s, opt_dir, (plen-1)*sizeof(char));
+    s[plen-1] = '/';
     s = &s[plen];
-    s[0] = '/';
-    s = &s[1];
-    plen += 1;
   }
   memcpy (s, filename, (pflen+flen+1)*sizeof(char));
 
@@ -515,7 +513,7 @@ flush1_OFileB (OFileB* ofb, const byte* a, uint n)
   if (nullt_FileB (&ofb->fb))
   {
     /* Not sure why...*/
-    of->buf.s[of->off] = 0;
+    Ensure0( of->buf.s[of->off] );
   }
   return true;
 }

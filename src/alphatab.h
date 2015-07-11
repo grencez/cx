@@ -6,11 +6,13 @@ typedef TableT(char) AlphaTab;
 #define DeclTableT_AlphaTab
 DeclTableT( AlphaTab, AlphaTab );
 
+#define DeclAlphaTab( a )  DeclTable( char, a )
+
 static const char WhiteSpaceChars[] = " \t\v\r\n";
 
-char*
-get_empty_cstr();
+/* dflt_AlphaTab() - Jump down to this for AlphaTab functions.*/
 
+/** Duplicate a C string.**/
 qual_inline
     char*
 dup_cstr (const char* s)
@@ -67,35 +69,36 @@ sfxeq_cstr (const char* s, const char* sfx)
 }
 
 qual_inline
-    AlphaTab
+  AlphaTab
 dflt_AlphaTab ()
 {
-    DeclTable( char, t );
-    return t;
+  DeclAlphaTab( t );
+  return t;
 }
 
 qual_inline
   void
 init_AlphaTab (AlphaTab* ab)
 {
-  InitTable( *ab );
+  *ab = dflt_AlphaTab ();
 }
 
 qual_inline
-    AlphaTab
+  AlphaTab
 dflt1_AlphaTab (const char* s)
 {
-    AlphaTab t = dflt_AlphaTab ();
-    t.s = (char*) s;
+  DeclAlphaTab( t );
+  t.s = (char*) s;
+  if (s)
     t.sz = strlen (s) + 1;
-    return t;
+  return t;
 }
 
 qual_inline
   AlphaTab
 dflt2_AlphaTab (const char* s, ujint sz)
 {
-  AlphaTab t = dflt_AlphaTab ();
+  DeclAlphaTab( t );
   t.s = (char*) s;
   t.sz = sz;
   return t;
@@ -133,8 +136,8 @@ qual_inline
   void
 cat_cstr_AlphaTab (AlphaTab* t, const char* s)
 {
-  DecloStack1( AlphaTab, b, dflt1_AlphaTab (s) );
-  cat_AlphaTab (t, b);
+  const AlphaTab b = dflt1_AlphaTab (s);
+  cat_AlphaTab (t, &b);
 }
 
 qual_inline
@@ -165,24 +168,22 @@ qual_inline
   void
 tac_cstr_AlphaTab (AlphaTab* a, const char* s)
 {
-  DecloStack1( AlphaTab, b, dflt1_AlphaTab (s) );
-  tac_AlphaTab (a, b);
+  const AlphaTab b = dflt1_AlphaTab (s);
+  tac_AlphaTab (a, &b);
 }
 
 qual_inline
   AlphaTab
 cons1_AlphaTab (const char* s)
 {
-  AlphaTab a = dflt_AlphaTab ();
-  AlphaTab b = dflt1_AlphaTab (s);
-  if (s)
-    cat_AlphaTab (&a, &b);
+  DeclAlphaTab( a );
+  cat_cstr_AlphaTab (&a, s);
   return a;
 }
 
 qual_inline
   char*
-cstr_of_AlphaTab (AlphaTab* ts)
+cstr_AlphaTab (AlphaTab* ts)
 {
   if (ts->sz == 0 || ts->s[ts->sz-1] != '\0')
     PushTable( *ts, '\0' );
@@ -192,13 +193,10 @@ cstr_of_AlphaTab (AlphaTab* ts)
 qual_inline
   const char*
 ccstr_of_AlphaTab (const AlphaTab* ts)
-{ return ts->s; }
-
-qual_inline
-  char*
-cstr_AlphaTab (AlphaTab* ts)
 {
-  return cstr_of_AlphaTab (ts);
+  if (ts->sz == 0)
+    return (char*) Static00;
+  return ts->s;
 }
 
 qual_inline
@@ -240,33 +238,37 @@ trim_end_AlphaTab (AlphaTab* a, ujint capac)
 
 qual_inline
   void
+clear_AlphaTab (AlphaTab* a)
+{ ClearTable( *a ); }
+
+qual_inline
+  void
 flush_AlphaTab (AlphaTab* a)
-{
-  if (a->sz > 0) {
-    a->sz = 1;
-    a->s[0] = '\0';
-  }
-}
+{ FlushTable( *a ); }
 
 qual_inline
   Bool
 null_ck_AlphaTab (const AlphaTab* a)
 {
-  return (a->sz == 0);
+  return !a->s;
 }
 
 qual_inline
   Bool
 empty_ck_AlphaTab (const AlphaTab* a)
 {
-  return (null_ck_AlphaTab (a) || (a->s[0] == '\0'));
+  return (a->sz == 0 || (a->s[0] == '\0'));
 }
 
 qual_inline
   void
 assign2_AlphaTab (AlphaTab* dst, const AlphaTab* src, ujint beg, ujint end)
 {
-  const ujint sz = (end - beg) + OneIf(beg==end || src->s[end-1]!='\0');
+  const ujint sz = (end - beg) - OneIf(beg!=end && src->s[end-1]!='\0');
+  if (sz == 0) {
+    clear_AlphaTab (dst);
+    return;
+  }
   if (dst != src) {
     ResizeTable( *dst, sz );
     RepliT( char, dst->s, &src->s[beg], sz-1 );

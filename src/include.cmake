@@ -83,6 +83,12 @@ foreach (f ${CxCFiles})
   list (APPEND CxFullCFiles ${CxBldPath}/${f})
 endforeach ()
 
+function (import_exe tgt exe_vbl tgt_path)
+  set (tmp ${tgt_path}/${tgt})
+  set (${exe_vbl} ${tmp} PARENT_SCOPE)
+  add_executable (${tgt} IMPORTED)
+  set_property (TARGET ${tgt} PROPERTY IMPORTED_LOCATION ${tmp})
+endfunction ()
 
 if (DEFINED CxPpPath)
   add_executable (cx ${CxBldPath}/cx.c ${CxFullCFiles})
@@ -101,18 +107,10 @@ if (DEFINED CxPpPath)
     RUNTIME_OUTPUT_DIRECTORY ${CxBinPath}
     COMPILE_FLAGS ${DEFAULT_COMPILE_FLAGS})
 else ()
-  add_executable (cx IMPORTED)
-  set_property (TARGET cx
-    PROPERTY IMPORTED_LOCATION ${CxBinPath}/cx)
-  add_executable (cembed IMPORTED)
-  set_property (TARGET cembed
-    PROPERTY IMPORTED_LOCATION ${CxBinPath}/cembed)
-  add_executable (cswitch IMPORTED)
-  set_property (TARGET cswitch
-    PROPERTY IMPORTED_LOCATION ${CxBinPath}/cswitch)
-  add_executable (comparispawn IMPORTED)
-  set_property (TARGET comparispawn
-    PROPERTY IMPORTED_LOCATION ${CxBinPath}/comparispawn)
+  import_exe (cx cx_exe ${CxBinPath})
+  import_exe (cembed cembed_exe ${CxBinPath})
+  import_exe (cswitch cswitch_exe ${CxBinPath})
+  import_exe (comparispawn comparispawn_exe ${CxBinPath})
 endif ()
 
 function (set_bld_cfile_properties file)

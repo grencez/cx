@@ -79,6 +79,9 @@ public:
   }
   ujint size() const { return this->sz(); }
 
+  bool empty_ck() const
+  { return (t.sz == 0); }
+
   void affy(ujint capac) {
     ujint old_sz = this->sz();
     for (ujint i = capac; i < old_sz; ++i)
@@ -119,9 +122,6 @@ public:
     ensize_Table (&t, capac);
     for (ujint i = old_sz; i < capac; ++i)
       new (&(*this)[i]) T();
-  }
-  void clear() {
-    this->resize(0);
   }
   void wipe(const T& x) {
     for (ujint i = 0; i < this->sz(); ++i) {
@@ -265,6 +265,11 @@ public:
       return true;
     }
     return false;
+  }
+  void clear() {
+    for (ujint i = 0; i < this->sz(); ++i)
+      (*this)[i].~T();
+    clear_Table (&this->t);
   }
   void flush() {
     for (ujint i = 0; i < this->sz(); ++i)

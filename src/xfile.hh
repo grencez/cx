@@ -15,57 +15,60 @@ namespace C {
 class XFile
 {
 private:
-  C::XFile* xf;
+  C::XFile* xfile;
 
 public:
   bool allgood;
 
   XFile()
-    : xf( 0 )
+    : xfile( 0 )
     , allgood( true )
   {}
-  explicit XFile(C::XFile* xf)
-    : xf( 0 )
+  XFile(C::XFile* xfile)
+    : xfile( 0 )
     , allgood( true )
   {
-    this->xf = xf;
+    this->xfile = xfile;
   }
 
   bool good() const
   { return allgood; }
 
+  bool operator!() const
+  { return !xfile || !allgood; }
+
   XFile& operator>>(int& x)
   {
     bool good =
-      xget_int_XFile (xf, &x);
+      xget_int_XFile (xfile, &x);
     allgood = allgood && good;
     return *this;
   }
   XFile& operator>>(uint& x)
   {
     bool good =
-      xget_uint_XFile (xf, &x);
+      xget_uint_XFile (xfile, &x);
     allgood = allgood && good;
     return *this;
   }
   XFile& operator>>(ujint& x)
   {
     bool good =
-      xget_ujint_XFile (xf, &x);
+      xget_ujint_XFile (xfile, &x);
     allgood = allgood && good;
     return *this;
   }
   XFile& operator>>(char& c)
   {
     bool good =
-      xget_char_XFile (xf, &c);
+      xget_char_XFile (xfile, &c);
     allgood = allgood && good;
     return *this;
   }
 
   bool skip(const char* pfx)
   {
-    return skip_cstr_XFile(xf, pfx);
+    return skip_cstr_XFile(xfile, pfx);
   }
 };
 }

@@ -28,15 +28,17 @@ public:
   OFile()
     : ofile( 0 )
   {}
-  explicit OFile(C::OFile* ofile)
-  {
-    this->ofile = ofile;
-  }
+
+  OFile(C::OFile* ofile)
+  { this->ofile = ofile; }
 
   static OFile& null() {
     static OFile ofile( null_OFile () );
     return ofile;
   }
+
+  bool operator!() const
+  { return !ofile; }
 
   OFile& operator<<(int x)
   {

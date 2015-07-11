@@ -92,9 +92,7 @@ qual_inline
   void
 init_data_XFile (XFile* xf)
 {
-  InitTable( xf->buf );
-  xf->buf.s = (byte*) get_empty_cstr ();
-  xf->buf.sz = 1;
+  InitZTable( xf->buf );
   xf->off = 0;
   xf->flushsz = 0;
 }
@@ -184,7 +182,7 @@ qual_inline
 init_XFile_olay_AlphaTab (XFile* xf, AlphaTab* ts)
 {
   init_XFile (xf);
-  xf->buf.s = (byte*) cstr_of_AlphaTab (ts);
+  xf->buf.s = (byte*) cstr_AlphaTab (ts);
   xf->buf.sz = ts->sz;
 }
 

@@ -3,13 +3,6 @@
 #include <stdio.h>
 
   char*
-get_empty_cstr()
-{
-  static char empty[1] = { '\0' };
-  return empty;
-}
-
-  char*
 itoa_dup_cstr (int x)
 {
   char buf[50];
