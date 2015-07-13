@@ -275,21 +275,21 @@ qual_inline
   void
 assign2_AlphaTab (AlphaTab* dst, const AlphaTab* src, ujint beg, ujint end)
 {
-  const ujint sz = (end - beg) - OneIf(beg!=end && src->s[end-1]!='\0');
+  const ujint sz = (end - beg) - OneIf(beg!=end && src->s[end-1]=='\0');
   if (sz == 0) {
     clear_AlphaTab (dst);
     return;
   }
   if (dst != src) {
-    ResizeTable( *dst, sz );
-    RepliT( char, dst->s, &src->s[beg], sz-1 );
+    ResizeTable( *dst, sz+1 );
+    RepliT( char, dst->s, &src->s[beg], sz );
   }
   else {
     if (beg != 0)
-      memmove (dst->s, &src->s[beg], (sz-1)*sizeof(char));
-    ResizeTable( *dst, sz );
+      memmove (dst->s, &src->s[beg], sz*sizeof(char));
+    ResizeTable( *dst, sz+1 );
   }
-  dst->s[sz-1] = '\0';
+  dst->s[sz] = '\0';
 }
 
 char*
