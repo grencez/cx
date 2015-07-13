@@ -51,6 +51,7 @@ public:
     t = b;
   }
 
+  char* forget() { return forget_AlphaTab (&t); }
   void clear() { clear_AlphaTab (&t); }
   void flush() { flush_AlphaTab (&t); }
 

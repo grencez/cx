@@ -88,7 +88,11 @@ getlined_XFile (XFile* xf, const char* delim)
 {
   uint ret_off;
   char* s;
-  uint delim_sz = strlen (delim);
+  uint delim_sz;
+
+  if (!delim)  return getline_XFile (xf);
+
+  delim_sz = strlen (delim);
 
   mayflush_XFile (xf, May);
   ret_off = xf->off;

@@ -237,6 +237,17 @@ trim_end_AlphaTab (AlphaTab* a, ujint capac)
 }
 
 qual_inline
+  char*
+forget_AlphaTab (AlphaTab* ts)
+{
+  char* s;
+  PackTable( *ts );
+  s = ts->s;
+  *ts = dflt_AlphaTab ();
+  return s;
+}
+
+qual_inline
   void
 clear_AlphaTab (AlphaTab* a)
 { ClearTable( *a ); }
