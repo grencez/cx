@@ -458,6 +458,34 @@ copy_const_Table (Table* a, const ConstTable* b)
     XferCastTable( a, CopyTable_a ); \
 } while (0)
 
+qual_inline
+  void
+cat_Table (Table* a, const Table* b)
+{
+  ujint off = a->sz;
+  grow_Table (a, b->sz);
+  Claim( a->elsz == b->elsz );
+  RepliT( byte, elt_Table (a, off), b->s, a->elsz * b->sz );
+}
+
+qual_inline
+  void
+cat_const_Table (Table* a, const ConstTable* b)
+{
+  ujint off = a->sz;
+  grow_Table (a, b->sz);
+  Claim( a->elsz == b->elsz );
+  RepliT( byte, elt_Table (a, off), b->s, a->elsz * b->sz );
+}
+#define CatTable( a, b )  do \
+{ \
+    Table CatTable_a = MakeCastTable( a ); \
+    const ConstTable CatTable_b = MakeCastConstTable( b ); \
+    cat_const_Table (&CatTable_a, &CatTable_b); \
+    XferCastTable( a, CatTable_a ); \
+} while (0)
+
+
 /** Clear the table and free most of its memory.**/
 qual_inline
   void
