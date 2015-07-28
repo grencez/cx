@@ -127,6 +127,10 @@ public:
     return (this->cmp(b) >= 0);
   }
 
+  Bit set0(ujint idx) { return set0_BitTable (bt, idx); }
+  Bit set1(ujint idx) { return set1_BitTable (bt, idx); }
+  bool ck(ujint idx) const { return ck_BitTable (bt, idx); }
+
   bool subseteq_ck(const BitTable& b) const {
     return fold_map2_BitTable (BitOp_AND, BitOp_IMP, this->bt, b.bt);
   }
