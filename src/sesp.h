@@ -391,6 +391,14 @@ make_Int_Sesp (SespCtx* ctx, int i)
 
 qual_inline
   Sesp
+cons_ccstr_Sesp (const char* a, Sesp b)
+{
+  SespCell cell = cons_Sesp (make_ccstr_Sesp (ctx_of_Sesp (b), a), to_SespCell (b));
+  return &cell->base;
+}
+
+qual_inline
+  Sesp
 list2_ccstr_Sesp (const char* a, Sesp b)
 {
   return list2_Sesp (make_ccstr_Sesp (ctx_of_Sesp (b), a), b);
