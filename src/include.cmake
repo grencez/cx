@@ -37,7 +37,7 @@ list (APPEND CxHFiles
 
 list (APPEND CxHHFiles
   alphatab.hh map.hh synhax.hh set.hh
-  table.hh bittable.hh lgtable.hh
+  table.hh bittable.hh lgtable.hh tuple.hh
   urandom.hh
   xfile.hh ofile.hh fileb.hh
   mpidissem.hh kautz.hh mpiloop.hh
