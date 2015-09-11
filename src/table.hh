@@ -271,10 +271,11 @@ public:
       (*this)[i].~T();
     clear_Table (&this->t);
   }
-  void flush() {
+  Table<T>& flush() {
     for (ujint i = 0; i < this->sz(); ++i)
       (*this)[i].~T();
     flush_Table (&this->t);
+    return *this;
   }
 
   /** If this Table represents a mapping from state indices,

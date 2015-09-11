@@ -75,8 +75,9 @@ public:
     oput_AlphaTab (ofile, &s.t);
     return *this;
   }
-  void flush() {
+  OFile& flush() {
     flush_OFile (ofile);
+    return *this;
   }
   OFile& operator<<(const EndL& e)
   {
@@ -84,6 +85,14 @@ public:
     *this << '\n';
     this->flush();
     return *this;
+  }
+
+  void printf(const char* fmt, ...)
+  {
+    va_list args;
+    va_start (args, fmt);
+    vprintf_OFile (ofile, fmt, args);
+    va_end (args);
   }
 
   void write(const char* s, ujint n)

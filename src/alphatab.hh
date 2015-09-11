@@ -128,11 +128,15 @@ public:
     return a;
   }
 
-  void push_delim(const char* pfx, const char* delim) {
+  AlphaTab& push_delim(const char* pfx, const char* delim) {
     if (this->empty_ck())
       (*this) = pfx;
     else
       (*this) << delim;
+    return (*this);
+  }
+  AlphaTab& push_delim(const char* delim) {
+    return push_delim(0, delim);
   }
 
   template <typename T>
