@@ -30,11 +30,18 @@ public:
     : t( cons1_AlphaTab (s) )
   {}
 
+  explicit AlphaTab(const C::AlphaTab& b)
+    : t( dflt_AlphaTab () )
+  {
+    copy_AlphaTab (&t, &b);
+  }
+
   AlphaTab(const AlphaTab& b)
     : t( dflt_AlphaTab () )
   {
     copy_AlphaTab (&t, &b.t);
   }
+
   const AlphaTab& operator=(const C::AlphaTab& b) {
     copy_AlphaTab (&t, &b);
     return *this;

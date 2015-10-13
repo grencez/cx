@@ -20,7 +20,8 @@ set (CxBldPath ${PfxBldPath}/cx)
 #set (CMAKE_CXX_COMPILER g++)
 #set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
-set (CxDeps alphatab bstree
+set (CxDeps
+  alphatab benchmark bstree
   xfile ofile fileb
   ospc rbtree
   sesp sxpn syscx urandom)
@@ -33,6 +34,7 @@ list (APPEND CxHFiles
 	lgtable.h
 	synhax.h
 	table.h
+  notpub/getRSS.c
   )
 
 list (APPEND CxHHFiles
@@ -211,6 +213,7 @@ include_directories (${PfxBldPath})
 
 file (MAKE_DIRECTORY ${PfxBldPath})
 file (MAKE_DIRECTORY ${CxBldPath})
+file (MAKE_DIRECTORY ${CxBldPath}/notpub)
 file (MAKE_DIRECTORY ${BldPath})
 
 add_custom_target (GenSources SOURCES ${FullCFiles} ${FullHFiles} ${FullCCFiles} ${FullHHFiles}
