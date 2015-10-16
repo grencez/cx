@@ -15,6 +15,7 @@ struct OFile
   TableT(byte) buf;
   ujint off;
   ujint flushsz;
+  bool mayflush;
   const OFileVT* vt;
   OFileCtx* ctx;
 };
@@ -80,17 +81,24 @@ init_OFile (OFile* of)
 {
   InitZTable( of->buf );
   of->off = 0;
-  of->flushsz = 0;
+  of->flushsz = 1;
+  of->mayflush = false;
   of->vt = 0;
   of->ctx = 0;
 }
 
 qual_inline
-  void
-mayflush_OFile (OFile* of)
+  Trit
+mayflush_OFile (OFile* of, Trit may)
 {
-  if (of->flushsz > 0 && of->off >= of->flushsz)
+  bool old_mayflush = of->mayflush;
+  if (may == Yes)  of->mayflush = true;
+
+  if (of->mayflush && of->off >= of->flushsz)
     of->vt->flush_fn (of);
+
+  if (may == Nil)  of->mayflush = false;
+  return (old_mayflush ? Yes : Nil);
 }
 
 qual_inline

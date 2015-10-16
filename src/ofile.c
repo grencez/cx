@@ -74,7 +74,7 @@ oput_int_OFile (OFile* f, int x)
   VTCall( f->vt, (void),oput_int_fn,(f, x); return );
   EnsizeTable( f->buf, f->off + 50 );
   f->off += sprintf (cstr_OFile (f), "%i", x);
-  mayflush_OFile (f);
+  mayflush_OFile (f, May);
 }
 
   void
@@ -83,7 +83,7 @@ oput_uint_OFile (OFile* f, uint x)
   VTCall( f->vt, (void),oput_uint_fn,(f, x); return );
   EnsizeTable( f->buf, f->off + 50 );
   f->off += sprintf (cstr_OFile (f), "%u", x);
-  mayflush_OFile (f);
+  mayflush_OFile (f, May);
 }
 
   void
@@ -92,7 +92,7 @@ oput_ujint_OFile (OFile* f, ujint x)
   VTCall( f->vt, (void),oput_ujint_fn,(f, x); return );
   EnsizeTable( f->buf, f->off + 50 );
   f->off += sprintf (cstr_OFile (f), "%lu", x);
-  mayflush_OFile (f);
+  mayflush_OFile (f, May);
 }
 
   void
@@ -101,7 +101,7 @@ oput_real_OFile (OFile* f, real x)
   VTCall( f->vt, (void),oput_real_fn,(f, x); return );
   EnsizeTable( f->buf, f->off + 50 );
   f->off += sprintf (cstr_OFile (f), "%.16e", x);
-  mayflush_OFile (f);
+  mayflush_OFile (f, May);
 }
 
   void
@@ -111,7 +111,7 @@ oput_char_OFile (OFile* f, char c)
   EnsizeTable( f->buf, f->off + 2 );
   f->buf.s[f->off] = c;
   f->buf.s[++f->off] = 0;
-  mayflush_OFile (f);
+  mayflush_OFile (f, May);
 }
 
   void
@@ -125,7 +125,7 @@ oput_AlphaTab (OFile* of, const AlphaTab* t)
   memcpy (&of->buf.s[of->off], t->s, n*sizeof(char));
   of->buf.s[of->buf.sz-1] = 0;
   of->off += n;
-  mayflush_OFile (of);
+  mayflush_OFile (of, May);
 }
 
   void
@@ -140,7 +140,7 @@ vprintf_OFile (OFile* f, const char* fmt, va_list args)
   Claim2( iret ,>=, 0 );
   Claim2( (uint) iret ,<=, sz );
   f->off += iret;
-  mayflush_OFile (f);
+  mayflush_OFile (f, May);
 }
 
   void
@@ -160,6 +160,6 @@ oputn_char_OFile (OFile* of, const char* a, ujint n)
   memcpy (&of->buf.s[of->off], a, n*sizeof(char));
   of->off += n;
   of->buf.s[of->off] = 0;
-  mayflush_OFile (of);
+  mayflush_OFile (of, May);
 }
 

@@ -51,6 +51,7 @@ init_XFileB (XFileB* xfb)
   static XFileVT vt;
   init_XFile (&xfb->xf);
   xfb->xf.flushsz = BUFSIZ;
+  xfb->xf.mayflush = true;
   init_FileB (&xfb->fb, false);
   xfb->xf.vt = &vt;
   xfb->xf.ctx = &ctx;
@@ -71,6 +72,7 @@ init_OFileB (OFileB* ofb)
   static OFileVT vt;
   init_OFile (&ofb->of);
   ofb->of.flushsz = BUFSIZ;
+  ofb->of.mayflush = true;
   init_FileB (&ofb->fb, true);
   ofb->of.vt = &vt;
   ofb->of.ctx = &ctx;

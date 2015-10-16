@@ -14,6 +14,7 @@ struct XFile
   TableT(byte) buf;
   ujint off;
   ujint flushsz;
+  bool mayflush;
   const XFileVT* vt;
   XFileCtx* ctx;
 };
@@ -94,7 +95,8 @@ init_data_XFile (XFile* xf)
 {
   InitZTable( xf->buf );
   xf->off = 0;
-  xf->flushsz = 0;
+  xf->flushsz = 1;
+  xf->mayflush = false;
 }
 
 qual_inline
@@ -116,15 +118,17 @@ olay_XFile (XFile* olay, XFile* xf, ujint off)
 }
 
 qual_inline
-  void
+  Trit
 mayflush_XFile (XFile* xf, Trit may)
 {
-  if (may == Yes)  xf->flushsz = 1;
+  bool old_mayflush = xf->mayflush;
+  if (may == Yes)  xf->mayflush = true;
 
-  if (xf->flushsz > 0 && xf->off > CeilQuot( xf->buf.sz, 4 ))
+  if (xf->mayflush && xf->off >= xf->flushsz)
     flush_XFile (xf);
 
-  if (may == Nil)  xf->flushsz = 0;
+  if (may == Nil)  xf->mayflush = false;
+  return (old_mayflush ? Yes : Nil);
 }
 
 qual_inline
