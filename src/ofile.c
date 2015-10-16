@@ -129,6 +129,13 @@ oput_AlphaTab (OFile* of, const AlphaTab* t)
 }
 
   void
+oput_OFile (OFile* of, OFile* src)
+{
+  AlphaTab ab = AlphaTab_OFile (src, 0);
+  oput_AlphaTab (of, &ab);
+}
+
+  void
 vprintf_OFile (OFile* f, const char* fmt, va_list args)
 {
   ujint sz = 2048;  /* Not good :( */

@@ -65,6 +65,8 @@ oput_char_OFile (OFile* of, char c);
 void
 oput_AlphaTab (OFile* of, const AlphaTab* t);
 void
+oput_OFile (OFile* of, OFile* src);
+void
 vprintf_OFile (OFile* of, const char* fmt, va_list args);
 void
 printf_OFile (OFile* of, const char* fmt, ...);
@@ -81,7 +83,7 @@ init_OFile (OFile* of)
 {
   InitZTable( of->buf );
   of->off = 0;
-  of->flushsz = 1;
+  of->flushsz = 0;
   of->mayflush = false;
   of->vt = 0;
   of->ctx = 0;
@@ -133,9 +135,25 @@ qual_inline
   AlphaTab
 AlphaTab_OFile (OFile* of, ujint off)
 {
-  DeclTable( char, t );
+  DeclAlphaTab( t );
   t.s = (char*) &of->buf.s[off];
   t.sz = (of->off - off) / sizeof(char);
+  return t;
+}
+
+/** Get a window into the OFile content.
+ * \param beg  Inclusive beginning index.
+ * \param end  Non-inclusive end index.
+ **/
+qual_inline
+  AlphaTab
+window2_OFile (OFile* ofile, ujint beg, ujint end)
+{
+  DeclAlphaTab( t );
+  Claim2( beg ,<=, end );
+  Claim2( end ,<=, ofile->off );
+  t.s = (char*) &ofile->buf.s[beg];
+  t.sz = (end - beg) / sizeof(char);
   return t;
 }
 
