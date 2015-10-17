@@ -171,6 +171,25 @@ AlphaTab_XFile (XFile* xf, ujint off)
   return t;
 }
 
+/** Get a window into the XFile content.
+ * \param beg  Inclusive beginning index.
+ * \param end  Non-inclusive end index.
+ **/
+qual_inline
+  AlphaTab
+window2_XFile (XFile* xfile, ujint beg, ujint end)
+{
+  DeclAlphaTab( t );
+  Claim2( beg ,<=, end );
+  Claim2( end ,<=, xfile->buf.sz );
+  if (end < xfile->buf.sz && xfile->buf.s[end] == 0) {
+    ++ end;
+  }
+  t.s = (char*) &xfile->buf.s[beg];
+  t.sz = end - beg;
+  return t;
+}
+
 qual_inline
   void
 init_AlphaTab_move_XFile (AlphaTab* t, XFile* xf)
