@@ -83,20 +83,13 @@ getline_XFile (XFile* in)
   return (ret_off + 1 == in->buf.sz) ? 0 : (char*) &in->buf.s[ret_off];
 }
 
-    char*
-getlined_XFile (XFile* xf, const char* delim)
+  bool
+skiplined_XFile (XFile* xf, const char* delim)
 {
-  uint ret_off;
   char* s;
-  uint delim_sz;
-
-  if (!delim)  return getline_XFile (xf);
-
-  delim_sz = strlen (delim);
+  uint delim_sz = strlen (delim);
 
   mayflush_XFile (xf, May);
-  ret_off = xf->off;
-  Claim2( ret_off ,<, xf->buf.sz );
   s = strstr (cstr_XFile (xf), delim);
 
   while (!s)
@@ -107,16 +100,58 @@ getlined_XFile (XFile* xf, const char* delim)
     if (xf->off + delim_sz < xf->buf.sz)
       xf->off = xf->buf.sz - delim_sz;
 
+    mayflush_XFile (xf, May);
     if (!xget_chunk_XFile (xf))  break;
 
     s = strstr (cstr_XFile (xf), delim);
   }
 
-  if (s)
-  {
-    memset(s, 0, delim_sz * sizeof(char));
+  if (s) {
     s = &s[delim_sz];
     xf->off = IdxElt( xf->buf.s, s );
+  }
+  else {
+    xf->off = xf->buf.sz - 1;
+  }
+
+  mayflush_XFile (xf, May);
+  return !!s;
+}
+
+/** Essentially strstr() on an XFile.**/
+  char*
+tolined_XFile (XFile* xf, const char* delim)
+{
+  const bool mayflush = xf->mayflush;
+  const ujint off = xf->off;
+  char* s = 0;
+
+  xf->mayflush = false;
+  if (skiplined_XFile (xf, delim))
+    s = cstr1_of_XFile (xf, xf->off - strlen(delim));
+  xf->off = off;
+  xf->mayflush = mayflush;
+  return s;
+}
+
+  char*
+getlined_XFile (XFile* xf, const char* delim)
+{
+  char* s;
+  uint ret_off;
+
+  if (!delim)  return getline_XFile (xf);
+
+  mayflush_XFile (xf, May);
+  ret_off = xf->off;
+  Claim2( ret_off ,<, xf->buf.sz );
+
+  s = tolined_XFile (xf, delim);
+  if (s)
+  {
+    const uint delim_sz = strlen (delim);
+    memset(s, 0, delim_sz * sizeof(char));
+    offto_XFile (xf, &s[delim_sz]);
     Claim2( xf->off ,<, xf->buf.sz );
   }
   else
@@ -125,6 +160,52 @@ getlined_XFile (XFile* xf, const char* delim)
   }
 
   return (ret_off + 1 == xf->buf.sz) ? 0 : (char*) &xf->buf.s[ret_off];
+}
+
+
+/** Assume opening delim has already been matched once.**/
+  char*
+tomatchd_XFile (XFile* xf, const char* beg_delim, const char* end_delim)
+{
+  uint nested = 1;
+  const bool mayflush = xf->mayflush;
+  const uint end_sz = strlen(end_delim);
+  const ujint off = xf->off;
+  char* pos = cstr_of_XFile (xf);
+
+  while (nested > 0) {
+    pos = tolined_XFile (xf, end_delim);
+    if (!pos)  break;
+    pos[0] = '\0';
+    -- nested;
+    while (skiplined_XFile (xf, beg_delim)) {
+      ++ nested;
+    }
+    pos[0] = end_delim[0];
+    offto_XFile (xf, &pos[end_sz]);
+  }
+  xf->off = off;
+  xf->mayflush = mayflush;
+  return pos;
+}
+
+/** Assume opening delim has already been matched once.**/
+  char*
+getmatchd_XFile (XFile* xf, const char* beg_delim, const char* end_delim)
+{
+  char* end = tomatchd_XFile (xf, beg_delim, end_delim);
+  const ujint ret_off = xf->off;
+  if (end) {
+    const uint delim_sz = strlen (end_delim);
+    memset(end, 0, delim_sz * sizeof(char));
+    offto_XFile (xf, &end[delim_sz]);
+    Claim2( xf->off ,<, xf->buf.sz );
+  }
+  else {
+    xf->off = xf->buf.sz - 1;
+  }
+
+  return (ret_off + 1 == xf->buf.sz) ? 0 : cstr1_of_XFile (xf, ret_off);
 }
 
     void
@@ -280,49 +361,6 @@ inject_XFile (XFile* in, XFile* src, const char* delim)
                 delim_sz * sizeof (char));
 }
 
-    void
-skipto_XFile (XFile* xf, const char* pos)
-{
-    xf->off = IdxElt( xf->buf.s, pos );
-}
-
-  bool
-skiplined_XFile (XFile* xf, const char* delim)
-{
-  char* s;
-  uint delim_sz = strlen (delim);
-
-  mayflush_XFile (xf, May);
-  s = strstr (cstr_XFile (xf), delim);
-
-  while (!s)
-  {
-    /* We only need to re-check the last /delim_sz-1/ chars,
-     * which start at /buf.sz-delim_sz/ due to the NUL byte.
-     */
-    if (xf->off + delim_sz < xf->buf.sz)
-      xf->off = xf->buf.sz - delim_sz;
-
-    mayflush_XFile (xf, May);
-    if (!xget_chunk_XFile (xf))  break;
-
-    s = strstr (cstr_XFile (xf), delim);
-  }
-
-  if (s)
-  {
-    s = &s[delim_sz];
-    xf->off = IdxElt( xf->buf.s, s );
-  }
-  else
-  {
-    xf->off = xf->buf.sz - 1;
-  }
-
-  mayflush_XFile (xf, May);
-  return !!s;
-}
-
   bool
 skip_cstr_XFile (XFile* xf, const char* pfx)
 {
@@ -359,6 +397,15 @@ olay_txt_XFile (XFile* olay, XFile* xf, ujint off)
 getlined_olay_XFile (XFile* olay, XFile* xf, const char* delim)
 {
   char* s = getlined_XFile (xf, delim);
+  if (!s)  return false;
+  olay_txt_XFile (olay, xf, IdxEltTable( xf->buf, s ));
+  return true;
+}
+
+  bool
+getmatchd_olay_XFile (XFile* olay, XFile* xf, const char* beg_delim, const char* end_delim)
+{
+  char* s = getmatchd_XFile (xf, beg_delim, end_delim);
   if (!s)  return false;
   olay_txt_XFile (olay, xf, IdxEltTable( xf->buf, s ));
   return true;

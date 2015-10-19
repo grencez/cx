@@ -48,7 +48,13 @@ xget_XFile (XFile* xf);
 char*
 getline_XFile (XFile* in);
 char*
+tolined_XFile (XFile* xf, const char* delim);
+char*
 getlined_XFile (XFile* xf, const char* delim);
+char*
+tomatchd_XFile (XFile* xf, const char* beg_delim, const char* end_delim);
+char*
+getmatchd_XFile (XFile* xf, const char* beg_delim, const char* end_delim);
 void
 skipds_XFile (XFile* xf, const char* delims);
 char*
@@ -61,8 +67,6 @@ void
 replace_delim_XFile (XFile* xf, char delim);
 void
 inject_XFile (XFile* in, XFile* src, const char* delim);
-void
-skipto_XFile (XFile* xf, const char* pos);
 bool
 skiplined_XFile (XFile* xf, const char* delim);
 bool
@@ -72,6 +76,8 @@ void
 olay_txt_XFile (XFile* olay, XFile* xf, ujint off);
 bool
 getlined_olay_XFile (XFile* olay, XFile* xf, const char* delim);
+bool
+getmatchd_olay_XFile (XFile* olay, XFile* xf, const char* beg_delim, const char* end_delim);
 bool
 nextds_olay_XFile (XFile* olay, XFile* xf, char* ret_match, const char* delims);
 
@@ -130,6 +136,11 @@ mayflush_XFile (XFile* xf, Trit may)
   if (may == Nil)  xf->mayflush = false;
   return (old_mayflush ? Yes : Nil);
 }
+
+qual_inline
+  void
+offto_XFile (XFile* xf, const char* pos)
+{ xf->off = IdxElt( xf->buf.s, pos ); }
 
 qual_inline
   const char*
