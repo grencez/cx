@@ -203,6 +203,15 @@ window2_XFile (XFile* xfile, ujint beg, ujint end)
 
 qual_inline
   void
+olay2_txt_XFile (XFile* olay, XFile* xf, ujint beg, ujint end)
+{
+  init_XFile (olay);
+  olay->buf.s = &xf->buf.s[beg];
+  olay->buf.sz = end - beg;
+}
+
+qual_inline
+  void
 init_AlphaTab_move_XFile (AlphaTab* t, XFile* xf)
 {
   *t = AlphaTab_XFile (xf, 0);

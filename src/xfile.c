@@ -90,7 +90,7 @@ skiplined_XFile (XFile* xf, const char* delim)
   uint delim_sz = strlen (delim);
 
   mayflush_XFile (xf, May);
-  s = strstr (cstr_XFile (xf), delim);
+  s = strstr (cstr_of_XFile (xf), delim);
 
   while (!s)
   {
@@ -103,12 +103,12 @@ skiplined_XFile (XFile* xf, const char* delim)
     mayflush_XFile (xf, May);
     if (!xget_chunk_XFile (xf))  break;
 
-    s = strstr (cstr_XFile (xf), delim);
+    s = strstr (cstr_of_XFile (xf), delim);
   }
 
   if (s) {
     s = &s[delim_sz];
-    xf->off = IdxElt( xf->buf.s, s );
+    offto_XFile (xf, s);
   }
   else {
     xf->off = xf->buf.sz - 1;
@@ -174,11 +174,17 @@ tomatchd_XFile (XFile* xf, const char* beg_delim, const char* end_delim)
   char* pos = cstr_of_XFile (xf);
 
   while (nested > 0) {
+    XFile olay[1];
+    ujint window_end;
     pos = tolined_XFile (xf, end_delim);
     if (!pos)  break;
-    pos[0] = '\0';
     -- nested;
-    while (skiplined_XFile (xf, beg_delim)) {
+
+    pos[0] = '\0';
+    window_end = &pos[1] - cstr1_of_XFile (xf, 0);
+    olay2_txt_XFile (olay, xf, xf->off, window_end);
+
+    while (skiplined_XFile (olay, beg_delim)) {
       ++ nested;
     }
     pos[0] = end_delim[0];
@@ -194,18 +200,17 @@ tomatchd_XFile (XFile* xf, const char* beg_delim, const char* end_delim)
 getmatchd_XFile (XFile* xf, const char* beg_delim, const char* end_delim)
 {
   char* end = tomatchd_XFile (xf, beg_delim, end_delim);
-  const ujint ret_off = xf->off;
   if (end) {
+    char* s = cstr_of_XFile (xf);
     const uint delim_sz = strlen (end_delim);
     memset(end, 0, delim_sz * sizeof(char));
     offto_XFile (xf, &end[delim_sz]);
     Claim2( xf->off ,<, xf->buf.sz );
-  }
-  else {
-    xf->off = xf->buf.sz - 1;
+    return s;
   }
 
-  return (ret_off + 1 == xf->buf.sz) ? 0 : cstr1_of_XFile (xf, ret_off);
+  xf->off = xf->buf.sz - 1;
+  return 0;
 }
 
     void
