@@ -36,6 +36,8 @@ struct LgTable
     ujint sz;
 };
 
+#define DEFAULT1_LgTable(T) { sizeof(T), DEFAULT_Table, DEFAULT_Table, 0, 0 }
+
 qual_inline
     LgTableAlloc
 cons2_LgTableAlloc (TableElSz elsz, ujintlg lgsz)

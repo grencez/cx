@@ -19,6 +19,7 @@ struct OFile
   const OFileVT* vt;
   OFileCtx* ctx;
 };
+#define DEFAULT_OFile  { DEFAULT_Z_Table(byte), 0, 0, false, 0, 0 }
 
 struct OFileCtx
 {
@@ -79,14 +80,27 @@ OFile* stderr_OFile ();
 
 qual_inline
   void
-init_OFile (OFile* of)
+init_data_OFile (OFile* of)
 {
   InitZTable( of->buf );
   of->off = 0;
   of->flushsz = 0;
   of->mayflush = false;
-  of->vt = 0;
-  of->ctx = 0;
+}
+
+qual_inline
+  OFile
+dflt_OFile ()
+{
+  default OFile of;
+  return of;
+}
+
+qual_inline
+  void
+init_OFile (OFile* of)
+{
+  *of = dflt_OFile ();
 }
 
 qual_inline
@@ -171,6 +185,16 @@ copy_AlphaTab_OFile (AlphaTab* t, OFile* of)
 {
   AlphaTab tmp = AlphaTab_OFile (of, 0);
   copy_AlphaTab (t, &tmp);
+}
+
+qual_inline
+  void
+init_AlphaTab_move_OFile (AlphaTab* t, OFile* of)
+{
+  *t = AlphaTab_OFile (of, 0);
+  t->alloc_lgsz = of->buf.alloc_lgsz;
+  init_data_OFile (of);
+  PackTable( *t );
 }
 
 #endif

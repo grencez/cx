@@ -1332,6 +1332,28 @@ declaration_ck (AST* a)
     return (n > 1);
 }
 
+static
+  AST*
+skipws_AST (AST* a)
+{
+  while (a && a->kind == Syntax_WS)
+    a = cdr_of_AST (a);
+  return a;
+}
+
+static
+  Cons*
+lastws_AST (Cons* a)
+{
+  Cons* b = a;
+  if (!a)  return 0;
+  do {
+    a = b;
+    b = a->cdr;
+  } while (b && AST_of_Cons(b)->kind == Syntax_WS);
+  return a;
+}
+
     void
 xfrm_stmts_AST (Cons** ast_p, ASTree* t, CxExecOpt* exec_opt)
 {
@@ -1387,6 +1409,78 @@ xfrm_stmts_AST (Cons** ast_p, ASTree* t, CxExecOpt* exec_opt)
                 d_for->cons->cdr = 0;
                 ast = d_braces;
             }
+        }
+        else if (ast->kind == Syntax_Stmt)
+        {
+          /* (... (; default type name ...) ...)
+           * -->
+           * (... (; type name = "DEFAULT_type") ...)
+           */
+          AST* d_stmt = ast;
+          AST* d_default = skipws_AST (cdar_of_AST(d_stmt));
+          AST* d_ptr = skipws_AST (d_default ? cdr_of_AST (d_default) : 0);
+          AST* d_type = skipws_AST (d_ptr ? cdr_of_AST (d_ptr) : 0);
+          AST* d_name = skipws_AST (d_type ? cdr_of_AST (d_type) : 0);
+          AST* d_end = skipws_AST (d_name ? cdr_of_AST (d_name) : 0);
+
+          if (d_default && d_default->kind == Lexical_Default &&
+              d_ptr && d_ptr->kind == Syntax_Iden)
+          {
+            d_end = d_name;
+            d_name = d_type;
+            d_type = d_ptr;
+            d_ptr = 0;
+          }
+
+          if (!d_end && d_name &&
+              d_default->kind == Lexical_Default &&
+              (!d_ptr || d_ptr->kind == Lexical_Mul) &&
+              d_type->kind == Syntax_Iden &&
+              d_name->kind == Syntax_Iden)
+          {
+            AST* d_assign;
+            AST* d_val;
+            Cons* a;
+
+            a = lastws_AST (d_stmt->cons->car.as.cons);
+            a->cdr = d_default->cons->cdr;
+            give_ASTree (t, d_default);
+
+            if (d_ptr) {
+              a = lastws_AST (a);
+              a->cdr = d_ptr->cons->cdr;
+              give_ASTree (t, d_ptr);
+            }
+
+            d_assign = take1_ASTree (t, Lexical_Assign);
+            d_val = take1_ASTree (t, Syntax_Iden);
+
+            cat_cstr_AlphaTab (&d_val->txt, "DEFAULT_");
+            cat_AlphaTab (&d_val->txt, &d_type->txt);
+
+            d_assign->cons->cdr = d_val->cons;
+            d_val->cons->cdr = d_name->cons->cdr;
+            d_name->cons->cdr = d_assign->cons;
+
+            if (d_ptr) {
+              AST* d_brackets = take1_ASTree (t, Syntax_Brackets);
+              AST* d_size = take1_ASTree (t, Syntax_Iden);
+              AST* d_braces = take1_ASTree (t, Syntax_Braces);
+
+              copy_cstr_AlphaTab (&d_size->txt, "1");
+
+              bevel_AST (d_brackets, t);
+              d_brackets->cons->cdr = d_name->cons->cdr;
+              d_name->cons->cdr = d_brackets->cons;
+              d_brackets->cons->car.as.cons->cdr = d_size->cons;
+
+              bevel_AST (d_braces, t);
+              d_braces->cons->cdr = d_val->cons->cdr;
+              d_braces->cons->car.as.cons->cdr = d_val->cons;
+              d_val->cons->cdr = 0;
+              d_assign->cons->cdr = d_braces->cons;
+            }
+          }
         }
         p = &ast->cons->cdr;
         ast = cdr_of_AST (ast);

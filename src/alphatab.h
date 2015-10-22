@@ -7,6 +7,7 @@ typedef TableT(char) AlphaTab;
 DeclTableT( AlphaTab, AlphaTab );
 
 #define DeclAlphaTab( a )  DeclTable( char, a )
+#define DEFAULT_AlphaTab  DEFAULT_Table
 
 static const char WhiteSpaceChars[] = " \t\v\r\n";
 
@@ -72,7 +73,7 @@ qual_inline
   AlphaTab
 dflt_AlphaTab ()
 {
-  DeclAlphaTab( t );
+  default AlphaTab t;
   return t;
 }
 
@@ -87,7 +88,7 @@ qual_inline
   AlphaTab
 dflt1_AlphaTab (const char* s)
 {
-  DeclAlphaTab( t );
+  default AlphaTab t;
   t.s = (char*) s;
   if (s)
     t.sz = strlen (s) + 1;
@@ -98,7 +99,7 @@ qual_inline
   AlphaTab
 dflt2_AlphaTab (const char* s, ujint sz)
 {
-  DeclAlphaTab( t );
+  default AlphaTab t;
   t.s = (char*) s;
   t.sz = sz;
   return t;
@@ -176,7 +177,7 @@ qual_inline
   AlphaTab
 cons1_AlphaTab (const char* s)
 {
-  DeclAlphaTab( a );
+  default AlphaTab a;
   cat_cstr_AlphaTab (&a, s);
   return a;
 }

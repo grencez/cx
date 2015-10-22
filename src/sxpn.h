@@ -51,8 +51,9 @@ struct Cons
 
 struct Sxpn
 {
-    LgTable cells;
+  LgTable cells;
 };
+#define DEFAULT_Sxpn { DEFAULT1_LgTable(Cons) }
 
 void
 oput_ConsAtom (OFile* of, const ConsAtom* ca);
@@ -119,12 +120,11 @@ Cons dflt_Cons () { return dflt1_Cons (0); }
 
 
 qual_inline
-    Sxpn
+  Sxpn
 dflt_Sxpn ()
 {
-    DecloStack( Sxpn, sx );
-    sx->cells = dflt1_LgTable (sizeof (Cons));
-    return *sx;
+  default Sxpn sx;
+  return sx;
 }
 
 qual_inline

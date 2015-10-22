@@ -362,7 +362,7 @@ testfn_cache_BitTable ()
   void
 testfn_Cons ()
 {
-  DecloStack1( Sxpn, sx, dflt_Sxpn () );
+  default* Sxpn sx;
   Cons* c = take_Sxpn (sx);
   Cons* b = take2_Sxpn (sx, dflt_Cons_ConsAtom (c), 0);
   Cons* a = take1_Sxpn (sx, b);
@@ -834,7 +834,7 @@ testfn_dirname ()
   for (i ; ArraySz( tests )) {
     const TestCase testcase = tests[i];
     AlphaTab path = dflt1_AlphaTab (testcase.input);
-    AlphaTab result = dflt_AlphaTab ();
+    default AlphaTab result;
 
     dirname_AlphaTab (&result, &path);
     if (!eq_cstr (result.s, testcase.expect) ) {

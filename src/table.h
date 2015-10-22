@@ -92,11 +92,11 @@ dflt1_Table (TableElSz elsz)
 {
     return dflt4_Table (0, 0, elsz, 0);
 }
-#define DeclTable( S, table ) \
-    TableT_##S table = { 0, 0, 0 }
+#define DEFAULT_Table  { 0, 0, 0 }
+#define DEFAULT_Z_Table( S )  { (S*)Static00, 1, 0 }
 
-#define DeclZTable( S, table ) \
-    TableT_##S table = { (S*)Static00, 1, 0 }
+#define DeclTable( S, table )  TableT_##S table = DEFAULT_Table
+#define DeclZTable( S, table ) TableT_##S table = DEFAULT_Z_Table(S)
 
 #define MakeCastTable( t ) \
     dflt4_Table ((t).s, (t).sz, sizeof(*(t).s), (t).alloc_lgsz)

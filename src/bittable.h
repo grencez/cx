@@ -122,42 +122,43 @@ wipe_BitTable (BitTable bt, Bit val)
             n * sizeof (BitTableEl));
 }
 
+#define DEFAULT_BitTable DEFAULT_Table
 qual_inline
-    BitTable
+  BitTable
 dflt_BitTable ()
 {
-    DeclTable( Bit, bt );
-    return bt;
+  default BitTable bt;
+  return bt;
 }
 
 qual_inline
-    BitTable
+  BitTable
 dflt2_BitTable (ujint nbits, BitTableEl* s)
 {
-    BitTable bt = dflt_BitTable ();
-    bt.s = s;
-    bt.sz = nbits;
-    return bt;
+  default BitTable bt;
+  bt.s = s;
+  bt.sz = nbits;
+  return bt;
 }
 
 qual_inline
-    BitTable
+  BitTable
 dflt3_BitTable (ujint nbits, BitTableEl* s, Bit val)
 {
-    BitTable bt = dflt2_BitTable (nbits, s);
-    wipe_BitTable (bt, val);
-    return bt;
+  BitTable bt = dflt2_BitTable (nbits, s);
+  wipe_BitTable (bt, val);
+  return bt;
 }
 
 qual_inline
-    BitTable
+  BitTable
 cons1_BitTable (ujint n)
 {
-    const ujint nblocks = CeilQuot( n, NBits_BitTableEl );
-    BitTable bt = dflt_BitTable ();
-    GrowTable( bt, nblocks );
-    bt.sz = n;
-    return bt;
+  const ujint nblocks = CeilQuot( n, NBits_BitTableEl );
+  default BitTable bt;
+  GrowTable( bt, nblocks );
+  bt.sz = n;
+  return bt;
 }
 
 qual_inline
