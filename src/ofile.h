@@ -19,7 +19,9 @@ struct OFile
   const OFileVT* vt;
   OFileCtx* ctx;
 };
-#define DEFAULT_OFile  { DEFAULT_Z_Table(byte), 0, 0, false, 0, 0 }
+#define DEFAULT3_OFile(flushsz, mayflush, vt) \
+{ DEFAULT_Z_Table(byte), 0, flushsz, mayflush, vt, 0 }
+#define DEFAULT_OFile  DEFAULT3_OFile(0, false, 0)
 
 struct OFileCtx
 {
@@ -29,8 +31,8 @@ struct OFileCtx
 struct OFileVT
 {
   bool (*flush_fn) (OFile*);
-  void (*free_fn) (OFile*);
   void (*close_fn) (OFile*);
+  void (*free_fn) (OFile*);
 
   void (*oput_int_fn) (OFile*, int);
   void (*oput_uint_fn) (OFile*, uint);
@@ -41,6 +43,11 @@ struct OFileVT
   void (*vprintf_fn) (OFile*, const char*, va_list);
   void (*oputn_char_fn) (OFile*, const char*, ujint);
 };
+#define DEFAULT3_OFileVT(flush_fn, close_fn, free_fn) \
+{ flush_fn, close_fn, free_fn, \
+  0, 0, 0, 0, 0, 0, 0, 0 \
+}
+
 
 void
 close_OFile (OFile* of);
@@ -92,7 +99,7 @@ qual_inline
   OFile
 dflt_OFile ()
 {
-  default OFile of;
+  OFile of = default;
   return of;
 }
 
@@ -149,7 +156,7 @@ qual_inline
   AlphaTab
 AlphaTab_OFile (OFile* of, ujint off)
 {
-  DeclAlphaTab( t );
+  AlphaTab t = default;
   t.s = (char*) &of->buf.s[off];
   t.sz = (of->off - off) / sizeof(char);
   return t;
@@ -163,7 +170,7 @@ qual_inline
   AlphaTab
 window2_OFile (OFile* ofile, ujint beg, ujint end)
 {
-  DeclAlphaTab( t );
+  AlphaTab t = default;
   Claim2( beg ,<=, end );
   Claim2( end ,<=, ofile->off );
   t.s = (char*) &ofile->buf.s[beg];

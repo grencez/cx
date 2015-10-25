@@ -366,24 +366,25 @@ ensize_Table (Table* t, ujint capac)
 
 
 qual_inline
-    void
+  void
 pack_Table (Table* t)
 {
-    if ((t->sz << 1) < ((ujint) 1 << t->alloc_lgsz))
+  if (t->alloc_lgsz > 0 &&
+      (t->sz << 1) < ((ujint) 1 << t->alloc_lgsz))
+  {
+    if (t->sz == 0)
     {
-        if (t->sz == 0)
-        {
-            free (t->s);
-            t->s = 0;
-            t->alloc_lgsz = 0;
-        }
-        else
-        {
-            t->s = realloc (t->s, t->sz * t->elsz);
-            while ((t->sz << 1) < ((ujint) 1 << t->alloc_lgsz))
-                t->alloc_lgsz -= 1;
-        }
+      free (t->s);
+      t->s = 0;
+      t->alloc_lgsz = 0;
     }
+    else
+    {
+      t->s = realloc (t->s, t->sz * t->elsz);
+      while ((t->sz << 1) < ((ujint) 1 << t->alloc_lgsz))
+        t->alloc_lgsz -= 1;
+    }
+  }
 }
 #define PackTable( t )  do \
 { \

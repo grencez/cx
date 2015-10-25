@@ -1357,134 +1357,113 @@ lastws_AST (Cons* a)
     void
 xfrm_stmts_AST (Cons** ast_p, ASTree* t, CxExecOpt* exec_opt)
 {
-    AST* ast = AST_of_Cons (*ast_p);
-    Cons** p = ast_p;
+  AST* ast = AST_of_Cons (*ast_p);
+  Cons** p = ast_p;
 
-    while (ast)
+  while (ast)
+  {
+    if (ast->cons->car.kind == Cons_Cons)
+      xfrm_stmts_AST (&ast->cons->car.as.cons->cdr, t, exec_opt);
+    if (ast->kind == Syntax_LineComment)
     {
-        if (ast->cons->car.kind == Cons_Cons)
-            xfrm_stmts_AST (&ast->cons->car.as.cons->cdr, t, exec_opt);
-        if (ast->kind == Syntax_LineComment)
-        {
-            AlphaTab ts = dflt1_AlphaTab ("\n");
-            ast->kind = Syntax_WS;
-            copy_AlphaTab (&ast->txt, &ts);
-        }
-        else if (ast->kind == Syntax_Directive)
-        {
-          if (check_delete_directive (&ast->txt, exec_opt))
-            ast->kind = Syntax_WS;
-        }
-        else if (ast->kind == Syntax_ForLoop)
-        {
-            /* (... (for (parens (; a) ...) x) ...)
-             * -->
-             * (... (braces (for (parens (; a) ...) x)) ...)
-             */
-            AST* d_for = ast;
-            AST* d_parens;
-            AST* d_stmt;
-
-            d_parens = cdar_of_AST (d_for);
-            while (d_parens && d_parens->kind != Syntax_Parens)
-                d_parens = cdr_of_AST (d_parens);
-
-            Claim( d_parens );
-            d_stmt = cdar_of_AST (d_parens);
-
-            if (d_stmt && declaration_ck (cdar_of_AST (d_stmt)))
-            {
-                AST* d_braces = take1_ASTree (t, Syntax_Braces);
-                AST* d_stmt1 = take1_ASTree (t, Syntax_Stmt);
-
-                bevel_AST (d_stmt1, t);
-                d_parens->cons->car.as.cons->cdr = d_stmt1->cons;
-                d_stmt1->cons->cdr = d_stmt->cons->cdr;
-
-                *p = d_braces->cons;
-                bevel_AST (d_braces, t);
-                d_braces->cons->cdr = d_for->cons->cdr;
-                d_braces->cons->car.as.cons->cdr = d_stmt->cons;
-                d_stmt->cons->cdr = d_for->cons;
-                d_for->cons->cdr = 0;
-                ast = d_braces;
-            }
-        }
-        else if (ast->kind == Syntax_Stmt)
-        {
-          /* (... (; default type name ...) ...)
-           * -->
-           * (... (; type name = "DEFAULT_type") ...)
-           */
-          AST* d_stmt = ast;
-          AST* d_default = skipws_AST (cdar_of_AST(d_stmt));
-          AST* d_ptr = skipws_AST (d_default ? cdr_of_AST (d_default) : 0);
-          AST* d_type = skipws_AST (d_ptr ? cdr_of_AST (d_ptr) : 0);
-          AST* d_name = skipws_AST (d_type ? cdr_of_AST (d_type) : 0);
-          AST* d_end = skipws_AST (d_name ? cdr_of_AST (d_name) : 0);
-
-          if (d_default && d_default->kind == Lexical_Default &&
-              d_ptr && d_ptr->kind == Syntax_Iden)
-          {
-            d_end = d_name;
-            d_name = d_type;
-            d_type = d_ptr;
-            d_ptr = 0;
-          }
-
-          if (!d_end && d_name &&
-              d_default->kind == Lexical_Default &&
-              (!d_ptr || d_ptr->kind == Lexical_Mul) &&
-              d_type->kind == Syntax_Iden &&
-              d_name->kind == Syntax_Iden)
-          {
-            AST* d_assign;
-            AST* d_val;
-            Cons* a;
-
-            a = lastws_AST (d_stmt->cons->car.as.cons);
-            a->cdr = d_default->cons->cdr;
-            give_ASTree (t, d_default);
-
-            if (d_ptr) {
-              a = lastws_AST (a);
-              a->cdr = d_ptr->cons->cdr;
-              give_ASTree (t, d_ptr);
-            }
-
-            d_assign = take1_ASTree (t, Lexical_Assign);
-            d_val = take1_ASTree (t, Syntax_Iden);
-
-            cat_cstr_AlphaTab (&d_val->txt, "DEFAULT_");
-            cat_AlphaTab (&d_val->txt, &d_type->txt);
-
-            d_assign->cons->cdr = d_val->cons;
-            d_val->cons->cdr = d_name->cons->cdr;
-            d_name->cons->cdr = d_assign->cons;
-
-            if (d_ptr) {
-              AST* d_brackets = take1_ASTree (t, Syntax_Brackets);
-              AST* d_size = take1_ASTree (t, Syntax_Iden);
-              AST* d_braces = take1_ASTree (t, Syntax_Braces);
-
-              copy_cstr_AlphaTab (&d_size->txt, "1");
-
-              bevel_AST (d_brackets, t);
-              d_brackets->cons->cdr = d_name->cons->cdr;
-              d_name->cons->cdr = d_brackets->cons;
-              d_brackets->cons->car.as.cons->cdr = d_size->cons;
-
-              bevel_AST (d_braces, t);
-              d_braces->cons->cdr = d_val->cons->cdr;
-              d_braces->cons->car.as.cons->cdr = d_val->cons;
-              d_val->cons->cdr = 0;
-              d_assign->cons->cdr = d_braces->cons;
-            }
-          }
-        }
-        p = &ast->cons->cdr;
-        ast = cdr_of_AST (ast);
+      AlphaTab ts = dflt1_AlphaTab ("\n");
+      ast->kind = Syntax_WS;
+      copy_AlphaTab (&ast->txt, &ts);
     }
+    else if (ast->kind == Syntax_Directive)
+    {
+      if (check_delete_directive (&ast->txt, exec_opt))
+        ast->kind = Syntax_WS;
+    }
+    else if (ast->kind == Syntax_ForLoop)
+    {
+      /* (... (for (parens (; a) ...) x) ...)
+       * -->
+       * (... (braces (for (parens (; a) ...) x)) ...)
+       */
+      AST* d_for = ast;
+      AST* d_parens;
+      AST* d_stmt;
+
+      d_parens = cdar_of_AST (d_for);
+      while (d_parens && d_parens->kind != Syntax_Parens)
+        d_parens = cdr_of_AST (d_parens);
+
+      Claim( d_parens );
+      d_stmt = cdar_of_AST (d_parens);
+
+      if (d_stmt && declaration_ck (cdar_of_AST (d_stmt)))
+      {
+        AST* d_braces = take1_ASTree (t, Syntax_Braces);
+        AST* d_stmt1 = take1_ASTree (t, Syntax_Stmt);
+
+        bevel_AST (d_stmt1, t);
+        d_parens->cons->car.as.cons->cdr = d_stmt1->cons;
+        d_stmt1->cons->cdr = d_stmt->cons->cdr;
+
+        *p = d_braces->cons;
+        bevel_AST (d_braces, t);
+        d_braces->cons->cdr = d_for->cons->cdr;
+        d_braces->cons->car.as.cons->cdr = d_stmt->cons;
+        d_stmt->cons->cdr = d_for->cons;
+        d_for->cons->cdr = 0;
+        ast = d_braces;
+      }
+    }
+    else if (ast->kind == Syntax_Stmt)
+    {
+      /* (... (; default type name ...) ...)
+       * -->
+       * (... (; type name = "DEFAULT_type") ...)
+       */
+      AST* d_stmt = ast;
+      AST* d_type = skipws_AST (cdar_of_AST (d_stmt));
+      AST* d_name = skipws_AST (d_type ? cdr_of_AST (d_type) : 0);
+      AST* d_brackets = skipws_AST (d_name ? cdr_of_AST (d_name) : 0);
+      AST* d_assign = skipws_AST (d_brackets ? cdr_of_AST (d_brackets) : 0);
+      AST* d_default = skipws_AST (d_assign ? cdr_of_AST (d_assign) : 0);
+      AST* d_end = skipws_AST (d_default ? cdr_of_AST (d_default) : 0);
+
+      if (d_brackets && d_brackets->kind == Lexical_Assign) {
+        d_end = d_default;
+        d_default = d_assign;
+        d_assign = d_brackets;
+        d_brackets = 0;
+      }
+
+      if (!d_end && d_default &&
+          d_default->kind == Lexical_Default &&
+          (!d_brackets || d_brackets->kind == Syntax_Brackets) &&
+          d_type->kind == Syntax_Iden &&
+          d_name->kind == Syntax_Iden)
+      {
+        AST* d_val;
+        Cons* a;
+
+        a = lastws_AST (d_assign->cons);
+        a->cdr = d_default->cons->cdr;
+        give_ASTree (t, d_default);
+
+        d_val = take1_ASTree (t, Syntax_Iden);
+        d_val->cons->cdr = a->cdr;
+        a->cdr = d_val->cons;
+        cat_cstr_AlphaTab (&d_val->txt, "DEFAULT_");
+        cat_AlphaTab (&d_val->txt, &d_type->txt);
+
+        if (d_brackets) {
+          AST* d_braces = take1_ASTree (t, Syntax_Braces);
+
+          bevel_AST (d_braces, t);
+          a->cdr = d_braces->cons;
+          d_braces->cons->cdr = d_val->cons->cdr;
+          d_val->cons->cdr = 0;
+          d_braces->cons->car.as.cons->cdr = d_val->cons;
+        }
+      }
+    }
+    p = &ast->cons->cdr;
+    ast = cdr_of_AST (ast);
+  }
 }
 
     void

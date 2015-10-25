@@ -29,6 +29,9 @@ free_fn_OFileB (OFile* of);
 static bool
 flush_fn_OFileB (OFile* of);
 
+const XFileVT FileB_XFileVT = DEFAULT3_XFileVT(xget_chunk_fn_XFileB, close_fn_XFileB, free_fn_XFileB);
+const OFileVT FileB_OFileVT = DEFAULT3_OFileVT(flush_fn_OFileB, close_fn_OFileB, free_fn_OFileB);
+
 static
   void
 init_FileB (FileB* fb, bool sink)

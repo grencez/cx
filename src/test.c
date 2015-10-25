@@ -151,11 +151,10 @@ output_dot_fn (BSTNode* x, void* args)
 output_dot (BSTree* t)
 {
   void* args[1];
-  OFileB ofb[1];
+  OFileB ofb[] = default;
   OFile* of = &ofb->of;
   args[0] = of;
 
-  init_OFileB (ofb);
   open_FileB (&ofb->fb, "", "out.dot");
 
   oput_cstr_OFile (of, "digraph tree {\n");
@@ -362,7 +361,7 @@ testfn_cache_BitTable ()
   void
 testfn_Cons ()
 {
-  default* Sxpn sx;
+  Sxpn sx[] = default;
   Cons* c = take_Sxpn (sx);
   Cons* b = take2_Sxpn (sx, dflt_Cons_ConsAtom (c), 0);
   Cons* a = take1_Sxpn (sx, b);
@@ -402,11 +401,10 @@ testfn_skipws_FileB ()
     "hello", "i", "am", "some", "text!"
   };
   uint idx = 0;
-  XFileB xfb[1];
+  XFileB xfb[] = default;
   XFile* xf = &xfb->xf;
   OFile* of = stderr_OFile ();
 
-  init_XFileB (xfb);
 #if 0
   open_FileB (&xfb, "", "test");
 #else
@@ -550,7 +548,7 @@ testfn_OSPc ()
 {
     bool good = true;
     const char* s;
-    DecloStack1( OSPc, ospc, dflt_OSPc () );
+    OSPc ospc[] = default;
     /* stdxpipe_OSPc (ospc); */
     stdopipe_OSPc (ospc);
     ospc->cmd = cons1_AlphaTab (exename_of_sysCx ());
@@ -788,7 +786,7 @@ testfn_pathname ()
 
   for (i ; ArraySz( tests )) {
     const TestCase testcase = tests[i];
-    AlphaTab result = dflt_AlphaTab ();
+    AlphaTab result = default;
     uint sepidx =
       pathname2_AlphaTab (&result, testcase.opt_dir, testcase.filename);
 
@@ -834,7 +832,7 @@ testfn_dirname ()
   for (i ; ArraySz( tests )) {
     const TestCase testcase = tests[i];
     AlphaTab path = dflt1_AlphaTab (testcase.input);
-    default AlphaTab result;
+    AlphaTab result = default;
 
     dirname_AlphaTab (&result, &path);
     if (!eq_cstr (result.s, testcase.expect) ) {

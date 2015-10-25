@@ -27,20 +27,21 @@ struct OSPc
   XFileB xfb;
   int status;
 };
+#define DEFAULT_OSPc \
+{ DEFAULT_AlphaTab, \
+  DEFAULT_Table, \
+  0, 0, \
+  -1, \
+  DEFAULT_OFileB, \
+  DEFAULT_XFileB, \
+  0 \
+}
 
 qual_inline
   OSPc
 dflt_OSPc ()
 {
-  OSPc p;
-  p.cmd = dflt_AlphaTab ();
-  InitTable( p.args );
-  p.of = 0;
-  p.xf = 0;
-  p.pid = -1;
-  init_OFileB( &p.ofb );
-  init_XFileB( &p.xfb );
-  p.status = 0;
+  OSPc p = default;
   return p;
 }
 

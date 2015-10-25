@@ -28,17 +28,25 @@ xget_chunk_XFile (XFile* xf)
   return (sz < xf->buf.sz);
 }
 
-    void
+  void
 flush_XFile (XFile* f)
 {
-    TableT(byte)* buf = &f->buf;
-    Claim2( f->off ,<=, buf->sz );
+  TableT(byte)* buf = &f->buf;
+  Claim2( f->off ,<=, buf->sz );
 
-    if (f->off == 0)  return;
-    buf->sz = buf->sz - f->off;
-    if (buf->sz > 0)
-        memmove (buf->s, &buf->s[f->off], buf->sz);
+  if (!f->vt && f->off + 1 == buf->sz) {
+    LoseTable( f->buf );
+    InitZTable( f->buf );
     f->off = 0;
+    f->flushsz = 1;
+    return;
+  }
+
+  if (f->off == 0)  return;
+  buf->sz = buf->sz - f->off;
+  if (buf->sz > 0)
+    memmove (buf->s, &buf->s[f->off], buf->sz);
+  f->off = 0;
 }
 
   void
@@ -294,7 +302,7 @@ nextds_XFile (XFile* xfile, char* ret_match, const char* delims)
   char* s = tods_XFile(xfile, delims);
   const ujint ret_off = xfile->off;
 
-  xfile->off = IdxElt( xfile->buf.s, s );
+  offto_XFile (xfile, s);
   if (ret_match)  *ret_match = s[0];
 
   if (xfile->off+1 < xfile->buf.sz) {

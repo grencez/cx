@@ -18,6 +18,10 @@ struct XFile
   const XFileVT* vt;
   XFileCtx* ctx;
 };
+#define DEFAULT3_XFile(flushsz, mayflush, vt) \
+{ DEFAULT_Z_Table(byte), 0, flushsz, mayflush, vt, 0 }
+#define DEFAULT_XFile  DEFAULT3_XFile(1,false,0)
+
 
 struct XFileCtx
 {
@@ -30,9 +34,12 @@ struct XFileVT
   bool (*xget_chunk_fn) (XFile*);
   //void (*flush_fn) (XFile);
 
-  void (*free_fn) (XFile*);
   void (*close_fn) (XFile*);
+  void (*free_fn) (XFile*);
 };
+#define DEFAULT3_XFileVT(flush_fn, close_fn, free_fn) \
+{ flush_fn, close_fn, free_fn \
+}
 
 void
 close_XFile (XFile* xf);
@@ -176,7 +183,7 @@ qual_inline
   AlphaTab
 AlphaTab_XFile (XFile* xf, ujint off)
 {
-  DeclTable( char, t );
+  AlphaTab t = default;
   t.s = (char*) &xf->buf.s[off];
   t.sz = (xf->off - off) / sizeof(char);
   return t;
@@ -190,7 +197,7 @@ qual_inline
   AlphaTab
 window2_XFile (XFile* xfile, ujint beg, ujint end)
 {
-  DeclAlphaTab( t );
+  AlphaTab t = default;
   Claim2( beg ,<=, end );
   Claim2( end ,<=, xfile->buf.sz );
   if (end < xfile->buf.sz && xfile->buf.s[end] == 0) {
@@ -231,11 +238,39 @@ init_XFile_olay_AlphaTab (XFile* xf, AlphaTab* ts)
 
 qual_inline
   void
+init_XFile_move_AlphaTab (XFile* xf, AlphaTab* ts)
+{
+  init_XFile (xf);
+  if (ts->sz == 0 || ts->s[0]=='\0') {
+    lose_AlphaTab (ts);
+    *ts = dflt_AlphaTab ();
+    return;
+  }
+  xf->buf.s = (byte*) cstr_AlphaTab (ts);
+  xf->buf.sz = ts->sz;
+  xf->buf.alloc_lgsz = ts->alloc_lgsz;
+  PackTable( xf->buf );
+  *ts = dflt_AlphaTab ();
+  xf->mayflush = true;
+  xf->flushsz = xf->buf.sz-1;
+}
+
+qual_inline
+  void
 init_XFile_olay_cstr (XFile* xf, char* s)
 {
   init_XFile (xf);
   xf->buf.s = (byte*) s;
   xf->buf.sz = strlen(s)+1;
+}
+
+qual_inline
+  void
+putlast_char_XFile (XFile* xfile, char c)
+{
+  if (xfile->off > 0 && (char)xfile->buf.s[xfile->off - 1] == '\0') {
+    xfile->buf.s[xfile->off - 1] = c;
+  }
 }
 
 #endif

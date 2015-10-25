@@ -9,6 +9,9 @@
 #include <stdarg.h>
 #include <stdio.h>
 
+extern const XFileVT FileB_XFileVT;
+extern const OFileVT FileB_OFileVT;
+
 typedef struct FileB FileB;
 typedef struct XFileB XFileB;
 typedef struct OFileB OFileB;
@@ -30,18 +33,34 @@ struct FileB {
   AlphaTab pathname;
   AlphaTab filename;
 };
+#define DEFAULT1_FileB(sink) \
+{ \
+  0, -1, true, \
+  sink, false, FileB_Ascii, \
+  DEFAULT_AlphaTab, DEFAULT_AlphaTab \
+}
 
 struct XFileB
 {
   XFile xf;
   FileB fb;
 };
+#define DEFAULT_XFileB \
+{ \
+  DEFAULT3_XFile(BUFSIZ, true, &FileB_XFileVT), \
+  DEFAULT1_FileB(false) \
+}
 
 struct OFileB
 {
   OFile of;
   FileB fb;
 };
+#define DEFAULT_OFileB \
+{ \
+  DEFAULT3_OFile(BUFSIZ, true, &FileB_OFileVT), \
+  DEFAULT1_FileB(true) \
+}
 
 void
 init_XFileB (XFileB* xfb);
