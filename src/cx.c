@@ -632,7 +632,7 @@ lex_AST (XFile* xf, ASTree* t)
     const char delims[] = "'\"(){}[];#+-*/%&^|~!.,?:><=";
     ujint off;
     ujint line = 0;
-    DecloStack( Associa, keyword_map );
+    Associa keyword_map[1];
     Cons* up = 0;
     AST dummy_ast = dflt_AST ();
     AST* ast = &dummy_ast;

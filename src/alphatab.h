@@ -14,11 +14,13 @@ static const char WhiteSpaceChars[] = " \t\v\r\n";
 
 /** Duplicate a C string.**/
 qual_inline
-    char*
+  char*
 dup_cstr (const char* s)
 {
-    uint n = strlen (s) + 1;
-    return DupliT( char, s, n );
+  ujint n = strlen (s) + 1;
+  char* dst;
+  Duplic( dst, s, n );
+  return dst;
 }
 
 qual_inline
@@ -118,7 +120,7 @@ cat_AlphaTab (AlphaTab* a, const AlphaTab* b)
     if (a->sz > 0)  -- a->sz;
     GrowTable( *a, n+1 );
 
-    RepliT( char, &a->s[a->sz-(n+1)], b->s, n );
+    memcpy (&a->s[a->sz-(n+1)], b->s, n);
     a->s[a->sz-1] = 0;
 }
 
@@ -161,7 +163,7 @@ tac_AlphaTab (AlphaTab* a, const AlphaTab* b)
     GrowTable( *a, n );
     if (a->sz > n)
         memmove (&a->s[n], a->s, (a->sz-n)*sizeof(char));
-    RepliT( char, a->s, b->s, n );
+    memcpy (a->s, b->s, n);
 }
 
 qual_inline
@@ -282,7 +284,7 @@ assign2_AlphaTab (AlphaTab* dst, const AlphaTab* src, ujint beg, ujint end)
   }
   if (dst != src) {
     ResizeTable( *dst, sz+1 );
-    RepliT( char, dst->s, &src->s[beg], sz );
+    memcpy (dst->s, &src->s[beg], sz);
   }
   else {
     if (beg != 0)

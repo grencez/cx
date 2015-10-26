@@ -464,9 +464,10 @@ qual_inline
 cat_Table (Table* a, const Table* b)
 {
   ujint off = a->sz;
+  if (b->sz == 0)  return;
   grow_Table (a, b->sz);
   Claim( a->elsz == b->elsz );
-  RepliT( byte, elt_Table (a, off), b->s, a->elsz * b->sz );
+  memcpy (elt_Table (a, off), b->s, a->elsz * b->sz);
 }
 
 qual_inline
@@ -474,9 +475,10 @@ qual_inline
 cat_const_Table (Table* a, const ConstTable* b)
 {
   ujint off = a->sz;
+  if (b->sz == 0)  return;
   grow_Table (a, b->sz);
   Claim( a->elsz == b->elsz );
-  RepliT( byte, elt_Table (a, off), b->s, a->elsz * b->sz );
+  memcpy (elt_Table (a, off), b->s, a->elsz * b->sz);
 }
 #define CatTable( a, b )  do \
 { \

@@ -101,15 +101,15 @@ dflt_Cons_ConsAtom (Cons* c)
 }
 
 qual_inline
-    Cons
+  Cons
 dflt2_Cons (ConsAtom a, Cons* b)
 {
-    DecloStack( Cons, c );
-    c->car = a;
-    c->nrefs = 1;
-    c->cdr = b;
-    inc_Cons (b);
-    return *c;
+  Cons c[1];
+  c->car = a;
+  c->nrefs = 1;
+  c->cdr = b;
+  inc_Cons (b);
+  return *c;
 }
 
 qual_inline

@@ -73,12 +73,6 @@ do { \
      ? ((line) = &(line)[strlen(tok)]) \
      : 0)
 
-/** Declare a variable pointing to an "anonymous" object on the stack.
- * \param T  Type of variable when dereferenced.
- * \param x  Name of variable.
- **/
-#define DecloStack( T, x )  T onstack_##x; T* const restrict x = &onstack_##x
-
 /** Declare a variable pointing to an "anonymous" object on the stack
  * and initialize that object.
  * \param T  Type of variable when dereferenced.
@@ -88,7 +82,7 @@ do { \
 #define DecloStack1( T, x, v ) \
     T onstack_##x = (v); T* const restrict x = &onstack_##x
 
-/** Allocate memory via malloc() with lest casting.
+/** Allocate memory via malloc() with less casting.
  * \param T  Type.
  * \param n  Number of elements.
  * \return  NULL when the number of elements is zero.
@@ -97,15 +91,46 @@ do { \
     ((n) == 0 ? (T*) 0 : \
      (T*) malloc ((n) * sizeof (T)))
 
-/** Replace memory via memcpy.
- * \param T  Type.
- * \param a  Destination block.
- * \param b  Source block.
- * \param n  Number of elements to copy.
- **/
-#define RepliT( T, a, b, n )  do \
+/** Copy {b} to {a}.**/
+#define Replac( a, b, n )  do \
 { \
-    if ((n) > 0)  memcpy (a, b, (n) * sizeof (T)); \
+  if ((n) > 0 && a && b) { \
+    memcpy (a, b, (n) * sizeof (*b)); \
+  } \
+} while (0)
+
+#define AllocTo( a, n ) do \
+{ \
+  const size_t AllocTo_sz = (n)*sizeof(*a); \
+  *(void**) &a = (AllocTo_sz == 0) ? 0 : malloc (AllocTo_sz); \
+} while (0)
+
+/** Dynamic allocation. Not sure if useful.**/
+#define Dynalloc(a, old_sz, new_sz) do \
+{ \
+  const size_t Dynalloc_old_sz = (old_sz)*sizeof(*a); \
+  const size_t Dynalloc_new_sz = (new_sz)*sizeof(*a); \
+  if (Dynalloc_new_sz > 0) { \
+    *(void**) &a = realloc (Dynalloc_old_sz == 0 ? 0 : (a), \
+                            Dynalloc_new_sz); \
+  } \
+  else { \
+    if (Dynalloc_old_sz > 0 && (a)) { \
+      free (a); \
+    } \
+    a = 0; \
+  } \
+} while (0)
+
+/** Duplicate {b} to {a}.**/
+#define Duplic( a, b, n )  do \
+{ \
+  const size_t Duplic_sz = (n) * sizeof(*b); \
+  void* Duplic_p = 0; \
+  if (Duplic_sz > 0) \
+    if ((Duplic_p = malloc (Duplic_sz))) \
+      memcpy (Duplic_p, b, Duplic_sz); \
+  *(void**) &a = Duplic_p; \
 } while (0)
 
 /** Duplicate memory.
@@ -126,6 +151,15 @@ do { \
  **/
 #define DeclAlloc( T, a, n ) \
     T* const restrict a = AllocT( T, n )
+
+/** Swap two values.**/
+#define Swap2( a, b ) \
+do { \
+  byte Swap2_tmp[sizeof(a)]; \
+  memcpy(&tmp, &(a), sizeof(tmp)); \
+  memcpy(&(a), &(b), sizeof(tmp)); \
+  memcpy(&(b), &(tmp), sizeof(tmp)); \
+} while (0)
 
 /** Swap two values.**/
 #define SwapT( T, a, b ) \
@@ -196,7 +230,7 @@ poset_cmp_lhs (PosetCmp cmp, const void* a, const void* b)
  **/
 static const size_t Static00[] = {0,0};
 
-/** Assign {a} as {b} iff they are not already equal.**/
+/** Assign {a} as {0} iff they are not already equal.**/
 #define Ensure0( a )  do { if (a)  a = 0; } while (0)
 
 /** Implemented in syscx.c **/
