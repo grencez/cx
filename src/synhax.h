@@ -91,6 +91,8 @@ do { \
     ((n) == 0 ? (T*) 0 : \
      (T*) malloc ((n) * sizeof (T)))
 
+#define CopyTo( a, b )  memcpy (&(a), &(b), sizeof(b))
+
 /** Copy {b} to {a}.**/
 #define Replac( a, b, n )  do \
 { \
@@ -102,7 +104,8 @@ do { \
 #define AllocTo( a, n ) do \
 { \
   const size_t AllocTo_sz = (n)*sizeof(*a); \
-  *(void**) &a = (AllocTo_sz == 0) ? 0 : malloc (AllocTo_sz); \
+  void* AllocTo_p = (AllocTo_sz == 0) ? 0 : malloc (AllocTo_sz); \
+  CopyTo( a, AllocTo_p ); \
 } while (0)
 
 /** Dynamic allocation. Not sure if useful.**/
@@ -111,8 +114,9 @@ do { \
   const size_t Dynalloc_old_sz = (old_sz)*sizeof(*a); \
   const size_t Dynalloc_new_sz = (new_sz)*sizeof(*a); \
   if (Dynalloc_new_sz > 0) { \
-    *(void**) &a = realloc (Dynalloc_old_sz == 0 ? 0 : (a), \
-                            Dynalloc_new_sz); \
+    void* Dynalloc_p = realloc (Dynalloc_old_sz == 0 ? 0 : (a), \
+                                Dynalloc_new_sz); \
+    CopyTo( a, Dynalloc_p ); \
   } \
   else { \
     if (Dynalloc_old_sz > 0 && (a)) { \
@@ -130,7 +134,7 @@ do { \
   if (Duplic_sz > 0) \
     if ((Duplic_p = malloc (Duplic_sz))) \
       memcpy (Duplic_p, b, Duplic_sz); \
-  *(void**) &a = Duplic_p; \
+  CopyTo( a, Duplic_p ); \
 } while (0)
 
 /** Duplicate memory.
