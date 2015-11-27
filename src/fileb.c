@@ -49,43 +49,25 @@ init_FileB (FileB* fb, bool sink)
   void
 init_XFileB (XFileB* xfb)
 {
-  static bool vt_initialized = false;
   static XFileCtx ctx;
-  static XFileVT vt;
   init_XFile (&xfb->xf);
   xfb->xf.flushsz = BUFSIZ;
   xfb->xf.mayflush = true;
   init_FileB (&xfb->fb, false);
-  xfb->xf.vt = &vt;
+  xfb->xf.vt = &FileB_XFileVT;
   xfb->xf.ctx = &ctx;
-  if (!vt_initialized) {
-    memset (&vt, 0, sizeof (vt));
-    vt.xget_chunk_fn = xget_chunk_fn_XFileB;
-    vt.close_fn = close_fn_XFileB;
-    vt.free_fn = free_fn_XFileB;
-    vt_initialized = true;
-  }
 }
 
   void
 init_OFileB (OFileB* ofb)
 {
-  static bool vt_initialized = false;
   static OFileCtx ctx;
-  static OFileVT vt;
   init_OFile (&ofb->of);
   ofb->of.flushsz = BUFSIZ;
   ofb->of.mayflush = true;
   init_FileB (&ofb->fb, true);
-  ofb->of.vt = &vt;
+  ofb->of.vt = &FileB_OFileVT;
   ofb->of.ctx = &ctx;
-  if (!vt_initialized) {
-    memset (&vt, 0, sizeof (vt));
-    vt.flush_fn = flush_fn_OFileB;
-    vt.close_fn = close_fn_OFileB;
-    vt.free_fn = free_fn_OFileB;
-    vt_initialized = true;
-  }
 }
 
 static
