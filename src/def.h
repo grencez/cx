@@ -50,6 +50,9 @@ typedef unsigned int uint;
 #endif
 
 typedef size_t zuint;
+#ifndef SIZE_MAX
+#define SIZE_MAX (~(size_t)0)
+#endif
 #ifndef SIZE_BIT
 #define SIZE_BIT (BYTE_BIT * sizeof(size_t))
 #endif
