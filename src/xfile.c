@@ -131,7 +131,7 @@ skiplined_XFile (XFile* xf, const char* delim)
 tolined_XFile (XFile* xf, const char* delim)
 {
   const bool mayflush = xf->mayflush;
-  const ujint off = xf->off;
+  const zuint off = xf->off;
   char* s = 0;
 
   xf->mayflush = false;
@@ -178,12 +178,12 @@ tomatchd_XFile (XFile* xf, const char* beg_delim, const char* end_delim)
   uint nested = 1;
   const bool mayflush = xf->mayflush;
   const uint end_sz = strlen(end_delim);
-  const ujint off = xf->off;
+  const zuint off = xf->off;
   char* pos = cstr_of_XFile (xf);
 
   while (nested > 0) {
     XFile olay[1];
-    ujint window_end;
+    zuint window_end;
     pos = tolined_XFile (xf, end_delim);
     if (!pos)  break;
     -- nested;
@@ -257,7 +257,7 @@ skipds_XFile (XFile* xf, const char* delims)
   char*
 tods_XFile (XFile* xfile, const char* delims)
 {
-  ujint off;
+  zuint off;
   const bool skip_nul = pfxeq_cstr ("!!", delims);
   // Fix up {delims} to not be NULL in any case,
   // and skip over the "!!" if it exists.
@@ -300,7 +300,7 @@ tods_XFile (XFile* xfile, const char* delims)
 nextds_XFile (XFile* xfile, char* ret_match, const char* delims)
 {
   char* s = tods_XFile(xfile, delims);
-  const ujint ret_off = xfile->off;
+  const zuint ret_off = xfile->off;
 
   offto_XFile (xfile, s);
   if (ret_match)  *ret_match = s[0];
@@ -352,7 +352,7 @@ replace_delim_XFile (XFile* xf, char delim)
 inject_XFile (XFile* in, XFile* src, const char* delim)
 {
     uint delim_sz = strlen (delim);
-    const ujint sz = in->buf.sz - in->off;
+    const zuint sz = in->buf.sz - in->off;
 
     xget_XFile (src);
     Claim2( src->buf.sz ,>, 0 );
@@ -394,9 +394,9 @@ skip_cstr_XFile (XFile* xf, const char* pfx)
 }
 
   void
-olay_txt_XFile (XFile* olay, XFile* xf, ujint off)
+olay_txt_XFile (XFile* olay, XFile* xf, zuint off)
 {
-  const ujint end = (xf->off + 1 < xf->buf.sz  ?  xf->off  :  xf->buf.sz);
+  const zuint end = (xf->off + 1 < xf->buf.sz  ?  xf->off  :  xf->buf.sz);
   Claim2( off ,<, end );
 
   init_XFile (olay);
@@ -458,16 +458,18 @@ xget_uint_XFile (XFile* xf, uint* x)
 }
 
   bool
-xget_ujint_XFile (XFile* xf, ujint* x)
+xget_luint_XFile (XFile* xf, luint* x)
 {
   const char* s;
   skipds_XFile (xf, WhiteSpaceChars);
   tods_XFile (xf, WhiteSpaceChars);
-  s = xget_ujint_cstr (x, (char*)&xf->buf.s[xf->off]);
+  s = xget_luint_cstr (x, (char*)&xf->buf.s[xf->off]);
   if (!s)  return false;
   xf->off = IdxElt( xf->buf.s, s );
   return true;
 }
+
+bool xget_ujint_XFile (XFile* xf, ujint* x) { return xget_luint_XFile (xf, x); }
 
   bool
 xget_real_XFile (XFile* xf, real* x)

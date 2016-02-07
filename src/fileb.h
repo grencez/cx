@@ -77,9 +77,9 @@ void
 lose_OFileB (OFileB* ofb);
 
 byte*
-ensure_XFileB (XFileB* xfb, ujint n);
+ensure_XFileB (XFileB* xfb, zuint n);
 byte*
-ensure_OFileB (OFileB* ofb, ujint n);
+ensure_OFileB (OFileB* ofb, zuint n);
 void
 setfmt_XFileB (XFileB* xfb, FileB_Format fmt);
 void
@@ -103,10 +103,10 @@ bool
 flush_OFileB (OFileB* ofb);
 
 void
-oputn_byte_OFileB (OFileB* f, const byte* a, ujint n);
+oputn_byte_OFileB (OFileB* f, const byte* a, zuint n);
 
 bool
-xgetn_byte_XFileB (XFileB* xfb, byte* a, ujint n);
+xgetn_byte_XFileB (XFileB* xfb, byte* a, zuint n);
 
 AlphaTab
 textfile_AlphaTab (const char* pathname, const char* filename);
@@ -135,7 +135,7 @@ mktmppath_sysCx (AlphaTab* path);
 
 qual_inline
   void
-olay_txt_OFile (XFile* olay, OFile* ofile, ujint off)
+olay_txt_OFile (XFile* olay, OFile* ofile, zuint off)
 {
   XFile xfile[1];
   init_XFile (olay);

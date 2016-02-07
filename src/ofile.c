@@ -53,12 +53,12 @@ null_OFile ()
     vt.close_fn = (void (*) (OFile*)) f;
     vt.oput_int_fn = (void (*) (OFile*, int)) f;
     vt.oput_uint_fn = (void (*) (OFile*, uint)) f;
-    vt.oput_ujint_fn = (void (*) (OFile*, ujint)) f;
+    vt.oput_luint_fn = (void (*) (OFile*, luint)) f;
     vt.oput_real_fn = (void (*) (OFile*, real)) f;
     vt.oput_char_fn = (void (*) (OFile*, char)) f;
     vt.oput_AlphaTab_fn = (void (*) (OFile*, const AlphaTab*)) f;
     vt.vprintf_fn = (void (*) (OFile*, const char*, va_list)) f;
-    vt.oputn_char_fn = (void (*) (OFile*, const char*, ujint)) f;
+    vt.oputn_char_fn = (void (*) (OFile*, const char*, zuint)) f;
 
     vt_initialized = true;
 
@@ -87,13 +87,15 @@ oput_uint_OFile (OFile* f, uint x)
 }
 
   void
-oput_ujint_OFile (OFile* f, ujint x)
+oput_luint_OFile (OFile* f, luint x)
 {
-  VTCall( f->vt, (void),oput_ujint_fn,(f, x); return );
+  VTCall( f->vt, (void),oput_luint_fn,(f, x); return );
   EnsizeTable( f->buf, f->off + 50 );
   f->off += sprintf (cstr_OFile (f), "%lu", x);
   mayflush_OFile (f, May);
 }
+
+void oput_ujint_OFile (OFile* f, ujint x) { oput_luint_OFile (f, x); }
 
   void
 oput_real_OFile (OFile* f, real x)
@@ -117,7 +119,7 @@ oput_char_OFile (OFile* f, char c)
   void
 oput_AlphaTab (OFile* of, const AlphaTab* t)
 {
-  ujint n = t->sz;
+  zuint n = t->sz;
   VTCall( of->vt, (void),oput_AlphaTab_fn,(of, t); return );
   if (n == 0)  return;
   if (!t->s[n-1])  -- n;
@@ -138,7 +140,7 @@ oput_OFile (OFile* of, OFile* src)
   void
 vprintf_OFile (OFile* f, const char* fmt, va_list args)
 {
-  ujint sz = 2048;  /* Not good :( */
+  zuint sz = 2048;  /* Not good :( */
   int iret = 0;
   VTCall( f->vt, (void),vprintf_fn,(f, fmt, args); return );
 
@@ -160,7 +162,7 @@ printf_OFile (OFile* f, const char* fmt, ...)
 }
 
   void
-oputn_char_OFile (OFile* of, const char* a, ujint n)
+oputn_char_OFile (OFile* of, const char* a, zuint n)
 {
   VTCall( of->vt, (void),oputn_char_fn,(of, a, n); return );
   GrowTable( of->buf, n );

@@ -23,9 +23,9 @@ public:
 
   class BitTableElement {
     C::BitTable bt;
-    ujint idx;
+    zuint idx;
   public:
-    BitTableElement(C::BitTable _bt, ujint _idx)
+    BitTableElement(C::BitTable _bt, zuint _idx)
       : bt(_bt)
       , idx(_idx)
     {}
@@ -43,7 +43,7 @@ public:
   BitTable() {
     bt = dflt_BitTable ();
   }
-  BitTable(ujint n, Bit b) {
+  BitTable(zuint n, Bit b) {
     bt = cons2_BitTable (n, b);
   }
   BitTable(const BitTable& a) {
@@ -65,7 +65,7 @@ public:
   }
   BitTable& operator=(const std::vector<bool>& a) {
     size_fo_BitTable (&bt, a.size());
-    for (ujint i = 0; i < bt.sz; ++i) {
+    for (zuint i = 0; i < bt.sz; ++i) {
       setb_BitTable (bt, i, a[i] ? 1 : 0);
     }
     return *this;
@@ -74,31 +74,31 @@ public:
     lose_BitTable (&bt);
   }
 
-  ujint sz() const {
+  zuint sz() const {
     return bt.sz;
   }
-  ujint size() const { return this->sz(); }
+  zuint size() const { return this->sz(); }
 
   void wipe(Bit b) {
     wipe_BitTable (bt, b);
   }
 
-  void grow(ujint capac) {
+  void grow(zuint capac) {
     grow_BitTable (&bt, capac);
   }
 
-  void resize(ujint capac) {
+  void resize(zuint capac) {
     size_fo_BitTable (&bt, capac);
   }
   void clear() {
     this->resize(0);
   }
 
-  Bit operator[](ujint i) const {
+  Bit operator[](zuint i) const {
     return ck_BitTable (bt, i);
   }
 
-  BitTableElement operator[](ujint i) {
+  BitTableElement operator[](zuint i) {
     return BitTableElement(bt, i);
   }
 
@@ -127,25 +127,25 @@ public:
     return (this->cmp(b) >= 0);
   }
 
-  Bit set0(ujint idx) { return set0_BitTable (bt, idx); }
-  Bit set1(ujint idx) { return set1_BitTable (bt, idx); }
-  bool ck(ujint idx) const { return ck_BitTable (bt, idx); }
+  Bit set0(zuint idx) { return set0_BitTable (bt, idx); }
+  Bit set1(zuint idx) { return set1_BitTable (bt, idx); }
+  bool ck(zuint idx) const { return ck_BitTable (bt, idx); }
 
   bool subseteq_ck(const BitTable& b) const {
     return fold_map2_BitTable (BitOp_AND, BitOp_IMP, this->bt, b.bt);
   }
 
-  ujint begidx() const {
+  zuint begidx() const {
     return begidx_BitTable (bt);
   }
-  ujint nextidx(ujint i) const {
+  zuint nextidx(zuint i) const {
     return nextidx_BitTable (bt, i);
   }
 
 };
 
 inline
-  ujint
+  zuint
 sz_of (const BitTable& t)
 {
   return t.sz();

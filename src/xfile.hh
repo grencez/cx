@@ -51,10 +51,10 @@ public:
     allgood = allgood && good;
     return *this;
   }
-  XFile& operator>>(ujint& x)
+  XFile& operator>>(luint& x)
   {
     bool good =
-      xget_ujint_XFile (xfile, &x);
+      xget_luint_XFile (xfile, &x);
     allgood = allgood && good;
     return *this;
   }

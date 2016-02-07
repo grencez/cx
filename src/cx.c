@@ -130,7 +130,7 @@ enum SyntaxKind
 struct AST
 {
     SyntaxKind kind;
-    ujint line;
+    zuint line;
     AlphaTab txt;
     Cons* cons;
 };
@@ -219,8 +219,8 @@ cons_ASTree ()
     void
 lose_ASTree (ASTree* t)
 {
-    for (ujint i = begidx_LgTable (&t->lgt);
-         i < Max_ujint;
+    for (zuint i = begidx_LgTable (&t->lgt);
+         i < SIZE_MAX;
          i = nextidx_LgTable (&t->lgt, i))
     {
         AST* ast = (AST*) elt_LgTable (&t->lgt, i);
@@ -539,7 +539,7 @@ parse_escaped (XFile* xf, AlphaTab* t, char delim)
          s = nextds_XFile (xf, 0, delims))
     {
         bool escaped = false;
-        ujint off;
+        zuint off;
 
         cat_cstr_AlphaTab (t, s);
         off = t->sz-1;
@@ -557,10 +557,10 @@ parse_escaped (XFile* xf, AlphaTab* t, char delim)
     return false;
 }
 
-    ujint
+    zuint
 count_newlines (const char* s)
 {
-    ujint n = 0;
+    zuint n = 0;
     for (s = strchr (s, '\n'); s;  s = strchr (&s[1], '\n'))
         ++ n;
     return n;
@@ -630,8 +630,8 @@ lex_AST (XFile* xf, ASTree* t)
 {
     char match = 0;
     const char delims[] = "'\"(){}[];#+-*/%&^|~!.,?:><=";
-    ujint off;
-    ujint line = 0;
+    zuint off;
+    zuint line = 0;
     Associa keyword_map[1];
     Cons* up = 0;
     AST dummy_ast = dflt_AST ();

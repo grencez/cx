@@ -50,9 +50,9 @@ public:
     oput_uint_OFile (ofile, x);
     return *this;
   }
-  OFile& operator<<(ujint x)
+  OFile& operator<<(luint x)
   {
-    oput_ujint_OFile (ofile, x);
+    oput_luint_OFile (ofile, x);
     return *this;
   }
   OFile& operator<<(real x)
@@ -95,7 +95,7 @@ public:
     va_end (args);
   }
 
-  void write(const char* s, ujint n)
+  void write(const char* s, zuint n)
   {
     oputn_char_OFile (ofile, s, n);
   }

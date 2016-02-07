@@ -154,7 +154,7 @@ public:
     return false;
   }
 
-  ujint sz() const { return this->size(); }
+  zuint sz() const { return this->size(); }
 };
 
 template <class T>
@@ -166,25 +166,25 @@ public:
     : Table<T>()
   {
     this->affy(a.sz());
-    for (ujint i = 0; i < a.sz(); ++i)
+    for (zuint i = 0; i < a.sz(); ++i)
       this->push(a[i]);
   }
   ~FlatSet() {}
   void operator=(const FlatSet<T>& a) {
     this->affysz(a.sz());
-    for (ujint i = 0; i < a.sz(); ++i)
+    for (zuint i = 0; i < a.sz(); ++i)
       (*this)[i] = a[i];
   }
 
   explicit FlatSet(const Table<T>& a) {
     this->affy(a.sz());
-    for (ujint i = 0; i < a.sz(); ++i)
+    for (zuint i = 0; i < a.sz(); ++i)
       this->push(a[i]);
     std::sort (this->begin(), this->end());
   }
   explicit FlatSet(const vector<T>& a) {
     this->affy(a.size());
-    for (ujint i = 0; i < a.size(); ++i)
+    for (zuint i = 0; i < a.size(); ++i)
       this->push(a[i]);
     std::sort (this->begin(), this->end());
   }
@@ -196,9 +196,9 @@ public:
       ++it;
     }
   }
-  explicit FlatSet(const T* a, ujint n) {
+  explicit FlatSet(const T* a, zuint n) {
     this->affy(n);
-    for (ujint i = 0; i < n; ++i)
+    for (zuint i = 0; i < n; ++i)
       this->push(a[i]);
     std::sort (this->begin(), this->end());
   }
@@ -210,8 +210,8 @@ public:
   bool subseteq_ck(const FlatSet<T>& b) const {
     const FlatSet<T>& a = *this;
     if (a.sz() > b.sz())  return false;
-    ujint off = 0;
-    for (ujint i = 0; i < a.sz();)
+    zuint off = 0;
+    for (zuint i = 0; i < a.sz();)
     {
       if (a[i] < b[i+off])
         return false;
@@ -228,14 +228,14 @@ public:
     return true;
   }
 
-  bool subseteq_fuzz_ck(Cx::Table<T>* diff, const FlatSet<T>& b, ujint nmisses) const {
+  bool subseteq_fuzz_ck(Cx::Table<T>* diff, const FlatSet<T>& b, zuint nmisses) const {
     const FlatSet<T>& a = *this;
     if (diff)
       diff->flush();
     if (a.sz() > b.sz() + nmisses)
       return false;
-    ujint i = 0;
-    ujint j = 0;
+    zuint i = 0;
+    zuint j = 0;
     while (i < a.sz() && j < b.sz())
     {
       Sign si = (a[i] == b[j] ? 0 : (a[i] < b[j] ? -1 : 1));
@@ -271,8 +271,8 @@ public:
   bool overlap_ck(const FlatSet<T>& b) const {
     const FlatSet<T>& a = *this;
     if (a.sz() > b.sz())  return b.overlap_ck(a);
-    ujint i = 0;
-    ujint j = 0;
+    zuint i = 0;
+    zuint j = 0;
     while (i < a.sz() && j < b.sz()) {
       if (a[i] == b[j])  return true;
       if (a[i] < b[j])  ++i;
@@ -283,7 +283,7 @@ public:
 
   bool overlap_ck(const Set<T>& b) const {
     const FlatSet<T>& a = *this;
-    for (ujint i = 0; i < a.sz(); ++i) {
+    for (zuint i = 0; i < a.sz(); ++i) {
       if (b.elem_ck(a[i]))  return true;
     }
     return false;
@@ -305,7 +305,7 @@ template <class T>
 Set<T>::operator-=(const FlatSet<T>& b)
 {
   Set<T>& a = *this;
-  for (ujint i = 0; i < b.sz(); ++i)
+  for (zuint i = 0; i < b.sz(); ++i)
     a -= b[i];
   return a;
 }

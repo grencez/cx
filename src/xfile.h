@@ -12,8 +12,8 @@ typedef struct XFileVT XFileVT;
 struct XFile
 {
   TableT(byte) buf;
-  ujint off;
-  ujint flushsz;
+  zuint off;
+  zuint flushsz;
   bool mayflush;
   const XFileVT* vt;
   XFileCtx* ctx;
@@ -80,7 +80,7 @@ bool
 skip_cstr_XFile (XFile* xf, const char* pfx);
 
 void
-olay_txt_XFile (XFile* olay, XFile* xf, ujint off);
+olay_txt_XFile (XFile* olay, XFile* xf, zuint off);
 bool
 getlined_olay_XFile (XFile* olay, XFile* xf, const char* delim);
 bool
@@ -92,6 +92,8 @@ bool
 xget_int_XFile (XFile* xf, int*);
 bool
 xget_uint_XFile (XFile* xf, uint*);
+bool
+xget_luint_XFile (XFile* xf, luint*);
 bool
 xget_ujint_XFile (XFile* xf, ujint*);
 bool
@@ -123,7 +125,7 @@ init_XFile (XFile* xf)
 
 qual_inline
   void
-olay_XFile (XFile* olay, XFile* xf, ujint off)
+olay_XFile (XFile* olay, XFile* xf, zuint off)
 {
   init_XFile (olay);
   olay->buf.s = &xf->buf.s[off];
@@ -151,7 +153,7 @@ offto_XFile (XFile* xf, const char* pos)
 
 qual_inline
   const char*
-ccstr1_of_XFile (const XFile* xf, ujint off)
+ccstr1_of_XFile (const XFile* xf, zuint off)
 { return (char*) &xf->buf.s[off]; }
 
 qual_inline
@@ -161,7 +163,7 @@ ccstr_of_XFile (const XFile* xf)
 
 qual_inline
   char*
-cstr1_of_XFile (XFile* f, ujint off)
+cstr1_of_XFile (XFile* f, zuint off)
 { return (char*) &f->buf.s[off]; }
 
 qual_inline
@@ -171,7 +173,7 @@ cstr_of_XFile (XFile* xf)
 
 qual_inline
   char*
-cstr1_XFile (XFile* f, ujint off)
+cstr1_XFile (XFile* f, zuint off)
 { return cstr1_of_XFile (f, off); }
 
 qual_inline
@@ -181,7 +183,7 @@ cstr_XFile (XFile* xf)
 
 qual_inline
   AlphaTab
-AlphaTab_XFile (XFile* xf, ujint off)
+AlphaTab_XFile (XFile* xf, zuint off)
 {
   AlphaTab t = default;
   t.s = (char*) &xf->buf.s[off];
@@ -195,7 +197,7 @@ AlphaTab_XFile (XFile* xf, ujint off)
  **/
 qual_inline
   AlphaTab
-window2_XFile (XFile* xfile, ujint beg, ujint end)
+window2_XFile (XFile* xfile, zuint beg, zuint end)
 {
   AlphaTab t = default;
   Claim2( beg ,<=, end );
@@ -210,7 +212,7 @@ window2_XFile (XFile* xfile, ujint beg, ujint end)
 
 qual_inline
   void
-olay2_txt_XFile (XFile* olay, XFile* xf, ujint beg, ujint end)
+olay2_txt_XFile (XFile* olay, XFile* xf, zuint beg, zuint end)
 {
   init_XFile (olay);
   olay->buf.s = &xf->buf.s[beg];

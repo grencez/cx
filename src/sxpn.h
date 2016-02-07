@@ -207,9 +207,9 @@ qual_inline
     void
 lose_Sxpn (Sxpn* sx)
 {
-    ujint i;
+    zuint i;
     for (i = begidx_LgTable (&sx->cells);
-         i < Max_ujint;
+         i < SIZE_MAX;
          i = nextidx_LgTable (&sx->cells, i))
     {
         Cons* a = (Cons*) elt_LgTable (&sx->cells, i);

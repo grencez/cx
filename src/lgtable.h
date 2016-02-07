@@ -16,35 +16,35 @@ DeclTableT( LgTableAlloc, LgTableAlloc );
 
 struct LgTableIntl
 {
-    const void* mem;
-    ujintlg lgsz;
+  const void* mem;
+  bitint lgsz;
 };
 
 struct LgTableAlloc
 {
-    void* mem;
-    TableT(ujint) avails;
-    BitTable bt;
+  void* mem;
+  TableT(zuint) avails;
+  BitTable bt;
 };
 
 struct LgTable
 {
-    TableElSz elsz;
-    TableT(LgTableAlloc) allocs;
-    TableT(LgTableIntl) intls;
-    ujint lgavails;
-    ujint sz;
+  TableElSz elsz;
+  TableT(LgTableAlloc) allocs;
+  TableT(LgTableIntl) intls;
+  zuint lgavails;
+  zuint sz;
 };
 
 #define DEFAULT1_LgTable(T) { sizeof(T), DEFAULT_Table, DEFAULT_Table, 0, 0 }
 
 qual_inline
     LgTableAlloc
-cons2_LgTableAlloc (TableElSz elsz, ujintlg lgsz)
+cons2_LgTableAlloc (TableElSz elsz, bitint lgsz)
 {
     LgTableAlloc a;
-    ujint sz = 2;
-    if (lgsz > 0)  sz = (ujint) 1 << lgsz;
+    zuint sz = 2;
+    if (lgsz > 0)  sz = (zuint) 1 << lgsz;
     a.mem = malloc (elsz * sz);
     /* memset (a.mem, 0xFF, elsz * sz); */
     InitTable( a.avails );
@@ -88,22 +88,22 @@ lose_LgTable (LgTable* t)
 
 qual_inline
     void*
-elt_LgTable (LgTable* t, ujint idx)
+elt_LgTable (LgTable* t, zuint idx)
 {
-    const ujintlg lgidx = lg_ujint (idx);
-    if (lgidx > 0)  idx &= ~((ujint) 1 << lgidx);
+    const bitint lgidx = lg_luint (idx);
+    if (lgidx > 0)  idx &= ~((zuint) 1 << lgidx);
     return EltZ( t->allocs.s[lgidx].mem, idx, t->elsz );
 }
 
 qual_inline
-    ujint
+    zuint
 idxelt_LgTable (const LgTable* t, const void* el)
 {
-    ujintlg lo = 0;
-    ujintlg hi = t->intls.sz;
+    bitint lo = 0;
+    bitint hi = t->intls.sz;
     do
     {
-        ujintlg oh = lo + (hi - lo) / 2;
+        bitint oh = lo + (hi - lo) / 2;
         const LgTableIntl intl = t->intls.s[oh];
 
         if ((size_t) el < (size_t) intl.mem)
@@ -112,27 +112,27 @@ idxelt_LgTable (const LgTable* t, const void* el)
         }
         else if (((size_t) el - (size_t) intl.mem)
                  >=
-                 ((ujint) t->elsz << intl.lgsz))
+                 ((zuint) t->elsz << intl.lgsz))
         {
             lo = oh+1;
         }
         else
         {
-            ujint idx = IdxEltZ( intl.mem, el, t->elsz );
+            zuint idx = IdxEltZ( intl.mem, el, t->elsz );
             if (intl.lgsz == 1 && intl.mem == t->allocs.s[0].mem)
                 return idx;
-            return (idx | ((ujint) 1 << intl.lgsz));
+            return (idx | ((zuint) 1 << intl.lgsz));
         }
     } while (lo != hi);
     Claim( false );
-    return Max_ujint;
+    return SIZE_MAX;
 }
 
 qual_inline
     void
 ins_LgTableIntl (TableT(LgTableIntl)* intls, const void* mem)
 {
-    ujintlg i;
+    bitint i;
     GrowTable( *intls, 1 );
     for (i = intls->sz-1; i > 0; --i)
     {
@@ -149,7 +149,7 @@ qual_inline
     void
 del_LgTableIntl (TableT(LgTableIntl)* intls)
 {
-    ujintlg i = 0, j;
+    bitint i = 0, j;
     /* Claim2( intls->sz ,>, 2 ); */
     for (j = 0; j < intls->sz; ++j)
     {
@@ -169,16 +169,16 @@ del_LgTableIntl (TableT(LgTableIntl)* intls)
  * \sa take_LgTable()
  **/
 qual_inline
-    ujint
+    zuint
 takeidx_LgTable (LgTable* t)
 {
-    ujint idx;
+    zuint idx;
     if (t->lgavails == 0)
     {
-        const ujintlg lgidx = t->allocs.sz;
+        const bitint lgidx = t->allocs.sz;
         LgTableAlloc* a;
 
-        idx = (lgidx == 0) ? 0 : ((ujint) 1 << lgidx);
+        idx = (lgidx == 0) ? 0 : ((zuint) 1 << lgidx);
 
         PushTable( t->allocs, cons2_LgTableAlloc (t->elsz, lgidx) );
         a = TopTable( t->allocs );
@@ -188,12 +188,12 @@ takeidx_LgTable (LgTable* t)
         a->bt.sz = 1;
         if (set1_BitTable (a->bt, 0))
             Claim( false );
-        t->lgavails |= ((ujint) 1 << lgidx);
+        t->lgavails |= ((zuint) 1 << lgidx);
     }
     else
     {
-        const ujintlg lgidx = lg_ujint (lsb_ujint (t->lgavails));
-        const ujint hibit = ((ujint) 1 << lgidx);
+        const bitint lgidx = lg_luint (lsb_luint (t->lgavails));
+        const zuint hibit = ((zuint) 1 << lgidx);
         LgTableAlloc* a = &t->allocs.s[lgidx];
 
         do
@@ -244,18 +244,18 @@ take_LgTable (LgTable* t)
  **/
 qual_inline
     void
-giveidx_LgTable (LgTable* t, ujint idx)
+giveidx_LgTable (LgTable* t, zuint idx)
 {
-    const ujintlg lgidx = lg_ujint (idx);
+    const bitint lgidx = lg_luint (idx);
     LgTableAlloc* a = &t->allocs.s[lgidx];
 
     if (lgidx > 0)
-        idx ^= ((ujint) 1 << lgidx);
+        idx ^= ((zuint) 1 << lgidx);
 
     if (!set0_BitTable (a->bt, idx))
         Claim( false );
 
-    t->lgavails |= ((ujint) 1 << lgidx);
+    t->lgavails |= ((zuint) 1 << lgidx);
 
     if (idx + 1 < a->bt.sz)
     {
@@ -274,13 +274,13 @@ giveidx_LgTable (LgTable* t, ujint idx)
     -- t->sz;
     while (t->allocs.sz > 2 &&
            t->allocs.s[t->allocs.sz-1].bt.sz == 0 &&
-           t->sz <= 3 * ((ujint)1 << (t->allocs.sz - 3)))
+           t->sz <= 3 * ((zuint)1 << (t->allocs.sz - 3)))
     {
         a = TopTable( t->allocs );
         lose_LgTableAlloc (a);
         del_LgTableIntl (&t->intls);
         MPopTable( t->allocs, 1 );
-        t->lgavails ^= ((ujint) 1 << (t->allocs.sz));
+        t->lgavails ^= ((zuint) 1 << (t->allocs.sz));
     }
 }
 
@@ -295,28 +295,28 @@ give_LgTable (LgTable* t, void* el)
 }
 
 qual_inline
-    ujint
-nextidx_LgTable (const LgTable* t, ujint idx)
+    zuint
+nextidx_LgTable (const LgTable* t, zuint idx)
 {
-    ujintlg lgidx = lg_ujint (idx);
-    if (lgidx >= t->allocs.sz)  return Max_ujint;
-    if (lgidx > 0)  idx ^= ((ujint) 1 << lgidx);
+    bitint lgidx = lg_luint (idx);
+    if (lgidx >= t->allocs.sz)  return SIZE_MAX;
+    if (lgidx > 0)  idx ^= ((zuint) 1 << lgidx);
     idx = next_BitTable (t->allocs.s[lgidx].bt, idx);
 
-    while (idx == Max_ujint)
+    while (idx == SIZE_MAX)
     {
         ++lgidx;
         if (lgidx == t->allocs.sz)  break;
         idx = beg_BitTable (t->allocs.s[lgidx].bt);
     }
 
-    if (idx == Max_ujint)  return idx;
+    if (idx == SIZE_MAX)  return idx;
     if (lgidx == 0)  return idx;
-    return (idx ^ ((ujint) 1 << lgidx));
+    return (idx ^ ((zuint) 1 << lgidx));
 }
 
 qual_inline
-    ujint
+    zuint
 begidx_LgTable (const LgTable* t)
 {
     if (t->allocs.sz > 0)
@@ -326,11 +326,11 @@ begidx_LgTable (const LgTable* t)
             return 0;
         return nextidx_LgTable (t, 0);
     }
-    return Max_ujint;
+    return SIZE_MAX;
 }
 
 qual_inline
-  ujint
+  zuint
 allocsz_of_LgTable (const LgTable* t)
 {
   if (t->allocs.sz > 0)
@@ -340,7 +340,7 @@ allocsz_of_LgTable (const LgTable* t)
 
 qual_inline
   Bool
-endidx_ck_LgTable (const LgTable* t, ujint idx)
+endidx_ck_LgTable (const LgTable* t, zuint idx)
 {
   return (idx >= allocsz_of_LgTable (t));
 }

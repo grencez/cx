@@ -16,7 +16,7 @@ xget_chunk_fn_XFileB (XFile* xf);
 static bool
 oput_chunk_OFileB (OFileB* ofb);
 static void
-oputn_raw_byte_OFileB (OFileB* ofb, const byte* a, ujint n);
+oputn_raw_byte_OFileB (OFileB* ofb, const byte* a, zuint n);
 
 static void
 close_fn_XFileB (XFile* xf);
@@ -148,7 +148,7 @@ free_fn_OFileB (OFile* of)
 }
 
 static inline
-  ujint
+  zuint
 chunksz_OFileB (OFileB* ofb)
 {
   (void) ofb;
@@ -156,7 +156,7 @@ chunksz_OFileB (OFileB* ofb)
 }
 
 static inline
-  ujint
+  zuint
 chunksz_XFileB (XFileB* xfb)
 {
   (void) xfb;
@@ -164,10 +164,10 @@ chunksz_XFileB (XFileB* xfb)
 }
 
   byte*
-ensure_XFileB (XFileB* xfb, ujint n)
+ensure_XFileB (XFileB* xfb, zuint n)
 {
   XFile* const xf = &xfb->xf;
-  ujint sz = xf->buf.sz;
+  zuint sz = xf->buf.sz;
   if (nullt_FileB (&xfb->fb))
   {
     Claim2( 0 ,<, sz );
@@ -178,7 +178,7 @@ ensure_XFileB (XFileB* xfb, ujint n)
 }
 
   byte*
-ensure_OFileB (OFileB* ofb, ujint n)
+ensure_OFileB (OFileB* ofb, zuint n)
 {
   OFile* const of = &ofb->of;
   oput_chunk_OFileB (ofb);
@@ -382,7 +382,7 @@ xget_XFileB (XFileB* xfb)
   bool
 xget_chunk_XFileB (XFileB* xfb)
 {
-  const ujint chunksz = chunksz_XFileB (xfb);
+  const zuint chunksz = chunksz_XFileB (xfb);
   TableT(byte)* buf = &xfb->xf.buf;
   size_t n;
   byte* s;
@@ -554,10 +554,10 @@ op_FileB (XOFileB* xo, FileB_Op op, FileBOpArg* arg)
 #endif
 
   void
-oputn_raw_byte_OFileB (OFileB* ofb, const byte* a, ujint n)
+oputn_raw_byte_OFileB (OFileB* ofb, const byte* a, zuint n)
 {
   OFile* const of = &ofb->of;
-  const ujint ntotal = of->off + n;
+  const zuint ntotal = of->off + n;
   if (ntotal <= allocsz_Table ((Table*) &of->buf))
   {
     memcpy (&of->buf.s[of->off], a, n);
@@ -579,7 +579,7 @@ oputn_raw_byte_OFileB (OFileB* ofb, const byte* a, ujint n)
 }
 
     void
-oputn_byte_OFileB (OFileB* ofb, const byte* a, ujint n)
+oputn_byte_OFileB (OFileB* ofb, const byte* a, zuint n)
 {
     if (ofb->fb.fmt == FileB_Raw)
     {
@@ -624,14 +624,14 @@ xget_uint_XFileB (XFileB* xfb, uint* x)
 
 static
   bool
-xgetn_raw_byte_XFileB (XFileB* xfb, byte* a, ujint n)
+xgetn_raw_byte_XFileB (XFileB* xfb, byte* a, zuint n)
 {
   XFile* const xf = &xfb->xf;
   Claim2( xfb->fb.fmt ,==, FileB_Raw );
   flush_XFileB (xfb);
   while (n > 0)
   {
-    ujint m;
+    zuint m;
     if (xf->buf.sz == 0)
       xfb->fb.good = xget_chunk_XFileB (xfb);
     if (!xfb->fb.good)  return false;
@@ -646,7 +646,7 @@ xgetn_raw_byte_XFileB (XFileB* xfb, byte* a, ujint n)
 }
 
   bool
-xgetn_byte_XFileB (XFileB* xfb, byte* a, ujint n)
+xgetn_byte_XFileB (XFileB* xfb, byte* a, zuint n)
 {
   if (xfb->fb.fmt == FileB_Raw)
     return xgetn_raw_byte_XFileB (xfb, a, n);

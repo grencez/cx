@@ -17,7 +17,7 @@ qual_inline
   char*
 dup_cstr (const char* s)
 {
-  ujint n = strlen (s) + 1;
+  zuint n = strlen (s) + 1;
   char* dst;
   Duplic( dst, s, n );
   return dst;
@@ -98,7 +98,7 @@ dflt1_AlphaTab (const char* s)
 
 qual_inline
   AlphaTab
-dflt2_AlphaTab (const char* s, ujint sz)
+dflt2_AlphaTab (const char* s, zuint sz)
 {
   AlphaTab t = default;
   t.s = (char*) s;
@@ -113,7 +113,7 @@ qual_inline
     void
 cat_AlphaTab (AlphaTab* a, const AlphaTab* b)
 {
-    ujint n = b->sz;
+    zuint n = b->sz;
     if (n == 0)  return;
     if (!b->s[n-1])  -- n;
 
@@ -144,7 +144,7 @@ cat_cstr_AlphaTab (AlphaTab* t, const char* s)
 
 qual_inline
   void
-cat1_cstr_AlphaTab (AlphaTab* t, const char* s, ujint sz)
+cat1_cstr_AlphaTab (AlphaTab* t, const char* s, zuint sz)
 {
   const AlphaTab b = dflt2_AlphaTab (s, sz);
   cat_AlphaTab (t, &b);
@@ -155,7 +155,7 @@ qual_inline
     void
 tac_AlphaTab (AlphaTab* a, const AlphaTab* b)
 {
-    ujint n = b->sz;
+    zuint n = b->sz;
     if (n == 0)  return;
     if (!b->s[n-1])  -- n;
     if (n == 0)  return;
@@ -228,7 +228,7 @@ endc_ck_AlphaTab (AlphaTab* a, char c)
 
 qual_inline
   void
-trim_end_AlphaTab (AlphaTab* a, ujint capac)
+trim_end_AlphaTab (AlphaTab* a, zuint capac)
 {
   bool nullt = (a->sz > 0) && (a->s[a->sz-1] == '\0');
   if (capac == 0)  return;
@@ -275,9 +275,9 @@ empty_ck_AlphaTab (const AlphaTab* a)
 
 qual_inline
   void
-assign2_AlphaTab (AlphaTab* dst, const AlphaTab* src, ujint beg, ujint end)
+assign2_AlphaTab (AlphaTab* dst, const AlphaTab* src, zuint beg, zuint end)
 {
-  const ujint sz = (end - beg) - OneIf(beg!=end && src->s[end-1]=='\0');
+  const zuint sz = (end - beg) - OneIf(beg!=end && src->s[end-1]=='\0');
   if (sz == 0) {
     clear_AlphaTab (dst);
     return;
@@ -301,6 +301,8 @@ xget_uint_cstr (uint* ret, const char* in);
 char*
 xget_int_cstr (int* ret, const char* in);
 char*
+xget_luint_cstr (luint* ret, const char* in);
+char*
 xget_ujint_cstr (ujint* ret, const char* in);
 char*
 xget_real_cstr (real* ret, const char* in);
@@ -311,7 +313,7 @@ cmp_cstr_loc (const char* const* a, const char* const* b);
 void
 cat_uint_AlphaTab (AlphaTab* a, uint x);
 void
-cat_ujint_AlphaTab (AlphaTab* a, ujint x);
+cat_luint_AlphaTab (AlphaTab* a, luint x);
 void
 cat_int_AlphaTab (AlphaTab* a, int x);
 

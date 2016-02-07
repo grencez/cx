@@ -85,8 +85,8 @@ take_SespKind (SespKind* kind)
   void
 free_SespKind (SespKind* kind)
 {
-  for (ujint i = begidx_LgTable (&kind->cells);
-       i != Max_ujint;
+  for (zuint i = begidx_LgTable (&kind->cells);
+       i != SIZE_MAX;
        i = nextidx_LgTable (&kind->cells, i))
   {
     void* el = elt_LgTable (&kind->cells, i);

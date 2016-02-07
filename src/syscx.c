@@ -361,13 +361,13 @@ dup2_sysCx (fd_t oldfd, fd_t newfd)
     return (ret == 0);
 }
 
-    jint
-read_sysCx (fd_t fd, void* buf, jint sz)
+  long
+read_sysCx (fd_t fd, void* buf, long sz)
 {
 #ifdef POSIX_SOURCE
-    return read (fd, buf, sz);
+  return read (fd, buf, sz);
 #else
-    return _read (fd, buf, sz);
+  return _read (fd, buf, sz);
 #endif
 }
 
@@ -515,14 +515,14 @@ mktmppath_sysCx (AlphaTab* path)
   oput_char_OFile (of, '/');
   oput_AlphaTab (of, path);
   oput_char_OFile (of, '-');
-  oput_ujint_OFile (of, pid);
+  oput_luint_OFile (of, pid);
   oput_char_OFile (of, '-');
 
   path->sz = 0;
-  for (ujint i = 0; i < Max_ujint; ++i)
+  for (zuint i = 0; i < SIZE_MAX; ++i)
   {
-    ujint off = of->off;
-    oput_ujint_OFile (of, i);
+    zuint off = of->off;
+    oput_luint_OFile (of, i);
 
     if (mkdir_sysCx (cstr1_OFile (of, 0)))
     {

@@ -68,8 +68,8 @@ uint_URandom (URandom* urandom, uint n)
   return (uint) (n * (x * 2.328306e-10));
 #else
   /* May screw with the randomness.*/
-  const uint32 q = (Max_uint32 / n);
-  const uint32 m = Max_uint32 - (Max_uint32 % n);
+  const uint32 q = (UINT32_MAX / n);
+  const uint32 m = UINT32_MAX - (UINT32_MAX % n);
   uint32 x;
   do {
     x = uint32_URandom (a);
@@ -95,9 +95,9 @@ shuffle_uints_URandom (URandom* urandom, uint* a, uint n)
 randommod_sysCx(uint n)
 {
   const uint max = n-1;
-  FixDeclBitTable( bt, NBits_uint, 0 );
-  const uint nbits = lg_ujint (max) + 1;
-  const uint nbytes = ceil_quot(nbits, NBits_byte);
+  FixDeclBitTable( bt, BYTE_BIT, 0 );
+  const uint nbits = lg_luint (max) + 1;
+  const uint nbytes = ceil_quot(nbits, BYTE_BIT);
   uint x;
 
   do {

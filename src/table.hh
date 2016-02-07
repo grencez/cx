@@ -27,20 +27,20 @@ public:
   }
   Table(const Table<T>& a) {
     t = dflt1_Table (sizeof(T));
-    for (ujint i = 0; i < a.sz(); ++i) {
+    for (zuint i = 0; i < a.sz(); ++i) {
       this->push(a[i]);
     }
   }
   explicit Table(const std::vector<T>& a) {
     t = dflt1_Table (sizeof(T));
-    for (ujint i = 0; i < a.size(); ++i) {
+    for (zuint i = 0; i < a.size(); ++i) {
       this->push(a[i]);
     }
   }
   const Table<T>& operator=(const Table<T>& a) {
     if (this->sz() > a.sz())
       this->mpop(this->sz() - a.sz());
-    for (ujint  i = 0; i < this->sz(); ++i) {
+    for (zuint  i = 0; i < this->sz(); ++i) {
       (*this)[i] = a[i];
     }
     while (this->sz() < a.sz()) {
@@ -51,7 +51,7 @@ public:
   const Table<T>& operator=(const std::vector<T>& a) {
     if (this->sz() > a.size())
       this->mpop(this->sz() - a.size());
-    for (ujint  i = 0; i < this->sz(); ++i) {
+    for (zuint  i = 0; i < this->sz(); ++i) {
       (*this)[i] = a[i];
     }
     while (this->sz() < a.size()) {
@@ -60,93 +60,93 @@ public:
     return *this;
   }
   ~Table() {
-    for (ujint i = 0; i < t.sz; ++i)
+    for (zuint i = 0; i < t.sz; ++i)
       (*this)[i].~T();
     lose_Table (&t);
   }
 
-  explicit Table(ujint capac) {
+  explicit Table(zuint capac) {
     t = dflt1_Table (sizeof(T));
     this->grow(capac);
   }
-  Table(ujint capac, const T& e) {
+  Table(zuint capac, const T& e) {
     t = dflt1_Table (sizeof(T));
     this->grow(capac, e);
   }
 
-  ujint sz() const {
+  zuint sz() const {
     return t.sz;
   }
-  ujint size() const { return this->sz(); }
+  zuint size() const { return this->sz(); }
 
   bool empty_ck() const
   { return (t.sz == 0); }
 
-  void affy(ujint capac) {
-    ujint old_sz = this->sz();
-    for (ujint i = capac; i < old_sz; ++i)
+  void affy(zuint capac) {
+    zuint old_sz = this->sz();
+    for (zuint i = capac; i < old_sz; ++i)
       (*this)[i].~T();
     affy_Table (&t, capac);
   }
 
-  void affysz(ujint capac, const T& e = T()) {
-    ujint old_sz = this->sz();
-    for (ujint i = capac; i < old_sz; ++i)
+  void affysz(zuint capac, const T& e = T()) {
+    zuint old_sz = this->sz();
+    for (zuint i = capac; i < old_sz; ++i)
       (*this)[i].~T();
     affysz_Table (&t, capac);
-    for (ujint i = old_sz; i < t.sz; ++i) {
+    for (zuint i = old_sz; i < t.sz; ++i) {
       new (&(*this)[i]) T(e);
     }
   }
 
-  void grow(ujint capac, const T& e = T()) {
-    ujint old_sz = t.sz;
+  void grow(zuint capac, const T& e = T()) {
+    zuint old_sz = t.sz;
     grow_Table (&t, capac);
-    for (ujint i = old_sz; i < t.sz; ++i) {
+    for (zuint i = old_sz; i < t.sz; ++i) {
       new (&(*this)[i]) T(e);
     }
   }
 
-  void resize(ujint capac) {
-    ujint old_sz = this->sz();
-    for (ujint i = capac; i < old_sz; ++i)
+  void resize(zuint capac) {
+    zuint old_sz = this->sz();
+    for (zuint i = capac; i < old_sz; ++i)
       (*this)[i].~T();
     size_Table (&t, capac);
-    for (ujint i = old_sz; i < capac; ++i)
+    for (zuint i = old_sz; i < capac; ++i)
       new (&(*this)[i]) T();
   }
-  void ensize(ujint capac) {
-    ujint old_sz = this->sz();
-    for (ujint i = capac; i < old_sz; ++i)
+  void ensize(zuint capac) {
+    zuint old_sz = this->sz();
+    for (zuint i = capac; i < old_sz; ++i)
       (*this)[i].~T();
     ensize_Table (&t, capac);
-    for (ujint i = old_sz; i < capac; ++i)
+    for (zuint i = old_sz; i < capac; ++i)
       new (&(*this)[i]) T();
   }
   void wipe(const T& x) {
-    for (ujint i = 0; i < this->sz(); ++i) {
+    for (zuint i = 0; i < this->sz(); ++i) {
       (*this)[i] = x;
     }
   }
 
-  T& operator[](ujint i) {
+  T& operator[](zuint i) {
     return *(T*) elt_Table (&t, i);
   }
-  const T& operator[](ujint i) const {
+  const T& operator[](zuint i) const {
     return *(const T*) elt_Table ((C::Table*)&t, i);
   }
 
   T* operator+() { return (T*) t.s; }
   const T* operator+() const { return (const T*) t.s; }
 
-  ujint index_of(const T* e) const
+  zuint index_of(const T* e) const
   {
     return idxelt_Table(&t, e);
   }
 
   bool elem_ck(const T& e) const
   {
-    for (ujint i = 0; i < t.sz; ++i) {
+    for (zuint i = 0; i < t.sz; ++i) {
       if (e == (*this)[i])
         return true;
     }
@@ -167,13 +167,13 @@ public:
     this->push(x);
     return *this;
   }
-  void mpop(ujint n = 1) {
-    for (ujint i = this->sz() - n; i < this->sz(); ++i)
+  void mpop(zuint n = 1) {
+    for (zuint i = this->sz() - n; i < this->sz(); ++i)
       (*this)[i].~T();
     mpop_Table (&t, n);
   }
   void cpop(uint n = 1) {
-    for (ujint i = this->sz() - n; i < this->sz(); ++i)
+    for (zuint i = this->sz() - n; i < this->sz(); ++i)
       (*this)[i].~T();
     cpop_Table (&t, n);
   }
@@ -187,9 +187,9 @@ public:
 
   bool operator==(const Table<T>& b) const {
     const Table<T>& a = *this;
-    const ujint n = a.sz();
+    const zuint n = a.sz();
     if (n != b.sz())  return false;
-    for (ujint i = 0; i < n; ++i) {
+    for (zuint i = 0; i < n; ++i) {
       if (a[i] != b[i])  return false;
     }
     return true;
@@ -201,8 +201,8 @@ public:
   Sign cmp(const Table<T>& b) const
   {
     const Table<T>& a = *this;
-    const ujint n = (a.sz() <= b.sz()) ? a.sz() : b.sz();
-    for (ujint i = 0; i < n; ++i) {
+    const zuint n = (a.sz() <= b.sz()) ? a.sz() : b.sz();
+    for (zuint i = 0; i < n; ++i) {
       if (a[i] < b[i])  return -1;
       if (b[i] < a[i])  return  1;
     }
@@ -245,14 +245,14 @@ public:
     }
   }
   void reverse() {
-    ujint n = this->sz() / 2;
-    for (ujint i = 0; i < n; ++i)
+    zuint n = this->sz() / 2;
+    for (zuint i = 0; i < n; ++i)
       SwapT( T, (*this)[i], (*this)[this->sz()-1-i] );
   }
   bool remove(const T& e)
   {
-    ujint pos = 0;
-    for (ujint i = 0; i < this->sz(); ++i) {
+    zuint pos = 0;
+    for (zuint i = 0; i < this->sz(); ++i) {
       if ((*this)[i] != e) {
         if (pos != i) {
           (*this)[pos] = (*this)[i];
@@ -267,12 +267,12 @@ public:
     return false;
   }
   void clear() {
-    for (ujint i = 0; i < this->sz(); ++i)
+    for (zuint i = 0; i < this->sz(); ++i)
       (*this)[i].~T();
     clear_Table (&this->t);
   }
   Table<T>& flush() {
-    for (ujint i = 0; i < this->sz(); ++i)
+    for (zuint i = 0; i < this->sz(); ++i)
       (*this)[i].~T();
     flush_Table (&this->t);
     return *this;
@@ -287,9 +287,9 @@ public:
    */
   void add_domain(uint domsz) {
     Table<T>& state_map = *this;
-    const ujint n = state_map.sz();
+    const zuint n = state_map.sz();
     state_map.grow(n * (domsz-1));
-    for (ujint i = n; i > 0; --i) {
+    for (zuint i = n; i > 0; --i) {
       for (uint j = 0; j < domsz; ++j) {
         state_map[(i-1) * domsz + j] = state_map[i-1];
       }
@@ -299,7 +299,7 @@ public:
 };
 
 template <class T>
-  ujint
+  zuint
 sz_of (const Table<T>& t)
 {
   return t.sz();
@@ -307,13 +307,13 @@ sz_of (const Table<T>& t)
 
 inline
   void
-state_of_index (uint* state, ujint idx, const Table<uint>& doms)
+state_of_index (uint* state, zuint idx, const Table<uint>& doms)
 {
   ::state_of_index (state, idx, &doms[0], doms.sz());
 }
 
 inline
-  ujint
+  zuint
 index_of_state (const uint* state, const Table<uint>& doms)
 {
   return ::index_of_state (state, &doms[0], doms.sz());

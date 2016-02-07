@@ -35,11 +35,11 @@ public:
     return *v;
   }
 
-  ujint sz() const { return this->size(); }
+  zuint sz() const { return this->size(); }
 };
 
 template <class K, class V>
-  ujint
+  zuint
 sz_of(const Map<K,V>& m)
 {
   return m.sz();

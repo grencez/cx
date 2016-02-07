@@ -88,7 +88,7 @@ claim_TNode (BSTNode* x, void* args)
     }
     {:if (!x->split[0] || !x->split[1])
         uint c = countup_black_RBTNode (b);
-        if (*nblack == Max_uint)
+        if (*nblack == UINT_MAX)
             *nblack = c;
         else
             Claim2( *nblack ,==, c );
@@ -100,7 +100,7 @@ static
 claim_BSTree (BSTree* t, uint n_expect)
 {
     uint n_result;
-    uint nblack = Max_uint;
+    uint nblack = UINT_MAX;
     void* args[2];
     args[0] = &n_result;
     args[1] = &nblack;
@@ -298,7 +298,7 @@ testfn_BitTable ()
   }
 
   {
-    const uint idx = NBits_uint - 2;
+    const uint idx = INT_BIT - 2;
     const uint x = 100;
     set_uint_BitTable(bt, idx, 5, 100);
     Claim2( x & 7        ,==, get_uint_BitTable(bt, idx  , 3) );
@@ -446,51 +446,51 @@ testfn_skipws_FileB ()
     void
 testfn_LgTable ()
 {
-    DecloStack1( LgTable, lgt, dflt1_LgTable (sizeof (int)) );
-    ujint idx;
-    ujint n = 40;
+  DecloStack1( LgTable, lgt, dflt1_LgTable (sizeof (int)) );
+  zuint idx;
+  zuint n = 40;
 
-    Claim2( 4 ,==, msb_ujint (4) );
-    Claim2( 4 ,==, msb_ujint (5) );
-    Claim2( 8 ,==, msb_ujint (13) );
+  Claim2( 4 ,==, msb_luint (4) );
+  Claim2( 4 ,==, msb_luint (5) );
+  Claim2( 8 ,==, msb_luint (13) );
 
-    Claim2( 0 ,==, lg_ujint (0) );
-    Claim2( 0 ,==, lg_ujint (1) );
-    Claim2( 1 ,==, lg_ujint (2) );
-    Claim2( 1 ,==, lg_ujint (3) );
-    Claim2( 2 ,==, lg_ujint (4) );
-    Claim2( 2 ,==, lg_ujint (4) );
+  Claim2( 0 ,==, lg_luint (0) );
+  Claim2( 0 ,==, lg_luint (1) );
+  Claim2( 1 ,==, lg_luint (2) );
+  Claim2( 1 ,==, lg_luint (3) );
+  Claim2( 2 ,==, lg_luint (4) );
+  Claim2( 2 ,==, lg_luint (4) );
 
-    {:for (i ; n)
-        int* el = (int*) take_LgTable (lgt);
-        *el = - (int) i;
-        idx = idxelt_LgTable (lgt, el);
-        Claim2( idx ,==, i );
-    }
+  {:for (i ; n)
+    int* el = (int*) take_LgTable (lgt);
+    *el = - (int) i;
+    idx = idxelt_LgTable (lgt, el);
+    Claim2( idx ,==, i );
+  }
 
-    giveidx_LgTable (lgt, 1);
-    idx = takeidx_LgTable (lgt);
-    Claim2( idx ,==, 1 );
+  giveidx_LgTable (lgt, 1);
+  idx = takeidx_LgTable (lgt);
+  Claim2( idx ,==, 1 );
 
-    giveidx_LgTable (lgt, 0);
-    idx = takeidx_LgTable (lgt);
-    Claim2( idx ,==, 0 );
+  giveidx_LgTable (lgt, 0);
+  idx = takeidx_LgTable (lgt);
+  Claim2( idx ,==, 0 );
 
-    giveidx_LgTable (lgt, 5);
-    idx = takeidx_LgTable (lgt);
-    Claim2( idx ,==, 5 );
+  giveidx_LgTable (lgt, 5);
+  idx = takeidx_LgTable (lgt);
+  Claim2( idx ,==, 5 );
 
-    giveidx_LgTable (lgt, 7);
-    idx = takeidx_LgTable (lgt);
-    Claim2( idx ,==, 7 );
+  giveidx_LgTable (lgt, 7);
+  idx = takeidx_LgTable (lgt);
+  Claim2( idx ,==, 7 );
 
-    {:for (i ; n)
-        ujint sz = n-i;
-        Claim2( lgt->allocs.sz ,<=, (ujint) lg_ujint (sz) + 2 );
-        giveidx_LgTable (lgt, sz-1);
-    }
+  {:for (i ; n)
+    zuint sz = n-i;
+    Claim2( lgt->allocs.sz ,<=, (zuint) lg_luint (sz) + 2 );
+    giveidx_LgTable (lgt, sz-1);
+  }
 
-    lose_LgTable (lgt);
+  lose_LgTable (lgt);
 }
 
 /** \test
@@ -627,8 +627,8 @@ static
     void
 claim_allocsz_Table (Table* t)
 {
-    const ujint sz = t->sz;
-    const ujint allocsz = allocsz_Table (t);
+    const zuint sz = t->sz;
+    const zuint allocsz = allocsz_Table (t);
 
     Claim2( sz ,<=, allocsz );
     Claim2( sz ,>=, allocsz / 4 );

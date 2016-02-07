@@ -14,20 +14,24 @@
 typedef int Bit;
 //enum Trit { Nil = -1, Yes = 1, May = 0 };
 enum Trit { Nil = 0, Yes = 1, May = 2 };
-typedef char Sign;
-typedef char Bool;
-#define MPI_Bool MPI_CHAR
-
 typedef enum Trit Trit;
+
+
+typedef int_fast8_t sign_t;
+typedef sign_t Sign;
+
 /** Type of function which compares two objects.
  * Return values should conform to:
  *  -1: lhs < rhs
  *   0: lhs == rhs
  *  +1: lhs > rhs
  **/
-typedef Sign (* PosetCmpFn) (const void*, const void*);
+typedef sign_t (* PosetCmpFn) (const void*, const void*);
 
-    /** Define bool.**/
+typedef char Bool;
+#define MPI_Bool MPI_CHAR
+
+/** Define bool.**/
 #if !defined(__cplusplus) && !defined(__OPENCL_VERSION__)
 typedef char bool;
 #define true 1
@@ -35,43 +39,44 @@ typedef char bool;
 #endif
 
 typedef unsigned char byte;
-#define NBitsInByte 8
-#define NBits_byte 8
-#define Max_byte ((byte)0xFF)
+#define BYTE_BIT CHAR_BIT
+#define BYTE_MAX UCHAR_MAX
 
 #if !defined(__OPENCL_VERSION__)
 typedef unsigned int uint;
 #endif  /* #ifndef __OPENCL_VERSION__ */
-#define Max_uint UINT_MAX
-#define NBits_uint (NBits_byte*sizeof(uint))
+#ifndef INT_BIT
+#define INT_BIT (BYTE_BIT * sizeof(int))
+#endif
 
-typedef long int jint;
-typedef unsigned long int ujint;
-#define Max_ujint (~(ujint)0)
-typedef byte ujintlg;
-#define NBits_ujint (NBits_byte*sizeof(ujint))
-#define Max_ujintlg  Max_byte
-#define MaxCk_ujintlg(x)  ((x) == Max_byte)
+typedef size_t zuint;
+#ifndef SIZE_BIT
+#define SIZE_BIT (BYTE_BIT * sizeof(size_t))
+#endif
+
+typedef byte bitint;
+#define BITINT_MAX BYTE_MAX
+
+typedef unsigned long int luint;
+typedef unsigned long int ulong;
+#ifndef LONG_BIT
+#define LONG_BIT (BYTE_BIT * sizeof(long))
+#endif
+
+typedef zuint ujint;
+typedef bitint ujintlg;
 
 #if !defined(__OPENCL_VERSION__)
 typedef struct uint2 uint2;
 struct uint2 { uint s[2]; };
 #endif  /* #ifndef __OPENCL_VERSION__ */
 typedef struct ujint2 ujint2;
-struct ujint2 { ujint s[2]; };
+struct ujint2 { zuint s[2]; };
 
 #ifndef uint32
 /* #define uint32 uint */
 #define uint32 uint32_t
 #endif
-#ifndef Max_uint32
-#define Max_uint32 ((uint32)0xFFFFFFFFu)
-#endif
-
-#ifndef Max_uint16
-#define Max_uint16 (65535u)
-#endif
-
 
 #if 0
 typedef double real;
@@ -81,6 +86,11 @@ typedef double real;
 #define Epsilon_real DBL_EPSILON
 #define realPackSz 2
 #define GL_REAL GL_DOUBLE
+
+#define REAL_MAX DBL_MAX
+#define REAL_MIN (-DBL_MAX)
+#define REAL_SMALL DBL_MIN
+#define REAL_EPSILON DBL_EPSILON
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -94,6 +104,12 @@ typedef float real;
 #define Min_real (-FLT_MAX)
 #define Small_real FLT_MIN
 #define Epsilon_real FLT_EPSILON
+
+#define REAL_MAX FLT_MAX
+#define REAL_MIN (-FLT_MAX)
+#define REAL_SMALL FLT_MIN
+#define REAL_EPSILON FLT_EPSILON
+
 #define realPackSz 4
 #define GL_REAL GL_FLOAT
 

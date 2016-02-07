@@ -51,7 +51,7 @@ public:
     lose_Associa (&map);
   }
 
-  ujint sz() const { return map.nodes.sz; }
+  zuint sz() const { return map.nodes.sz; }
 
   V* lookup(const K& key)
   {
@@ -71,7 +71,7 @@ public:
 };
 
 template <class K, class V>
-  ujint
+  zuint
 sz_of(const Map<K,V>& m)
 {
   return m.sz();

@@ -12,8 +12,8 @@
  * should be applied to ensure overflowing sums are truncated.
  * But uint32_t should be 32 bits.
  **/
-#define MASK32(x)  (Max_uint32 & (x))
-#define MASK16(x)  (Max_uint16 & (x))
+#define MASK32(x)  (UINT32_MAX & (x))
+#define MASK16(x)  (UINT16_MAX & (x))
 
 
 

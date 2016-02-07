@@ -62,7 +62,7 @@ public:
   void clear() { clear_AlphaTab (&t); }
   void flush() { flush_AlphaTab (&t); }
 
-  ujint sz() const {
+  zuint sz() const {
     return t.sz;
   }
   bool operator!() const {
@@ -107,15 +107,15 @@ public:
     return a;
   }
 
-  AlphaTab& operator<<(ujint x) {
-    cat_ujint_AlphaTab (&t, x);
+  AlphaTab& operator<<(zuint x) {
+    cat_luint_AlphaTab (&t, x);
     return *this;
   }
-  const AlphaTab& operator=(ujint x) {
+  const AlphaTab& operator=(zuint x) {
     clear_AlphaTab (&t);
     return (*this) << x;
   }
-  AlphaTab operator+(ujint x) const {
+  AlphaTab operator+(zuint x) const {
     AlphaTab a( *this );
     a << x;
     return a;

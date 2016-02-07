@@ -13,11 +13,11 @@ itoa_dup_cstr (int x)
   char*
 xget_uint_cstr (uint* ret, const char* in)
 {
-  ujint x = 0;
+  zuint x = 0;
   char* s =
     xget_ujint_cstr (&x, in);
   if (!s)  return 0;
-  if (x > Max_uint)  return 0;
+  if (x > UINT_MAX)  return 0;
   *ret = x;
   return s;
 }
@@ -42,7 +42,7 @@ xget_int_cstr (int* ret, const char* in)
 }
 
   char*
-xget_ujint_cstr (ujint* ret, const char* in)
+xget_luint_cstr (luint* ret, const char* in)
 {
   unsigned long v;
   char* out = 0;
@@ -54,11 +54,13 @@ xget_ujint_cstr (ujint* ret, const char* in)
   if (out == in)  out = 0;
   if (out)
   {
-    *ret = (ujint) v;
+    *ret = (zuint) v;
     if (*ret != v)  out = 0;
   }
   return out;
 }
+
+char* xget_ujint_cstr (ujint* ret, const char* in) { return xget_luint_cstr (ret, in); }
 
   char*
 xget_real_cstr (real* ret, const char* in)
@@ -78,8 +80,8 @@ xget_real_cstr (real* ret, const char* in)
   Sign
 cmp_AlphaTab (const AlphaTab* a, const AlphaTab* b)
 {
-  ujint na = a->sz;
-  ujint nb = b->sz;
+  zuint na = a->sz;
+  zuint nb = b->sz;
   int ret;
   if (na > 0 && !a->s[na-1])  --na;
   if (nb > 0 && !b->s[nb-1])  --nb;
@@ -114,7 +116,7 @@ cat_uint_AlphaTab (AlphaTab* a, uint x)
 }
 
   void
-cat_ujint_AlphaTab (AlphaTab* a, ujint x)
+cat_luint_AlphaTab (AlphaTab* a, luint x)
 {
   char buf[50];
   (void) sprintf(buf, "%lu", x);

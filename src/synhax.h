@@ -19,7 +19,7 @@
  * cast the resulting memory address to a pointer of some type.
  */
 #define CastOff( T, p ,op, off ) \
-  ((T*) ((size_t) (p) op (ptrdiff_t) (off)))
+  ((T*) ((uintptr_t) (p) op (ptrdiff_t) (off)))
 
 /** Call a virtual function.**/
 #define VTCall(vt,pfx,fn,sfx) \
@@ -39,16 +39,16 @@ do { \
   CastOff( T, p ,-, offsetof( T, field ) )
 
 #define EltZ( a, idx, elsz ) \
-    ((void*) ((size_t) a + (size_t) ((idx) * (elsz))))
+    ((void*) ((uintptr_t) a + (uintptr_t) ((idx) * (elsz))))
 
 #define Elt( a, idx )  (&(a)[idx])
 
 #define EltInZ( a, e, n, elsz ) \
-    (((size_t) (a) <= (size_t) (e)) && \
-     ((size_t) (e) < ((size_t) (a) + (n * elsz))))
+    (((uintptr_t) (a) <= (uintptr_t) (e)) && \
+     ((uintptr_t) (e) < ((uintptr_t) (a) + (n * elsz))))
 
 #define IdxEltZ( a, e, elsz ) \
-    ((size_t) ((size_t) (e) - (size_t) (a)) / (elsz))
+    ((size_t) ((uintptr_t) (e) - (uintptr_t) (a)) / (elsz))
 
 #define IdxElt( a, e ) \
     IdxEltZ( a, e, sizeof(*a) )
@@ -203,7 +203,7 @@ dflt3_PosetCmp (ptrdiff_t node_offset, ptrdiff_t key_offset, PosetCmpFn fn)
 }
 
 qual_inline
-  Sign
+  sign_t
 poset_cmp (PosetCmp cmp, const void* a, const void* b)
 {
   return cmp.fn ((const void*) (cmp.off + (ptrdiff_t)a),
@@ -211,7 +211,7 @@ poset_cmp (PosetCmp cmp, const void* a, const void* b)
 }
 
 qual_inline
-  Sign
+  sign_t
 poset_cmp_lhs (PosetCmp cmp, const void* a, const void* b)
 {
   return cmp.fn (a, (const void*) (cmp.off + (ptrdiff_t)b));
@@ -251,7 +251,8 @@ dbglog_printf3 (const char* file,
 #define DBog4(s,a,b,c,d)  dbglog_printf3 (__FILE__,__FUNC__,__LINE__,s,a,b,c,d)
 #define DBog5(s,a,b,c,d,e)  dbglog_printf3 (__FILE__,__FUNC__,__LINE__,s,a,b,c,d,e)
 #define DBog0(s)  DBog1("%s",s)
-#define DBog_ujint(x)  DBog2( "%s:%lu", #x, (ujint)(x) )
+#define DBog_ujint(x)  DBog2( "%s:%lu", #x, (luint)(x) )
+#define DBog_luint(x)  DBog2( "%s:%lu", #x, (luint)(x) )
 
 #define BailOut( ret, msg ) \
 do \
@@ -297,7 +298,7 @@ do { \
 } while (0)
 
 
-#define DeclLegit(good) Sign good = 1; Sign* const DoLegit_vbl = &good
+#define DeclLegit(good) sign_t good = 1; sign_t* const DoLegit_vbl = &good
 
 #define DoLegit3(p, good, msg) \
   for (good = good ? -1 : 0; \

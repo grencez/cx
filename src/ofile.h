@@ -13,8 +13,8 @@ typedef struct OFileVT OFileVT;
 struct OFile
 {
   TableT(byte) buf;
-  ujint off;
-  ujint flushsz;
+  zuint off;
+  zuint flushsz;
   bool mayflush;
   const OFileVT* vt;
   OFileCtx* ctx;
@@ -36,12 +36,12 @@ struct OFileVT
 
   void (*oput_int_fn) (OFile*, int);
   void (*oput_uint_fn) (OFile*, uint);
-  void (*oput_ujint_fn) (OFile*, ujint);
+  void (*oput_luint_fn) (OFile*, luint);
   void (*oput_real_fn) (OFile*, real);
   void (*oput_char_fn) (OFile*, char);
   void (*oput_AlphaTab_fn) (OFile*, const AlphaTab*);
   void (*vprintf_fn) (OFile*, const char*, va_list);
-  void (*oputn_char_fn) (OFile*, const char*, ujint);
+  void (*oputn_char_fn) (OFile*, const char*, zuint);
 };
 #define DEFAULT3_OFileVT(flush_fn, close_fn, free_fn) \
 { flush_fn, close_fn, free_fn, \
@@ -65,6 +65,8 @@ oput_int_OFile (OFile* of, int x);
 void
 oput_uint_OFile (OFile* of, uint x);
 void
+oput_luint_OFile (OFile* of, luint x);
+void
 oput_ujint_OFile (OFile* of, ujint x);
 void
 oput_real_OFile (OFile* of, real x);
@@ -79,7 +81,7 @@ vprintf_OFile (OFile* of, const char* fmt, va_list args);
 void
 printf_OFile (OFile* of, const char* fmt, ...);
 void
-oputn_char_OFile (OFile* of, const char* a, ujint n);
+oputn_char_OFile (OFile* of, const char* a, zuint n);
 
 /* Implemented in syscx.c */
 OFile* stdout_OFile ();
@@ -134,7 +136,7 @@ oput_cstr_OFile (OFile* of, const char* s)
 
 qual_inline
   const char*
-ccstr1_of_OFile (const OFile* of, ujint off)
+ccstr1_of_OFile (const OFile* of, zuint off)
 { return (char*) &of->buf.s[off]; }
 
 qual_inline
@@ -144,7 +146,7 @@ ccstr_of_OFile (const OFile* of)
 
 qual_inline
   char*
-cstr1_OFile (OFile* f, ujint off)
+cstr1_OFile (OFile* f, zuint off)
 { return (char*) &f->buf.s[off]; }
 
 qual_inline
@@ -154,7 +156,7 @@ cstr_OFile (OFile* of)
 
 qual_inline
   AlphaTab
-AlphaTab_OFile (OFile* of, ujint off)
+AlphaTab_OFile (OFile* of, zuint off)
 {
   AlphaTab t = default;
   t.s = (char*) &of->buf.s[off];
@@ -168,7 +170,7 @@ AlphaTab_OFile (OFile* of, ujint off)
  **/
 qual_inline
   AlphaTab
-window2_OFile (OFile* ofile, ujint beg, ujint end)
+window2_OFile (OFile* ofile, zuint beg, ujint end)
 {
   AlphaTab t = default;
   Claim2( beg ,<=, end );

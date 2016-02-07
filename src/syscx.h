@@ -64,8 +64,8 @@ fd_t
 dup_sysCx (fd_t fd);
 bool
 dup2_sysCx (fd_t oldfd, fd_t newfd);
-jint
-read_sysCx (fd_t fd, void* buf, jint sz);
+long
+read_sysCx (fd_t fd, void* buf, long sz);
 bool
 closefd_sysCx (fd_t fd);
 FILE*

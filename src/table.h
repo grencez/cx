@@ -11,8 +11,7 @@
 #include <string.h>
 #endif  /* #ifndef __OPENCL_VERSION__ */
 
-typedef ujintlg TableLgSz;
-typedef unsigned short TableElSz;
+typedef unsigned int TableElSz;
 
 #define TableT( S )  TableT_##S
 #define TableElT( S )  TableElT_##S
@@ -21,18 +20,18 @@ typedef struct Table Table;
 struct Table
 {
     void* s;
-    ujint sz;
+    zuint sz;
     TableElSz elsz;
-    TableLgSz alloc_lgsz;
+    bitint alloc_lgsz;
 };
 
 typedef struct ConstTable ConstTable;
 struct ConstTable
 {
     const void* s;
-    ujint sz;
+    zuint sz;
     TableElSz elsz;
-    TableLgSz alloc_lgsz;
+    bitint alloc_lgsz;
 };
 
 #define DeclTableT( S, T ) \
@@ -40,15 +39,15 @@ struct ConstTable
     typedef T TableElT_##S; \
     struct TableT_##S { \
         TableElT_##S* s; \
-        ujint sz; \
-        TableLgSz alloc_lgsz; \
+        zuint sz; \
+        bitint alloc_lgsz; \
     }
 
 #define FixTableT( S, N ) \
     struct { \
         TableElT_##S s[N]; \
-        ujint sz; \
-        TableLgSz alloc_lgsz; \
+        zuint sz; \
+        bitint alloc_lgsz; \
     }
 
 #define DeclTableT_MemLoc
@@ -65,6 +64,10 @@ DeclTableT( const_cstr, const char* );
 DeclTableT( int, int );
 #define DeclTableT_uint
 DeclTableT( uint, uint );
+#define DeclTableT_zuint
+DeclTableT( zuint, zuint );
+#define DeclTableT_luint
+DeclTableT( luint, luint );
 #define DeclTableT_ujint
 DeclTableT( ujint, ujint );
 #define DeclTableT_uint2
@@ -77,7 +80,7 @@ DeclTableT( TableT_uint, TableT(uint) );
 
 qual_inline
     Table
-dflt4_Table (void* s, ujint sz, TableElSz elsz, TableLgSz alloc_lgsz)
+dflt4_Table (void* s, zuint sz, TableElSz elsz, bitint alloc_lgsz)
 {
     Table t;
     t.s = s;
@@ -103,8 +106,8 @@ dflt1_Table (TableElSz elsz)
 
 qual_inline
     ConstTable
-dflt4_ConstTable (const void* s, ujint sz,
-                  TableElSz elsz, TableLgSz alloc_lgsz)
+dflt4_ConstTable (const void* s, zuint sz,
+                  TableElSz elsz, bitint alloc_lgsz)
 {
     ConstTable t;
     t.s = s;
@@ -160,7 +163,7 @@ init_z_Table (Table* t, TableElSz elsz)
 #define InitFixTable( t )  do \
 { \
     (t).sz = 0; \
-    (t).alloc_lgsz = Max_ujintlg; \
+    (t).alloc_lgsz = BITINT_MAX; \
 } while (0)
 
 #ifndef __OPENCL_VERSION__
@@ -168,7 +171,7 @@ qual_inline
     void
 lose_Table (Table* t)
 {
-    if (t->alloc_lgsz > 0 && !MaxCk_ujintlg( t->alloc_lgsz ))
+    if (t->alloc_lgsz > 0 && t->alloc_lgsz != BITINT_MAX)
         free (t->s);
 }
 #define LoseTable( t )  do \
@@ -179,9 +182,9 @@ lose_Table (Table* t)
 #endif  /* #ifndef __OPENCL_VERSION__ */
 
 #define AllocszTable( t ) \
-    ((t).alloc_lgsz == 0 ? 0 : (ujint)1 << ((t).alloc_lgsz - 1))
+    ((t).alloc_lgsz == 0 ? 0 : (zuint)1 << ((t).alloc_lgsz - 1))
 qual_inline
-    ujint
+    zuint
 allocsz_Table (const Table* t)
 {
     return AllocszTable( *t );
@@ -189,7 +192,7 @@ allocsz_Table (const Table* t)
 
 qual_inline
     void*
-elt_Table (Table* t, ujint idx)
+elt_Table (Table* t, zuint idx)
 {
     return EltZ( t->s, idx, t->elsz );
 }
@@ -197,34 +200,34 @@ elt_Table (Table* t, ujint idx)
     TableElT_##S* const x = Elt( (t).s, idx )
 
 qual_inline
-    ujint
+    zuint
 idxelt_Table (const Table* t, const void* el)
 {
-    return (ujint) IdxEltZ( t->s, el, t->elsz );
+    return (zuint) IdxEltZ( t->s, el, t->elsz );
 }
 #define IdxEltTable( t, el ) \
-    (ujint) IdxEltZ( (t).s, el, sizeof(*(t).s) )
+    (zuint) IdxEltZ( (t).s, el, sizeof(*(t).s) )
 
 
 #ifndef __OPENCL_VERSION__
 qual_inline
     void
-grow_Table (Table* t, ujint capac)
+grow_Table (Table* t, zuint capac)
 {
     t->sz += capac;
-    if (MaxCk_ujintlg( t->alloc_lgsz ))
+    if (t->alloc_lgsz == BITINT_MAX)
     {
         // This allocation is fixed.
         return;
     }
-    if ((t->sz << 1) > ((ujint)1 << t->alloc_lgsz))
+    if ((t->sz << 1) > ((zuint)1 << t->alloc_lgsz))
     {
         if (t->alloc_lgsz == 0)
         {
             t->s = 0;
             t->alloc_lgsz = 1;
         }
-        while (t->sz > ((ujint)1 << t->alloc_lgsz))
+        while (t->sz > ((zuint)1 << t->alloc_lgsz))
             t->alloc_lgsz += 1;
 
         t->alloc_lgsz += 1;
@@ -241,10 +244,10 @@ grow_Table (Table* t, ujint capac)
 
 qual_inline
     void
-mpop_Table (Table* t, ujint capac)
+mpop_Table (Table* t, zuint capac)
 {
     t->sz -= capac;
-    if (MaxCk_ujintlg( t->alloc_lgsz ))
+    if (t->alloc_lgsz == BITINT_MAX)
     {
         // This allocation is fixed.
         return;
@@ -269,7 +272,7 @@ mpop_Table (Table* t, ujint capac)
 /**! Pop table without deallocation.**/
 qual_inline
   void
-cpop_Table (Table* t, ujint n)
+cpop_Table (Table* t, zuint n)
 {
   t->sz -= n;
 }
@@ -308,8 +311,8 @@ grow1_Table (Table* t)
     /** Don't use this... It's a hack for the Grow1Table() macro.**/
 qual_inline
     void
-synhax_grow1_Table (void* ps, void* s, ujint* sz,
-                    TableElSz elsz, TableLgSz* alloc_lgsz)
+synhax_grow1_Table (void* ps, void* s, zuint* sz,
+                    TableElSz elsz, bitint* alloc_lgsz)
 {
     Table t = dflt4_Table (s, *sz, elsz, *alloc_lgsz);
     grow1_Table (&t);
@@ -329,7 +332,7 @@ synhax_grow1_Table (void* ps, void* s, ujint* sz,
 
 qual_inline
   void
-resize_Table (Table* t, ujint capac)
+resize_Table (Table* t, zuint capac)
 {
   if (t->sz <= capac)  grow_Table (t, capac - t->sz);
   else                 mpop_Table (t, t->sz - capac);
@@ -343,14 +346,14 @@ resize_Table (Table* t, ujint capac)
 
 qual_inline
   void
-size_Table (Table* t, ujint capac)
+size_Table (Table* t, zuint capac)
 { resize_Table (t, capac); }
 #define SizeTable( t, capac )  ResizeTable(t, capac)
 
     /** Never downsize.**/
 qual_inline
     void
-ensize_Table (Table* t, ujint capac)
+ensize_Table (Table* t, zuint capac)
 {
     if (t->sz < capac)
         grow_Table (t, capac - t->sz);
@@ -370,7 +373,7 @@ qual_inline
 pack_Table (Table* t)
 {
   if (t->alloc_lgsz > 0 &&
-      (t->sz << 1) < ((ujint) 1 << t->alloc_lgsz))
+      (t->sz << 1) < ((zuint) 1 << t->alloc_lgsz))
   {
     if (t->sz == 0)
     {
@@ -381,7 +384,7 @@ pack_Table (Table* t)
     else
     {
       t->s = realloc (t->s, t->sz * t->elsz);
-      while ((t->sz << 1) < ((ujint) 1 << t->alloc_lgsz))
+      while ((t->sz << 1) < ((zuint) 1 << t->alloc_lgsz))
         t->alloc_lgsz -= 1;
     }
   }
@@ -395,18 +398,18 @@ pack_Table (Table* t)
 
 qual_inline
   void
-affy_Table (Table* t, ujint capac)
+affy_Table (Table* t, zuint capac)
 {
   if (t->alloc_lgsz > 0) {
     t->s = realloc (t->s, t->elsz * capac);
-    t->alloc_lgsz = NBits_ujint - 1;
+    t->alloc_lgsz = SIZE_BIT - 1;
   }
   else if (t->sz < capac) {
     const void* s = t->s;
     t->s = malloc (t->elsz * capac);
     if (t->sz > 0)
       memcpy (t->s, s, t->elsz * t->sz);
-    t->alloc_lgsz = NBits_ujint - 1;
+    t->alloc_lgsz = SIZE_BIT - 1;
   }
 }
 #define AffyTable( t, capac )  do \
@@ -418,7 +421,7 @@ affy_Table (Table* t, ujint capac)
 
 qual_inline
   void
-affysz_Table (Table* t, ujint sz)
+affysz_Table (Table* t, zuint sz)
 {
   affy_Table (t, sz);
   t->sz = sz;
@@ -463,7 +466,7 @@ qual_inline
   void
 cat_Table (Table* a, const Table* b)
 {
-  ujint off = a->sz;
+  zuint off = a->sz;
   if (b->sz == 0)  return;
   grow_Table (a, b->sz);
   Claim( a->elsz == b->elsz );
@@ -474,7 +477,7 @@ qual_inline
   void
 cat_const_Table (Table* a, const ConstTable* b)
 {
-  ujint off = a->sz;
+  zuint off = a->sz;
   if (b->sz == 0)  return;
   grow_Table (a, b->sz);
   Claim( a->elsz == b->elsz );
@@ -510,7 +513,7 @@ flush_Table (Table* a)
 
 qual_inline
   void
-state_of_index (uint* state, ujint idx, const uint* doms, uint n)
+state_of_index (uint* state, zuint idx, const uint* doms, uint n)
 {
   for (uint i = n; i > 0; --i) {
     state[i-1] = idx % doms[i-1];
@@ -519,10 +522,10 @@ state_of_index (uint* state, ujint idx, const uint* doms, uint n)
 }
 
 qual_inline
-  ujint
+  zuint
 index_of_state (const uint* state, const uint* doms, uint n)
 {
-  ujint idx = 0;
+  zuint idx = 0;
   for (uint i = 0; i < n; ++i) {
     idx *= doms[i];
     idx += state[i];
