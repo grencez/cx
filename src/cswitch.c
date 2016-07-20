@@ -142,7 +142,7 @@ write_escaped_char (FILE* out, char c)
     fputs ("\\t", out);
     break;
   default:
-    fprintf(out, "\\X%02X", (unsigned int) (unsigned char) c);
+    fprintf(out, "\\x%02X", (unsigned int) (unsigned char) c);
     break;
   }
 }
