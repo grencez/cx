@@ -1,6 +1,5 @@
 
 /**
- * This public domain code serves to:
  * Compare a file with the output of a command.
  *
  * Usage example:

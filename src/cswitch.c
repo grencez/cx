@@ -1,5 +1,4 @@
 /**
- * This public domain code serves to:
  * Make a switch statement on strings.
  *
  * Usage example:

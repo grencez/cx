@@ -1,9 +1,22 @@
 
-#include "rng.h"
 #include "bittable.h"
+#include "urandom.h"
 
+/** If our uint32 type is more than 32 bits, then this mask
+ * should be applied to ensure overflowing sums are truncated.
+ * But uint32_t should be 32 bits, so it isn't used.
+ **/
+#define MASK32(x)  (UINT32_MAX & (x))
+#define MASK16(x)  (UINT16_MAX & (x))
 
+#include "thirdparty/rng-GeorgeMarsaglia.c"
+
+#include "thirdparty/hash-ThomasWang.c"
 #define uint32_hash uint32_hash_ThomasWang
+
+#include "thirdparty/rng-ChrisLomont.c"
+
+
 
   void
 init2_seeded_URandom (URandom* urandom, uint pcidx, uint npcs)

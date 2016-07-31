@@ -1,5 +1,5 @@
 
-#include "notpub/getRSS.c"
+#include "thirdparty/resource-usage-DavidRobertNadeau.c"
 
   size_t
 peak_memory_use_sysCx ()

@@ -30,11 +30,13 @@ list (APPEND CxHFiles
 	associa.h
 	bittable.h
 	def.h
-	rng.h
 	lgtable.h
 	synhax.h
 	table.h
-  notpub/getRSS.c
+  thirdparty/hash-ThomasWang.c
+  thirdparty/resource-usage-DavidRobertNadeau.c
+  thirdparty/rng-ChrisLomont.c
+  thirdparty/rng-GeorgeMarsaglia.c
   )
 
 list (APPEND CxHHFiles
@@ -213,7 +215,7 @@ include_directories (${PfxBldPath})
 
 file (MAKE_DIRECTORY ${PfxBldPath})
 file (MAKE_DIRECTORY ${CxBldPath})
-file (MAKE_DIRECTORY ${CxBldPath}/notpub)
+file (MAKE_DIRECTORY ${CxBldPath}/thirdparty)
 file (MAKE_DIRECTORY ${BldPath})
 
 add_custom_target (GenSources SOURCES ${FullCFiles} ${FullHFiles} ${FullCCFiles} ${FullHHFiles}

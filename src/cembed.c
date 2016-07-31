@@ -1,5 +1,4 @@
 /**
- * This public domain code serves to:
  * Embed file contents into C code.
  *
  * Usage example:
