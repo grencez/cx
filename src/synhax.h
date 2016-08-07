@@ -297,6 +297,7 @@ do { \
   } \
 } while (0)
 
+#define skip_unless( cond )  if (!(cond))  continue
 
 #define DeclLegit(good) sign_t good = 1; sign_t* const DoLegit_vbl = &good
 
