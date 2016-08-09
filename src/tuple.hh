@@ -62,6 +62,29 @@ public:
   }
 };
 
+template <class T>
+class Triple : public Tuple<T,3>
+{
+public:
+  Triple() : Tuple<T,3>() {}
+
+  Triple(const T& e0, const T& e1, const T& e2)
+    : Tuple<T,3>()
+  {
+    (*this)[0] = e0;
+    (*this)[1] = e1;
+    (*this)[2] = e2;
+  }
+
+  Triple(const T& e)
+    : Tuple<T,3>()
+  {
+    (*this)[0] = e;
+    (*this)[1] = e;
+    (*this)[2] = e;
+  }
+};
+
 
 template <class T>
   const Tuple<T,2>
