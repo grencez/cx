@@ -251,6 +251,7 @@ dbglog_printf3 (const char* file,
 #define DBog4(s,a,b,c,d)  dbglog_printf3 (__FILE__,__FUNC__,__LINE__,s,a,b,c,d)
 #define DBog5(s,a,b,c,d,e)  dbglog_printf3 (__FILE__,__FUNC__,__LINE__,s,a,b,c,d,e)
 #define DBog0(s)  DBog1("%s",s)
+#define DBog_zuint(x)  DBog2( "%s:%zu", #x, (zuint)(x) )
 #define DBog_ujint(x)  DBog2( "%s:%lu", #x, (luint)(x) )
 #define DBog_luint(x)  DBog2( "%s:%lu", #x, (luint)(x) )
 
