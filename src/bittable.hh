@@ -74,6 +74,22 @@ public:
     lose_BitTable (&bt);
   }
 
+  BitTable& operator&=(const C::BitTable& a) {
+    op_BitTable (bt, BitOp_AND, a);
+    return *this;
+  }
+  BitTable& operator|=(const C::BitTable& a) {
+    op_BitTable (bt, BitOp_OR, a);
+    return *this;
+  }
+  BitTable& operator-=(const C::BitTable& a) {
+    op_BitTable (bt, BitOp_NIMP, a);
+    return *this;
+  }
+  BitTable& operator&=(const BitTable& a) { return *this &= a.bt; }
+  BitTable& operator|=(const BitTable& a) { return *this |= a.bt; }
+  BitTable& operator-=(const BitTable& a) { return *this -= a.bt; }
+
   zuint sz() const {
     return bt.sz;
   }
@@ -135,13 +151,23 @@ public:
     return fold_map2_BitTable (BitOp_AND, BitOp_IMP, this->bt, b.bt);
   }
 
+  bool sat_ck() const {
+    return sat_ck_BitTable (bt);
+  }
+
   zuint begidx() const {
     return begidx_BitTable (bt);
   }
   zuint nextidx(zuint i) const {
     return nextidx_BitTable (bt, i);
   }
+  void nextidx(zuint* i) const {
+    *i = nextidx_BitTable (bt, *i);
+  }
 
+  zuint count() const {
+    return count_BitTable (bt);
+  }
 };
 
 inline

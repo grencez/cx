@@ -490,6 +490,24 @@ all_BitTable (const BitTable bt)
 }
 
 qual_inline
+  Bit
+sat_ck_BitTable (const BitTable bt)
+{
+  DeclBitTableIdcs( p, q, bt.sz );
+  zuint i;
+
+  UFor( i, p )
+    if (0 != bt.s[i])
+      return 0;
+
+  UFor( i, q )
+    if (ck_BitTable (bt, bt.sz - 1 - i))
+      return 0;
+
+  return 1;
+}
+
+qual_inline
   Sign
 cmp_BitTableEl (const BitTableEl a, const BitTableEl b)
 {
