@@ -1,8 +1,9 @@
-
 #ifndef Tuple_HH_
 #define Tuple_HH_
 
-#include "synhax.hh"
+extern "C" {
+#include "def.h"
+}
 
 namespace Cx {
 template <class T, uint N>
@@ -110,4 +111,3 @@ mk_Tuple(const T& e0, const T& e1, const T& e2, const T& e3) {
 
 }
 #endif
-

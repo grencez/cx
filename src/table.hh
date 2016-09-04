@@ -321,4 +321,3 @@ index_of_state (const uint* state, const Table<uint>& doms)
 }
 
 #endif
-

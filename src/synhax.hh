@@ -1,4 +1,3 @@
-
 #ifndef SYNHAX_HH_
 #define SYNHAX_HH_
 
@@ -107,4 +106,3 @@ public:
 }
 
 #endif
-
