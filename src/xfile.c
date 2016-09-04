@@ -404,6 +404,9 @@ olay_txt_XFile (XFile* olay, XFile* xf, zuint off)
   olay->buf.sz = end - off;
 
   Claim( !olay->buf.s[olay->buf.sz-1] );
+  while (olay->buf.sz > 1 && !olay->buf.s[olay->buf.sz-2]) {
+    olay->buf.sz -= 1;
+  }
 }
 
   bool
