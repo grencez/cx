@@ -147,6 +147,11 @@ public:
   Bit set1(zuint idx) { return set1_BitTable (bt, idx); }
   bool ck(zuint idx) const { return ck_BitTable (bt, idx); }
 
+  void set(zuint idx, uint nbits, uint z)
+  { set_uint_BitTable (bt, idx, nbits, z); }
+  uint get(zuint idx, uint nbits) const
+  { return get_uint_BitTable (bt, idx, nbits); }
+
   bool subseteq_ck(const BitTable& b) const {
     return fold_map2_BitTable (BitOp_AND, BitOp_IMP, this->bt, b.bt);
   }

@@ -300,7 +300,7 @@ testfn_BitTable ()
   {
     const uint idx = INT_BIT - 2;
     const uint x = 100;
-    set_uint_BitTable(bt, idx, 5, 100);
+    set_uint_BitTable(bt, idx, 5, x);
     Claim2( x & 7        ,==, get_uint_BitTable(bt, idx  , 3) );
     Claim2( (x >> 1) & 7 ,==, get_uint_BitTable(bt, idx+1, 3) );
     Claim2( x & 15       ,==, get_uint_BitTable(bt, idx  , 4) );

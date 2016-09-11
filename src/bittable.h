@@ -302,7 +302,7 @@ qual_inline
 set_uint_BitTable (BitTable bt, const zuint i, const uint nbits, const uint z)
 {
   uint off = 0;
-  while (off < nbits) {
+  while (off < nbits && i+off < bt.sz) {
     DeclBitTableIdcs( p, q, i+off );
     const BitTableEl x = bt.s[p];
     const uint n = (q + (nbits - off) > NBits_BitTableEl)
@@ -312,6 +312,8 @@ set_uint_BitTable (BitTable bt, const zuint i, const uint nbits, const uint z)
 
     bt.s[p] = (x & ~mask) | (((z >> off) << q) & mask);
     off += n;
+    if (i+off >= bt.sz)
+      return;
   }
 }
 
@@ -321,7 +323,7 @@ get_uint_BitTable (BitTable bt, const zuint i, const uint nbits)
 {
   uint off = 0;
   uint z = 0;
-  while (off < nbits) {
+  while (off < nbits && i+off < bt.sz) {
     DeclBitTableIdcs( p, q, i+off );
     const BitTableEl x = bt.s[p];
     uint n = (q + (nbits - off) > NBits_BitTableEl)
