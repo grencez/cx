@@ -45,6 +45,12 @@ public:
     if (filename == "-") {
       return stdout_OFile ();
     }
+    if (filename == "/dev/stdout") {
+      return stdout_OFile ();
+    }
+    if (filename == "/dev/stderr") {
+      return stderr_OFile ();
+    }
     if (this->open(dirname, filename)) {
       return &ofb.of;
     }
