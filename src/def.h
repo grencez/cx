@@ -152,7 +152,7 @@ typedef float real;
 #ifdef _MSC_VER
 # define __FUNC__ __FUNCTION__
 #else
-# define __FUNC__ __func__
+# define __FUNC__ __extension__ __func__
 #endif
 
 
