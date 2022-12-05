@@ -1,6 +1,12 @@
 
 # Cx - A C-to-C Translator and Useful Functions/Classes/Tools
 
+## Deprecation Notice
+Useful functions and data structures have moved to the [Fildesh](https://github.com/fildesh/fildesh/) scripting language codebase.
+However, this project's handful of C-to-C transformations have been abandoned; they added more confusion that they were worth.
+
+## Description
+
 This is a library that I use to make ANSI C / C++ programming easier.
 Many research tools and domain-specific languages build upon ANSI C or a subset of it, so it's not an entirely useless exercise to stick to that standard.
 You will need to put the repository of preprocessed files (https://github.com/grencez/cx-pp) in `../cx-pp` in order to build this.
